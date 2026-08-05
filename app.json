@@ -1,16 +1,18 @@
 {
   "expo": {
-    "name": "mnn_1",
-    "slug": "mnn_1",
+    "name": "청능 애플리케이션",
+    "slug": "rn-hear-1",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
-    "scheme": "mnn1",
+    "scheme": "rnhear",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.rnhear.app"
     },
     "android": {
+      "package": "com.rnhear.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -25,6 +27,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-dev-client",
       [
         "expo-splash-screen",
         {
@@ -32,7 +35,12 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "react-native-audio-api",
+      "expo-audio",
+      "expo-asset",
+      "expo-font",
+      "expo-screen-orientation"
     ],
     "experiments": {
       "typedRoutes": true,

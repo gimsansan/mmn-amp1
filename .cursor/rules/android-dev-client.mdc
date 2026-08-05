@@ -1,0 +1,35 @@
+﻿---
+description: RN 청능 앱(rn-hear-1) — Android dev-client / 저사양 우선 컨텍스트
+alwaysApply: true
+---
+
+# 청능 앱 — Android dev-client
+
+상세 컨텍스트: `docs/dev-client-setup-context.md` (필요 시 `@docs/dev-client-setup-context.md`).
+
+## 플랫폼 · 실행
+
+- Android 우선. iOS 전용 API/가이드를 기본으로 추천하지 말 것.
+- **Expo Go 불가** — `react-native-audio-api`, Skia, Rive, Reanimated/worklets 등 네이티브 모듈 사용.
+- 개발: `npm start` (`expo start --dev-client`) / 빌드: `npm run android` (`expo run:android`).
+- 네이티브 의존성·플러그인 변경 시 **dev client 리빌드** 필요.
+
+## 스택 (요약)
+
+- Expo SDK 57 / RN 0.86 / React 19 / New Arch always-on.
+- 라우트: `src/app/` (`expo-router`, main = `expo-router/entry`).
+- SVG: `metro.config.js` + `src/types/svg.d.ts` 설정됨.
+- `babel.config.js`: worklets plugin `bundleMode: true` (Expo 자동 worklets 끔).
+- Metro: `getBundleModeMetroConfig` + `patches/metro*0.84.4.patch` (`postinstall`).
+
+## 경량화 (필수 방침)
+
+- 진단/측정 화면: 정적·최경량. Rive/Skia는 결과·훈련 화면에만.
+- 런타임 부담: WebP 정적 이미지 < Reanimated < Rive / Lottie / Skia.
+- Bundle Mode 이미 적용. Babel/Metro 변경 후 `--reset-cache` 권장. 구 `react-native-reanimated/plugin` 쓰지 말 것.
+
+## AI 행동
+
+- 미확인 파일은 추측하지 말고 읽고 확인할 것.
+- 구버전 예제(`react-native-reanimated/plugin`, old arch)를 그대로 적용하지 말 것.
+- 성능에 부정적 영향이 있는 변경은 응답에 명시할 것.
