@@ -1,8 +1,9 @@
 # 청능 애플리케이션 (rn-hear-1)
 
-React Native / Expo SDK 57 기반 **청능 스크리닝·훈련** 앱. 안드로이드 우선, **dev-client** 전용(Expo Go 불가).
+React Native / Expo SDK 57 기반 **청능 웰니스·훈련** 앱. 안드로이드 우선, **dev-client** 전용(Expo Go 불가).
 
 상세 컨텍스트: [`docs/dev-client-setup-context.md`](./docs/dev-client-setup-context.md)  
+훈련·자극 설계(AMP/MDT·트랙): [`docs/amp-mdt-training-design.md`](./docs/amp-mdt-training-design.md)  
 Cursor 규칙 2번 vs 3번: [`docs/cursor-rules-2-vs-3.md`](./docs/cursor-rules-2-vs-3.md)
 
 ## 요구 환경
@@ -40,6 +41,7 @@ npm run doctor
 | `metro.config.js` | SVG transformer + Bundle Mode |
 | `patches/` | metro / metro-runtime Bundle Mode 패치 |
 | `docs/dev-client-setup-context.md` | 스택·설정·경량화 방침 |
+| `docs/amp-mdt-training-design.md` | 웰니스·훈련 / ①② 트랙·AM 스펙 |
 | `.cursor/rules/android-dev-client.mdc` | Cursor AI always-apply 규칙 |
 
 ## 스크립트
@@ -54,4 +56,4 @@ npm run doctor
 
 ## 경량화 방침
 
-저사양 안드로이드 우선. 진단 화면은 정적 위주, Rive/Skia는 결과·훈련 화면에만. 자세한 내용은 docs §5 참고.
+저사양 안드로이드 우선. 측정·훈련 입력 화면은 정적 위주, Rive/Skia는 결과·연출 화면에만. 자세한 내용은 docs §5·훈련 설계 문서 참고.

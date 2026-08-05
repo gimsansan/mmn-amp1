@@ -11,7 +11,8 @@
 
 - 플랫폼: React Native 안드로이드 (iOS 스크립트도 있으나 안드로이드 우선)
 - 실행 모드: **dev-client** (Expo Go 불가 — 이유는 §2)
-- 앱 성격: 청능 스크리닝·훈련 앱. **오디오 실시간 합성 기반**. 저사양 안드로이드 **경량화 우선**.
+- 앱 성격: 청능 **웰니스·훈련** 앱(진단·스크리닝 주장 지양). **오디오 실시간 합성 기반**. 저사양 안드로이드 **경량화 우선**.
+- 훈련·자극 설계(① AM/포락선 · ② 주파수, 엔진·계단식): [`docs/amp-mdt-training-design.md`](./amp-mdt-training-design.md)
 - 진입점: `package.json` → `"main": "expo-router/entry"` / 라우팅: `expo-router` (`src/app/`, typed routes)
 - 프로젝트명: `rn-hear-1` (app.json name: "청능 애플리케이션")
 - 워크스페이스 경로: `d:\mnn_1`
@@ -109,7 +110,7 @@
   - **주의**: 독립 top-level Metro 다중 번들(동적 code-split 호스트/피처 분리)과 비호환. 이 앱은 단일 번들 전제.
   - 패치는 Metro 공식 반영 전 임시 우회. metro 버전 업 시 patch 파일 재확인.
 - **설계 방침(대화 맥락, 일관 유지)**:
-  - 측정(진단) 화면은 정적 위주로 최경량. Rive/Skia 연출은 결과·훈련 화면에만.
+  - 측정·훈련 입력 화면은 정적 위주로 최경량. Rive/Skia 연출은 결과·연출 화면에만.
   - 나무 성장은 연속 벡터 변형(Rive) 대신 **단계 이미지 전환(WebP + Reanimated)** 방식 검토 중.
   - 런타임 부담: 정적 이미지(WebP) < Reanimated < (Rive · Lottie · Skia).
 

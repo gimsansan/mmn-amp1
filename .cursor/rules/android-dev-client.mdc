@@ -6,6 +6,7 @@ alwaysApply: true
 # 청능 앱 — Android dev-client
 
 상세 컨텍스트: `docs/dev-client-setup-context.md` (필요 시 `@docs/dev-client-setup-context.md`).
+훈련·자극 설계: `docs/amp-mdt-training-design.md` — 웰니스·훈련(진단/스크리닝 주장 지양), ② 주파수 우선 · ① AM/포락선은 후순위 옵션.
 
 ## 플랫폼 · 실행
 
@@ -24,7 +25,7 @@ alwaysApply: true
 
 ## 경량화 (필수 방침)
 
-- 진단/측정 화면: 정적·최경량. Rive/Skia는 결과·훈련 화면에만.
+- 측정·훈련 입력 화면: 정적·최경량. Rive/Skia는 결과·연출 화면에만.
 - 런타임 부담: WebP 정적 이미지 < Reanimated < Rive / Lottie / Skia.
 - Bundle Mode 이미 적용. Babel/Metro 변경 후 `--reset-cache` 권장. 구 `react-native-reanimated/plugin` 쓰지 말 것.
 
