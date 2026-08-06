@@ -4,6 +4,8 @@ React Native / Expo SDK 57 기반 **청능 웰니스·훈련** 앱. 안드로이
 
 상세 컨텍스트: [`docs/dev-client-setup-context.md`](./docs/dev-client-setup-context.md)  
 훈련·자극 설계(AMP/MDT·트랙): [`docs/amp-mdt-training-design.md`](./docs/amp-mdt-training-design.md)  
+구현·결과 로그: [`docs/impl-log.md`](./docs/impl-log.md)  
+인계문(최신): [`docs/handoff.md`](./docs/handoff.md)  
 Cursor 규칙 2번 vs 3번: [`docs/cursor-rules-2-vs-3.md`](./docs/cursor-rules-2-vs-3.md)
 
 ## 요구 환경
@@ -42,6 +44,8 @@ npm run doctor
 | `patches/` | metro / metro-runtime Bundle Mode 패치 |
 | `docs/dev-client-setup-context.md` | 스택·설정·경량화 방침 |
 | `docs/amp-mdt-training-design.md` | 웰니스·훈련 / ①② 트랙·AM 스펙 |
+| `docs/impl-log.md` | 구현·결과 날짜별 로그 |
+| `docs/handoff.md` | 새 채팅 AI용 인계문(최신) |
 | `.cursor/rules/android-dev-client.mdc` | Cursor AI always-apply 규칙 |
 
 ## 스크립트
