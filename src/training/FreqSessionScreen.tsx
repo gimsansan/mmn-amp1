@@ -190,6 +190,14 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
     summary?.meanReversalDeltaCents == null
       ? '—'
       : `약 ${Math.round(summary.meanReversalDeltaCents)}`;
+  const easiestText =
+    summary?.easiestDeltaCents == null
+      ? '—'
+      : `약 ${Math.round(summary.easiestDeltaCents)}`;
+  const hardestText =
+    summary?.hardestDeltaCents == null
+      ? '—'
+      : `약 ${Math.round(summary.hardestDeltaCents)}`;
 
   return (
     <ThemedView style={styles.container}>
@@ -240,8 +248,11 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
             <ThemedText style={styles.caption}>
               {`최근 난이도 참고 · 음높이 차이 ${meanText}`}
             </ThemedText>
+            <ThemedText style={styles.caption}>
+              {`이번 연습 · 가장 쉬움 ${easiestText} · 가장 어려움 ${hardestText}`}
+            </ThemedText>
             <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
-              작을수록 더 세밀한 구분 · 청력 검사·진단 결과 아님
+              작을수록 더 세밀한 구분 · 점수·청력 검사·진단 결과 아님
             </ThemedText>
           </ThemedView>
         ) : null}

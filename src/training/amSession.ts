@@ -34,6 +34,10 @@ export type AmSessionSummary = {
   endReason: SessionEndReason | null;
   /** 최근 반전 시행의 depthDb 평균. 없으면 null. 진단 역치 아님. */
   meanReversalDepthDb: number | null;
+  /** 이번 세션 history 중 가장 큰 depthDb(가장 쉬움, 0에 가까움). 점수·역치 아님. */
+  easiestDepthDb: number | null;
+  /** 이번 세션 history 중 가장 작은 depthDb(가장 어려움). 점수·역치 아님. */
+  hardestDepthDb: number | null;
   correctCount: number;
 };
 
@@ -136,12 +140,17 @@ export function summarizeAmSession(session: AmSessionState): AmSessionSummary {
       : slice.reduce((a, b) => a + b, 0) / slice.length;
 
   const correctCount = stair.history.filter((h) => h.correct).length;
+  const depths = stair.history.map((h) => h.depthDb);
+  const easiestDepthDb = depths.length === 0 ? null : Math.max(...depths);
+  const hardestDepthDb = depths.length === 0 ? null : Math.min(...depths);
 
   return {
     trialCount: stair.trialCount,
     reversalCount: stair.reversalCount,
     endReason,
     meanReversalDepthDb,
+    easiestDepthDb,
+    hardestDepthDb,
     correctCount,
   };
 }

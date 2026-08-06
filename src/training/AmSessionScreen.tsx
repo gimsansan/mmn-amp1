@@ -192,6 +192,14 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     summary?.meanReversalDepthDb == null
       ? '—'
       : `약 ${summary.meanReversalDepthDb.toFixed(1)}`;
+  const easiestText =
+    summary?.easiestDepthDb == null
+      ? '—'
+      : `약 ${summary.easiestDepthDb.toFixed(1)}`;
+  const hardestText =
+    summary?.hardestDepthDb == null
+      ? '—'
+      : `약 ${summary.hardestDepthDb.toFixed(1)}`;
 
   return (
     <ThemedView style={styles.container}>
@@ -242,8 +250,11 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
             <ThemedText style={styles.caption}>
               {`최근 난이도 참고 · 떨림 정도 ${meanText}`}
             </ThemedText>
+            <ThemedText style={styles.caption}>
+              {`이번 연습 · 가장 쉬움 ${easiestText} · 가장 어려움 ${hardestText}`}
+            </ThemedText>
             <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
-              숫자가 작을수록 더 얕은 떨림 · 청력 검사·진단 결과 아님
+              숫자가 작을수록 더 얕은 떨림 · 점수·청력 검사·진단 결과 아님
             </ThemedText>
           </ThemedView>
         ) : null}

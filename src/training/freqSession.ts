@@ -37,6 +37,10 @@ export type FreqSessionSummary = {
   endReason: SessionEndReason | null;
   /** 최근 반전 시행의 Δ 평균. 없으면 null. 진단 역치 아님. */
   meanReversalDeltaCents: number | null;
+  /** 이번 세션 history 중 가장 큰 Δ(가장 쉬움). 점수·역치 아님. */
+  easiestDeltaCents: number | null;
+  /** 이번 세션 history 중 가장 작은 Δ(가장 어려움). 점수·역치 아님. */
+  hardestDeltaCents: number | null;
   correctCount: number;
 };
 
@@ -139,12 +143,19 @@ export function summarizeSession(session: FreqSessionState): FreqSessionSummary 
       : slice.reduce((a, b) => a + b, 0) / slice.length;
 
   const correctCount = stair.history.filter((h) => h.correct).length;
+  const deltas = stair.history.map((h) => h.deltaCents);
+  const easiestDeltaCents =
+    deltas.length === 0 ? null : Math.max(...deltas);
+  const hardestDeltaCents =
+    deltas.length === 0 ? null : Math.min(...deltas);
 
   return {
     trialCount: stair.trialCount,
     reversalCount: stair.reversalCount,
     endReason,
     meanReversalDeltaCents,
+    easiestDeltaCents,
+    hardestDeltaCents,
     correctCount,
   };
 }
