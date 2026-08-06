@@ -8,8 +8,9 @@ import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { AmSessionScreen } from '@/training/AmSessionScreen';
 import { FreqSessionScreen } from '@/training/FreqSessionScreen';
+import { SessionHistoryScreen } from '@/training/SessionHistoryScreen';
 
-type Track = 'picker' | 'freq' | 'am';
+type Track = 'picker' | 'freq' | 'am' | 'history';
 
 /** 연습 탭 — 트랙 선택 후 정적 훈련 UI. */
 export default function ExploreScreen() {
@@ -26,6 +27,10 @@ export default function ExploreScreen() {
 
   if (track === 'am') {
     return <AmSessionScreen onBack={backToPicker} />;
+  }
+
+  if (track === 'history') {
+    return <SessionHistoryScreen onBack={backToPicker} />;
   }
 
   return (
@@ -62,6 +67,20 @@ export default function ExploreScreen() {
             <ThemedText type="smallBold">떨림 찾기</ThemedText>
             <ThemedText themeColor="textSecondary" type="small">
               소리가 떨리는지 찾는 연습
+            </ThemedText>
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setTrack('history')}
+            style={({ pressed }) => [
+              styles.card,
+              { backgroundColor: theme.backgroundElement },
+              pressed && styles.pressed,
+            ]}>
+            <ThemedText type="smallBold">연습 기록</ThemedText>
+            <ThemedText themeColor="textSecondary" type="small">
+              이 기기에 남긴 연습 요약 보기
             </ThemedText>
           </Pressable>
         </View>
