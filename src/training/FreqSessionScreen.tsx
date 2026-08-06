@@ -26,6 +26,7 @@ import {
   type FreqSessionState,
   type FreqSessionSummary,
 } from '@/training/freqSession';
+import { appendFreqSessionSummary } from '@/training/sessionStore';
 
 type Phase = 'idle' | 'playing' | 'choose' | 'feedback' | 'summary';
 
@@ -77,6 +78,7 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
   const [result, setResult] = useState<FreqAfcChoiceResult | null>(null);
   const [summary, setSummary] = useState<FreqSessionSummary | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [saveNote, setSaveNote] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -87,10 +89,19 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
 
   const goSummary = useCallback((next: FreqSessionState) => {
     abortFreqAfcPlayback();
+    const nextSummary = summarizeSession(next);
     setSession(next);
-    setSummary(summarizeSession(next));
+    setSummary(nextSummary);
     setPhase('summary');
     setTrial(null);
+    setSaveNote(null);
+    void appendFreqSessionSummary(nextSummary)
+      .then(() => {
+        setSaveNote('기기에 기록했어요');
+      })
+      .catch(() => {
+        setSaveNote('기록 저장에 실패했어요');
+      });
   }, []);
 
   const resetToIdle = useCallback(() => {
@@ -101,6 +112,7 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
     setTrial(null);
     setResult(null);
     setSummary(null);
+    setSaveNote(null);
   }, []);
 
   const runTrial = useCallback(async (state: FreqSessionState) => {
@@ -142,6 +154,7 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
     const next = createFreqSession();
     setSession(next);
     setSummary(null);
+    setSaveNote(null);
     void runTrial(next);
   }, [runTrial]);
 
@@ -254,6 +267,11 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
             <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
               작을수록 더 세밀한 구분 · 점수·청력 검사·진단 결과 아님
             </ThemedText>
+            {saveNote ? (
+              <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+                {saveNote}
+              </ThemedText>
+            ) : null}
           </ThemedView>
         ) : null}
 

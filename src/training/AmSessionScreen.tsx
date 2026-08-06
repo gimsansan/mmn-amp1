@@ -28,6 +28,7 @@ import {
   DEFAULT_MAX_TRIALS,
   DEFAULT_TARGET_REVERSALS,
 } from '@/training/freqSession';
+import { appendAmSessionSummary } from '@/training/sessionStore';
 
 type Phase = 'idle' | 'playing' | 'choose' | 'feedback' | 'summary';
 
@@ -79,6 +80,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
   const [result, setResult] = useState<AmAfcChoiceResult | null>(null);
   const [summary, setSummary] = useState<AmSessionSummary | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [saveNote, setSaveNote] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -89,10 +91,19 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
 
   const goSummary = useCallback((next: AmSessionState) => {
     abortAmAfcPlayback();
+    const nextSummary = summarizeAmSession(next);
     setSession(next);
-    setSummary(summarizeAmSession(next));
+    setSummary(nextSummary);
     setPhase('summary');
     setTrial(null);
+    setSaveNote(null);
+    void appendAmSessionSummary(nextSummary)
+      .then(() => {
+        setSaveNote('기기에 기록했어요');
+      })
+      .catch(() => {
+        setSaveNote('기록 저장에 실패했어요');
+      });
   }, []);
 
   const resetToIdle = useCallback(() => {
@@ -103,6 +114,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     setTrial(null);
     setResult(null);
     setSummary(null);
+    setSaveNote(null);
   }, []);
 
   const runTrial = useCallback(async (state: AmSessionState) => {
@@ -144,6 +156,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     const next = createAmSession();
     setSession(next);
     setSummary(null);
+    setSaveNote(null);
     void runTrial(next);
   }, [runTrial]);
 
@@ -256,6 +269,11 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
             <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
               숫자가 작을수록 더 얕은 떨림 · 점수·청력 검사·진단 결과 아님
             </ThemedText>
+            {saveNote ? (
+              <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+                {saveNote}
+              </ThemedText>
+            ) : null}
           </ThemedView>
         ) : null}
 
