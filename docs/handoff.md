@@ -1,8 +1,67 @@
 # 인계문 로그 — rn-hear-1 / mnn_1
 
 > **대상**: 새 채팅 AI. 사용자는 맥락을 이미 앎.  
-> **방식**: 「인계문 작성해」 시 **덮어쓰지 말고 아래에 최신 블록을 위에 추가**. 각 블록 제목: `## 인계 — YYYY-MM-DD HH:mm`.  
-> 동일 블록을 `docs/handoff-YYYY-MM-DD.md`에도 추가. `impl-log` 한 줄. Ask에서는 본문만 올리지 말 것.
+> **방식**: 「인계문 작성해」 시 **덮어쓰지 말고 최신 블록을 맨 위에 추가**. 각 블록 제목: `## 인계 — YYYY-MM-DD HH:mm`.  
+> `impl-log`에 한 줄. Ask에서는 본문만 올리지 말 것.  
+> **날짜별 사본은 만들지 않는다**(2026-08-07 변경 — 100% 중복이었음. 과거 조회는 git 이력). 규칙: `.cursor/rules/android-dev-client.mdc`
+
+---
+
+## 인계 — 2026-08-06 17:01
+
+새 채팅 AI용. 최신: `docs/handoff.md` 상단.
+
+### 프로젝트
+- `d:\mnn_1` · rn-hear-1 · Android · Expo Go 불가 / **dev-client**
+- Expo 57 / RN 0.86 / `react-native-audio-api` ^0.13.2
+- 규칙: `.cursor/rules/android-dev-client.mdc` · 설계: `docs/amp-mdt-training-design.md` · 로그: `docs/impl-log.md`
+
+### 제품 합의 (확실)
+- 웰니스·훈련 · 효과 카피 금지(**미검증**)
+- **②**·**①** 에뮬 청취·세션 종료·요약 min/max 확인
+- 「기기에 기록했어요」 **에뮬 문구 수동 확인함**(사용자)
+- §4.4 **임시 DOI + 전문가 미검토** · **DOI 검수 보류**(외부 대기 · 피드백 오면 수정 검토)
+- **자극 스펙 임시값 유지**(유지≠확정 · 자격상 임의 확정 안 함) · 전환 목표 **4**
+- **세션 영속 MVP** · **이력 목록 UI 반영** · 커밋 `ec53d8f` 푸시됨
+- **연습 기록 UI 방향**(16:37): 목업 전체 비채택. **일부**: 다색·그래프/게이지 소수. **미적용**: score 카피·전환 카드 중복·난이도 축 시각화
+- 숨김 파일럿 설정(길게 누르기 등)=**최후 수단·미구현**(지금은 상수 유지)
+- UI 순화 · 요약: 전환 평균 + 가장 쉬움/어려움(**≠점수·역치**)
+- 테마: `theme.ts` 흑·백·회색 위주 → **다음: 액센트 다색 일부**(합의)
+- 인계문: **추가+시각** · 새 창: `@docs/handoff.md` + 「인계 이어서」
+- ① 3AFC: 정답 1 · 오답 2 · `chosenIndex === oddIndex`
+
+### 한 일 (이번·직전)
+| 내용 | 경로/비고 |
+|------|-----------|
+| UI 방향 합의 문서화 | `impl-log` 16:37 · 설계 §8 · **이번 인계에 반영** |
+| 이력 UI·문서 커밋·푸시 | `ec53d8f` → `origin/two_feat` |
+| 저장 문구 에뮬 확인 | 사용자 수동 확인 |
+| 이력 목록 UI(이전) | `SessionHistoryScreen.tsx` · `explore.tsx` |
+| 영속 MVP·DOI(이전) | `sessionStore` · 보류 `e95ed2a` |
+
+### 안 한 일
+- 이력 UI 다색·게이지/그래프 **구현**(합의만)
+- 클라우드 · 페이징
+- 자극 스펙 **확정** · DOI **전문가 검수**
+- 숨김 파일럿 설정 UI
+
+### 세션 (코드 · 임시 유지)
+- 전환 4 / 시행 40 / 수동 · 키 `training.sessionHistory.v1` · 최대 50
+- 공통: n=3 · 0.5s · ISI 0.35s · gain 0.15 · ramp 0.03s
+- ② Δ 10~150 ±10 시작 150 · ① depth 0~-40 · 요약≠역치
+- 영속·이력: `sessionStore.ts` · `SessionHistoryScreen.tsx` · `goSummary`
+
+### 핵심 경로
+- ① `AmSessionScreen` 계열 · ② `FreqSessionScreen` 계열
+- 영속·이력: `sessionStore` · `SessionHistoryScreen` · `explore`
+- 테마: `src/constants/theme.ts`
+
+### 다음 (권장)
+1. (선택) `theme.ts` 액센트 일부 + 이력 게이지/그래프 1~2개(과하지 않게)
+2. (후순위) 자극 확정 · DOI 검수 · 숨김 파일럿 설정
+
+### 단정 금지
+효과 미검증 · 임시값≠확정 · 평균·min/max≠역치 · 저장≠진단 · 색·게이지 구체 스펙 미정 · 시각화≠점수
 
 ---
 

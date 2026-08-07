@@ -72,6 +72,8 @@ type FreqSessionScreenProps = {
 export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
+  /** 이번 세션 요약을 이미 저장했는지. 중복 저장 방지(세션 시작 시 리셋). */
+  const savedRef = useRef(false);
   const [phase, setPhase] = useState<Phase>('idle');
   const [session, setSession] = useState<FreqSessionState | null>(null);
   const [trial, setTrial] = useState<FreqAfcTrial | null>(null);
@@ -88,12 +90,21 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
   }, []);
 
   const goSummary = useCallback((next: FreqSessionState) => {
+    // 진행 중인 시행이 있으면 재생 루프까지 멈춘다.
+    // stopPureTone()은 대기 promise를 resolve만 하므로, 이 플래그가 없으면
+    // 남은 구간이 계속 재생되고 runTrial이 phase를 'choose'로 되돌린다.
+    abortRef.current = true;
     abortFreqAfcPlayback();
     const nextSummary = summarizeSession(next);
     setSession(next);
     setSummary(nextSummary);
     setPhase('summary');
     setTrial(null);
+
+    if (savedRef.current) {
+      return;
+    }
+    savedRef.current = true;
     setSaveNote(null);
     void appendFreqSessionSummary(nextSummary)
       .then(() => {
@@ -106,6 +117,7 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
 
   const resetToIdle = useCallback(() => {
     abortRef.current = true;
+    savedRef.current = false;
     abortFreqAfcPlayback();
     setPhase('idle');
     setSession(null);
@@ -152,6 +164,7 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
 
   const onStart = useCallback(() => {
     const next = createFreqSession();
+    savedRef.current = false;
     setSession(next);
     setSummary(null);
     setSaveNote(null);
@@ -160,7 +173,8 @@ export function FreqSessionScreen({ onBack }: Readonly<FreqSessionScreenProps>) 
 
   const onChoose = useCallback(
     (index: number) => {
-      if (!trial || !session || phase !== 'choose') {
+      // 완료된 세션은 다시 채점하지 않는다(중지 직후 잔여 UI 방어).
+      if (!trial || !session || phase !== 'choose' || session.status !== 'active') {
         return;
       }
       const scored = scoreFreqAfcChoice(trial, index);

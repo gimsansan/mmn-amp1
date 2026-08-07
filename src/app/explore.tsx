@@ -2,24 +2,55 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DEFAULT_CARRIER_HZ } from '@/audio/amTone';
+import { DEFAULT_REFERENCE_HZ } from '@/audio/pureTone';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { AmSessionScreen } from '@/training/AmSessionScreen';
 import { FreqSessionScreen } from '@/training/FreqSessionScreen';
+import { ListeningCheckScreen } from '@/training/ListeningCheckScreen';
 import { SessionHistoryScreen } from '@/training/SessionHistoryScreen';
 
 type Track = 'picker' | 'freq' | 'am' | 'history';
 
-/** 연습 탭 — 트랙 선택 후 정적 훈련 UI. */
+/** 연습 탭 — 트랙 선택 → 듣기 준비 → 정적 훈련 UI. */
 export default function ExploreScreen() {
   const theme = useTheme();
   const [track, setTrack] = useState<Track>('picker');
+  /**
+   * 이번 진입에서 듣기 준비를 지났는지. 트랙을 고를 때마다 다시 확인한다
+   * — 기기·볼륨은 세션 사이에 바뀔 수 있으므로.
+   */
+  const [checked, setChecked] = useState(false);
 
   const backToPicker = useCallback(() => {
     setTrack('picker');
+    setChecked(false);
   }, []);
+
+  const openTrack = useCallback((next: Track) => {
+    setChecked(false);
+    setTrack(next);
+  }, []);
+
+  const passCheck = useCallback(() => {
+    setChecked(true);
+  }, []);
+
+  // 훈련 트랙은 듣기 준비를 한 번 지난 뒤에 들어간다(①② 공통 — 화면 중복 없음).
+  if ((track === 'freq' || track === 'am') && !checked) {
+    const isFreq = track === 'freq';
+    return (
+      <ListeningCheckScreen
+        trackTitle={isFreq ? '다른 음 찾기' : '떨림 찾기'}
+        sampleHz={isFreq ? DEFAULT_REFERENCE_HZ : DEFAULT_CARRIER_HZ}
+        onStart={passCheck}
+        onBack={backToPicker}
+      />
+    );
+  }
 
   if (track === 'freq') {
     return <FreqSessionScreen onBack={backToPicker} />;
@@ -44,7 +75,7 @@ export default function ExploreScreen() {
         <View style={styles.list}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => setTrack('freq')}
+            onPress={() => openTrack('freq')}
             style={({ pressed }) => [
               styles.card,
               { backgroundColor: theme.backgroundElement },
@@ -58,7 +89,7 @@ export default function ExploreScreen() {
 
           <Pressable
             accessibilityRole="button"
-            onPress={() => setTrack('am')}
+            onPress={() => openTrack('am')}
             style={({ pressed }) => [
               styles.card,
               { backgroundColor: theme.backgroundElement },
@@ -72,7 +103,7 @@ export default function ExploreScreen() {
 
           <Pressable
             accessibilityRole="button"
-            onPress={() => setTrack('history')}
+            onPress={() => openTrack('history')}
             style={({ pressed }) => [
               styles.card,
               { backgroundColor: theme.backgroundElement },

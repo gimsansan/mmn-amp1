@@ -13,8 +13,10 @@
 - 실행 모드: **dev-client** (Expo Go 불가 — 이유는 §2)
 - 앱 성격: 청능 **웰니스·훈련** 앱(진단·스크리닝 주장 지양). **오디오 실시간 합성 기반**. 저사양 안드로이드 **경량화 우선**.
 - 훈련·자극 설계(① AM/포락선 · ② 주파수, 엔진·계단식): [`docs/amp-mdt-training-design.md`](./amp-mdt-training-design.md)
-- 구현·결과 로그: [`docs/impl-log.md`](./impl-log.md)
-- 인계문(최신): [`docs/handoff.md`](./handoff.md) (`handoff-YYYY-MM-DD.md` 날짜 보관)
+- 문서 지도(분류·읽는 순서): [`docs/README.md`](./README.md)
+- 구현·결과 로그: [`docs/impl-log.md`](./impl-log.md) · 수정 리뷰: [`docs/fix-reviews.md`](./fix-reviews.md)
+- 개선 백로그 + 진행 현황: [`docs/improvement-backlog.md`](./improvement-backlog.md)
+- 인계문: [`docs/handoff.md`](./handoff.md) — 한 파일에 누적(최신이 위). **날짜별 사본은 만들지 않음**(2026-08-07 폐지)
 - 진입점: `package.json` → `"main": "expo-router/entry"` / 라우팅: `expo-router` (`src/app/`, typed routes)
 - 프로젝트명: `rn-hear-1` (app.json name: "청능 애플리케이션")
 - 워크스페이스 경로: `d:\mnn_1`

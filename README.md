@@ -2,9 +2,12 @@
 
 React Native / Expo SDK 57 기반 **청능 웰니스·훈련** 앱. 안드로이드 우선, **dev-client** 전용(Expo Go 불가).
 
+📖 **문서 지도 — 어떤 문서를 어떤 순서로 읽는지: [`docs/README.md`](./docs/README.md)**
+
 상세 컨텍스트: [`docs/dev-client-setup-context.md`](./docs/dev-client-setup-context.md)  
 훈련·자극 설계(AMP/MDT·트랙): [`docs/amp-mdt-training-design.md`](./docs/amp-mdt-training-design.md)  
-구현·결과 로그: [`docs/impl-log.md`](./docs/impl-log.md)  
+개선 백로그 + **진행 현황**: [`docs/improvement-backlog.md`](./docs/improvement-backlog.md) · [쉬운 말 버전](./docs/improvement-backlog-easy.md)  
+구현·결과 로그: [`docs/impl-log.md`](./docs/impl-log.md) · 수정 리뷰: [`docs/fix-reviews.md`](./docs/fix-reviews.md)  
 인계문(최신): [`docs/handoff.md`](./docs/handoff.md)  
 Cursor 규칙 2번 vs 3번: [`docs/cursor-rules-2-vs-3.md`](./docs/cursor-rules-2-vs-3.md)
 
@@ -46,6 +49,9 @@ npm run doctor
 | `docs/amp-mdt-training-design.md` | 웰니스·훈련 / ①② 트랙·AM 스펙 |
 | `docs/impl-log.md` | 구현·결과 날짜별 로그 |
 | `docs/handoff.md` | 새 채팅 AI용 인계문(최신) |
+| `docs/README.md` | **문서 지도** — 분류 규칙·어디에 적을지·읽는 순서 |
+| `docs/improvement-backlog.md` | 개선 백로그 + **진행 현황**(무엇이 고쳐졌고 무엇이 남았는지) |
+| `docs/fix-reviews.md` | 수정 전후 코드·평가·검증 리뷰(누적, 최신이 위) |
 | `.cursor/rules/android-dev-client.mdc` | Cursor AI always-apply 규칙 |
 
 ## 스크립트
