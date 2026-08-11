@@ -35,6 +35,7 @@
 | 문서 | 성격 | 담는 것 | **이것의 정본** |
 |------|------|---------|----------------|
 | `amp-mdt-training-design.md` | 갱신 | 훈련·자극 설계, 근거 문헌, 제품 방침 | **왜 이런 과제·절차인가**, 자극 스펙의 의미 |
+| `merge-host-decision.md` | 갱신 | HarmoniTune×mnn 병합 시 **호스트 선택** 개념·저장·기록 방침 | **어느 저장소를 살리는가**(제품 이름과 별개) |
 | `dev-client-setup-context.md` | 갱신 | 스택·빌드·Metro/Babel·경량화 방침 | **어떻게 돌리는가** |
 | `improvement-backlog.md` | 갱신 | 개선 후보 P0~P3 + 맨 위 **진행 현황 표** | **무엇이 문제인가 · 지금 상태가 어떤가** |
 | `improvement-backlog-easy.md` | 갱신 | 위 문서를 비유로 푼 것 | 없음(설명 전용 — **상태·근거를 여기서 관리하지 않음**) |
@@ -127,6 +128,7 @@
 docs/
 ├─ README.md                       ← 지금 이 파일(지도)
 ├─ amp-mdt-training-design.md      ① 설계·기준        [갱신형]
+├─ merge-host-decision.md          ① 설계(병합 호스트) [갱신형]
 ├─ dev-client-setup-context.md     ② 환경·실행        [갱신형]
 ├─ cursor-rules-2-vs-3.md          ② 환경(규칙 비교)  [갱신형]
 ├─ improvement-backlog.md          ③ 할 일 + 진행 현황 [갱신형] ★상태 정본
@@ -136,7 +138,7 @@ docs/
 └─ handoff.md                      ⑤ 인계(최신이 위)   [누적형]
 ```
 
-> **파일을 새로 만들기 전에**: 위 8개 중 들어갈 곳이 정말 없는지 먼저 보세요. 항목마다 파일을 만들면 `docs/`가 금방 못 쓰게 됩니다.
+> **파일을 새로 만들기 전에**: 위 목록 중 들어갈 곳이 정말 없는지 먼저 보세요. 항목마다 파일을 만들면 `docs/`가 금방 못 쓰게 됩니다.
 >
 > **실제로 있었던 일 (둘 다 2026-08-07 정리)**
 > - `fix-p0-1-review.md`·`fix-p0-2-review.md`를 항목별로 만들었다가 → `fix-reviews.md` 하나로 합침

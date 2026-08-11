@@ -45,6 +45,20 @@
 
 ## 로그
 
+### 2026-08-11 — HarmoniTune×mnn 호스트 결정 문서 + 저장·기록 방침
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | 병합 시 **제품=HarmoniTune · 코드 호스트=mnn_1**. 오디오 엔진은 양쪽 `react-native-audio-api`로 동일(문서 “Web Audio”는 규격명). 빌드 설정 비대칭(babel Bundle Mode·metro 패치·dev-client) 때문에 호스트는 mnn. 저장은 새 v2 키가 아니라 기존 `sessionStore`의 `track` 값 확장; 기록 화면 상위 이동은 훈련 3종 시점. |
+| 변경 요약 | `docs/merge-host-decision.md`에 §4.1 저장·기록 방침·체크리스트·단정 금지 보강. `docs/README.md` 지도에 문서 등록. |
+| 주요 경로 | `docs/merge-host-decision.md` · `docs/README.md` |
+| 결과 | 성공(문서만) |
+| 확인 | `sessionStore.ts`에 `track`·`schemaVersion`·`migrateRecord` 존재 확인(이전 대화 실측) |
+| 단정 금지 | `미검증` 실제 병합·HH 세션 마이그레이션 미구현. `추정` 트랙 값 이름(`'pitch2'` 등)은 예시. `미독` HH `app/training.tsx`. |
+| 성능·주의 | 없음 |
+| 다음 | 병합 착수 시 §4.1·호스트 결론 따라 진행 |
+
 ### 2026-08-11 — `.idea/`를 gitignore에 추가
 
 | 항목 | 내용 |
