@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { AmSessionSummary } from '@/training/amSession';
 import type { FreqSessionSummary, SessionEndReason } from '@/training/freqSession';
+import type { PitchCompareSummary } from '@/training/pitch2afc/pitchSummary';
 
 /** 로컬 연습 기록 키. 스키마 바꾸면 버전 bump. */
 const STORAGE_KEY = 'training.sessionHistory.v1';
@@ -16,7 +17,7 @@ export const SESSION_RECORD_VERSION = 1;
 /** 기기 보관 상한. 오래된 것부터 버림. */
 export const MAX_SAVED_SESSIONS = 50;
 
-export type SessionTrack = 'freq' | 'am';
+export type SessionTrack = 'freq' | 'am' | 'pitch2';
 
 export type SavedFreqSessionRecord = {
   id: string;
@@ -36,7 +37,19 @@ export type SavedAmSessionRecord = {
   summary: AmSessionSummary;
 };
 
-export type SavedSessionRecord = SavedFreqSessionRecord | SavedAmSessionRecord;
+export type SavedPitch2SessionRecord = {
+  id: string;
+  track: 'pitch2';
+  savedAt: string;
+  /** 없으면 1(초기 저장분). */
+  schemaVersion?: number;
+  summary: PitchCompareSummary;
+};
+
+export type SavedSessionRecord =
+  | SavedFreqSessionRecord
+  | SavedAmSessionRecord
+  | SavedPitch2SessionRecord;
 
 function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -102,6 +115,13 @@ function isValidRecord(value: unknown): value is SavedSessionRecord {
       isFiniteNumberOrNull(summary.meanReversalDepthDb) &&
       isFiniteNumberOrNull(summary.easiestDepthDb) &&
       isFiniteNumberOrNull(summary.hardestDepthDb)
+    );
+  }
+  if (value.track === 'pitch2') {
+    return (
+      isFiniteNumberOrNull(summary.meanReversalCents) &&
+      isFiniteNumberOrNull(summary.easiestCents) &&
+      isFiniteNumberOrNull(summary.hardestCents)
     );
   }
   return false;
@@ -216,6 +236,19 @@ export function appendAmSessionSummary(
   return appendRecord<SavedAmSessionRecord>(() => ({
     id: newId(),
     track: 'am',
+    savedAt: new Date().toISOString(),
+    schemaVersion: SESSION_RECORD_VERSION,
+    summary,
+  }));
+}
+
+/** 「높낮이 비교」 세션 종료 요약 저장. 진단·역치 아님. 실패 시 throw. */
+export function appendPitch2SessionSummary(
+  summary: PitchCompareSummary
+): Promise<SavedPitch2SessionRecord> {
+  return appendRecord<SavedPitch2SessionRecord>(() => ({
+    id: newId(),
+    track: 'pitch2',
     savedAt: new Date().toISOString(),
     schemaVersion: SESSION_RECORD_VERSION,
     summary,

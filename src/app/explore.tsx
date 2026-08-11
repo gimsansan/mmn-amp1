@@ -13,9 +13,16 @@ import { useTheme } from '@/hooks/use-theme';
 import { AmSessionScreen } from '@/training/AmSessionScreen';
 import { FreqSessionScreen } from '@/training/FreqSessionScreen';
 import { ListeningCheckScreen } from '@/training/ListeningCheckScreen';
-import { SessionHistoryScreen } from '@/training/SessionHistoryScreen';
+import { PitchCompareScreen } from '@/training/pitch2afc/PitchCompareScreen';
 
-type Track = 'picker' | 'freq' | 'am' | 'history';
+type Track = 'picker' | 'pitch2' | 'freq' | 'am';
+
+/** 듣기 준비 화면 제목(훈련 트랙만). */
+const TRACK_TITLE: Record<'pitch2' | 'freq' | 'am', string> = {
+  pitch2: '높낮이 비교',
+  freq: '다른 음 찾기',
+  am: '떨림 찾기',
+};
 
 type TrackOption = {
   track: Exclude<Track, 'picker'>;
@@ -24,28 +31,44 @@ type TrackOption = {
   description: string;
 };
 
-const TRACKS: readonly TrackOption[] = [
+type TrackSection = {
+  label: string;
+  options: readonly TrackOption[];
+};
+
+// §4-6: 훈련 3종을 계열별 섹션으로 묶는다. 음고 2(높낮이·다른 음) / 떨림 1(포락).
+const TRAINING_SECTIONS: readonly TrackSection[] = [
   {
-    track: 'freq',
-    icon: 'wave',
-    title: '다른 음 찾기',
-    description: '조금 다른 음높이를 찾는 연습',
+    label: '음고',
+    options: [
+      {
+        track: 'pitch2',
+        icon: 'wave',
+        title: '높낮이 비교',
+        description: '두 소리 중 어느 쪽이 높은지 맞히는 연습',
+      },
+      {
+        track: 'freq',
+        icon: 'wave',
+        title: '다른 음 찾기',
+        description: '조금 다른 음높이를 찾는 연습',
+      },
+    ],
   },
   {
-    track: 'am',
-    icon: 'ripple',
-    title: '떨림 찾기',
-    description: '소리가 떨리는지 찾는 연습',
-  },
-  {
-    track: 'history',
-    icon: 'list',
-    title: '연습 기록',
-    description: '이 기기에 남긴 연습 요약 보기',
+    label: '떨림',
+    options: [
+      {
+        track: 'am',
+        icon: 'ripple',
+        title: '떨림 찾기',
+        description: '소리가 떨리는지 찾는 연습',
+      },
+    ],
   },
 ];
 
-/** 연습 탭 — 트랙 선택 → 듣기 준비 → 정적 훈련 UI. */
+/** 연습 탭 — 트랙 선택 → 듣기 준비 → 정적 훈련 UI. 기록은 통계 탭으로 분리(§2-3). */
 export default function ExploreScreen() {
   const theme = useTheme();
   const [track, setTrack] = useState<Track>('picker');
@@ -69,17 +92,49 @@ export default function ExploreScreen() {
     setChecked(true);
   }, []);
 
-  // 훈련 트랙은 듣기 준비를 한 번 지난 뒤에 들어간다(①② 공통 — 화면 중복 없음).
-  if ((track === 'freq' || track === 'am') && !checked) {
-    const isFreq = track === 'freq';
+  const renderCard = useCallback(
+    (option: TrackOption) => (
+      <Pressable
+        key={option.track}
+        accessibilityRole="button"
+        accessibilityLabel={`${option.title} — ${option.description}`}
+        onPress={() => openTrack(option.track)}
+        style={({ pressed }) => [styles.cardPress, pressed && styles.pressed]}>
+        <Card style={styles.card}>
+          <View style={[styles.cardIcon, { backgroundColor: theme.accentTint }]}>
+            <Icon name={option.icon} size={22} color={theme.accent} />
+          </View>
+          <View style={styles.cardText}>
+            <ThemedText type="smallBold" style={styles.cardTitle}>
+              {option.title}
+            </ThemedText>
+            <ThemedText themeColor="textSecondary" type="small" style={styles.cardCaption}>
+              {option.description}
+            </ThemedText>
+          </View>
+        </Card>
+      </Pressable>
+    ),
+    [openTrack, theme.accent, theme.accentTint],
+  );
+
+  // 훈련 트랙은 듣기 준비를 한 번 지난 뒤에 들어간다(음고·떨림 공통 — 화면 중복 없음).
+  if ((track === 'pitch2' || track === 'freq' || track === 'am') && !checked) {
+    const title = TRACK_TITLE[track];
+    // ① 떨림 찾기만 반송파, 음고 트랙(높낮이·다른 음)은 기준음을 미리 들려준다.
+    const sampleHz = track === 'am' ? DEFAULT_CARRIER_HZ : DEFAULT_REFERENCE_HZ;
     return (
       <ListeningCheckScreen
-        trackTitle={isFreq ? '다른 음 찾기' : '떨림 찾기'}
-        sampleHz={isFreq ? DEFAULT_REFERENCE_HZ : DEFAULT_CARRIER_HZ}
+        trackTitle={title}
+        sampleHz={sampleHz}
         onStart={passCheck}
         onBack={backToPicker}
       />
     );
+  }
+
+  if (track === 'pitch2') {
+    return <PitchCompareScreen onBack={backToPicker} />;
   }
 
   if (track === 'freq') {
@@ -90,10 +145,6 @@ export default function ExploreScreen() {
     return <AmSessionScreen onBack={backToPicker} />;
   }
 
-  if (track === 'history') {
-    return <SessionHistoryScreen onBack={backToPicker} />;
-  }
-
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
@@ -102,28 +153,17 @@ export default function ExploreScreen() {
           웰니스·훈련 · 병원 검사·진단을 대신하지 않아요
         </ThemedText>
 
-        <View style={styles.list}>
-          {TRACKS.map((option) => (
-            <Pressable
-              key={option.track}
-              accessibilityRole="button"
-              accessibilityLabel={`${option.title} — ${option.description}`}
-              onPress={() => openTrack(option.track)}
-              style={({ pressed }) => [styles.cardPress, pressed && styles.pressed]}>
-              <Card style={styles.card}>
-                <View style={[styles.cardIcon, { backgroundColor: theme.accentTint }]}>
-                  <Icon name={option.icon} size={22} color={theme.accent} />
-                </View>
-                <View style={styles.cardText}>
-                  <ThemedText type="smallBold" style={styles.cardTitle}>
-                    {option.title}
-                  </ThemedText>
-                  <ThemedText themeColor="textSecondary" type="small" style={styles.cardCaption}>
-                    {option.description}
-                  </ThemedText>
-                </View>
-              </Card>
-            </Pressable>
+        <View style={styles.sections}>
+          {TRAINING_SECTIONS.map((section) => (
+            <View key={section.label} style={styles.section}>
+              <ThemedText
+                themeColor="textSecondary"
+                type="smallBold"
+                style={styles.sectionLabel}>
+                {section.label}
+              </ThemedText>
+              <View style={styles.list}>{section.options.map(renderCard)}</View>
+            </View>
           ))}
         </View>
       </SafeAreaView>
@@ -150,9 +190,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
+  sections: {
+    marginTop: Spacing.three,
+    gap: Spacing.three,
+  },
+  section: {
+    gap: Spacing.two,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0.4,
+    marginLeft: Spacing.half,
+  },
   list: {
     gap: Spacing.three - 2,
-    marginTop: Spacing.three,
   },
   cardPress: {
     borderRadius: Radius.large - 2,

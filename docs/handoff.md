@@ -7,6 +7,130 @@
 
 ---
 
+## 인계 — 2026-08-11 17:23
+
+새 채팅 AI용. 최신: `docs/handoff.md` 상단.
+
+### 지금 상태 (병합 §4-7 완료)
+- 브랜치 `merge/harmonitune`. 제품=HarmoniTune · 코드 호스트=mnn_1.
+- 정본: `docs/merge-plan-harmonitune.md`(§4 순서), `docs/merge-host-decision.md`(§4.1 저장·§3.2 HH 원본 위치 `d:\harmonic_hear`). 규칙: `.cursor/rules/android-dev-client.mdc`.
+- §4-1~§4-6 → **§4-7(홈·통계·설정 이식) 완료**. 다음 = §4-8(`app.json` 리브랜딩·리빌드) → §4-9(설계 문서 3트랙).
+
+### 한 일 (§4-7) — 사용자 결정 3개 반영
+- 결정: **IA=하단 탭 확장**(홈·연습·통계·설정) · **테마=mnn 디자인 유지**(§2-6) · **결과 화면=기존 인라인 `SummaryCard` 유지**(HH result 라우트 신설 안 함).
+- HH 원본 실측 결과 **그대로 이식 불가**: HH 통계/결과는 `TrainingStorage.thresholdCents`(역치) 기반 → mnn `sessionStore`엔 역치 없음. 「최고 역치·최소 차이·평가」는 §2-1(순화)과 정면 충돌 → **재작성**.
+- `app-tabs.tsx`: 통계·설정 트리거 추가. 전용 PNG 없어 `sf`(iOS)/`md`(Android Material) 시스템 심볼 사용.
+- `SessionHistoryScreen.tsx`: 「연습 기록」→「연습 통계」 승격(§2-3 발동: 3종 완성). 상단 `AggregateCard`(연습 횟수·푼 문항·평균 정답률·트랙별 횟수 + 「참고용·점수/진단 아님」) + `computeAggregate` 신설.
+- `src/app/stats.tsx`·`src/app/settings.tsx` 신설. 설정=앱 정보/버전(`expo-constants`)·의료기기 아님 고지·연습 기록 전체 삭제(Alert→`clearSavedSessions`).
+- `explore.tsx`: 기록 카드·`history` 트랙 제거(훈련 3카드만). `index.tsx`: 홈 카피 3트랙+통계 탭 반영.
+- 결과: `npx tsc` 0 · 린트 0 · `npm test` **114 통과**. **리빌드 불필요**(순수 TSX·`expo-symbols` 이미 설치).
+
+### 안 한 일 / 다음
+- **실기기 미확인**: 통계/설정 탭 표시, 탭 아이콘(sf/md) 렌더, 데이터 삭제 흐름, §4-5 저장 흐름.
+- **의도적 미이식**: HH 설정의 기준음 프리셋·진동 토글·온보딩 replay — mnn에 설정 저장소·훈련 배선이 없어 가짜 컨트롤 방지로 뺌. 필요 시 별도 저장소+훈련 배선 선행. §2-5=mnn `ListeningCheckScreen` 유지.
+- §4-8: `app.json` 이름·slug·패키지·아이콘 → HarmoniTune. **이때 dev client 리빌드 필요** + 온보딩 중복 최종 정리.
+- §4-9: 설계 문서 §3·§6 3트랙 반영, HH 시작값 50/200 불일치 정정.
+
+### 단정 금지
+- `추정`: 심볼명 `chart.bar`/`gearshape`/`bar_chart`/`settings`가 기기에서 의도대로 그려질지 — 타입 통과, 실측 안 함.
+- `추정`: HH result 라우트를 안 만든 것이 최종이라는 보장 없음(3종 UI 통합 재검토 가능).
+- `주의`: 홈/explore는 PNG 탭 아이콘, 통계/설정은 시스템 심볼 → 안드로이드에서 아이콘 톤이 섞여 보일 수 있음(실측 필요).
+
+### 인계 규칙
+- **추가+시각** · 새 창: `@docs/handoff.md` + 「인계 이어서」.
+
+---
+
+## 인계 — 2026-08-11 17:03
+
+새 채팅 AI용. 최신: `docs/handoff.md` 상단.
+
+### 지금 상태 (병합 §4-5 완료)
+- 브랜치 `merge/harmonitune`. 제품=HarmoniTune · 코드 호스트=mnn_1.
+- 정본: `docs/merge-plan-harmonitune.md`(§4 순서), `docs/merge-host-decision.md`(§4.1 저장). 규칙: `.cursor/rules/android-dev-client.mdc`.
+- §4-1~§4-4(로직 이식·`cents.ts` 통합·화면 라우팅) → **§4-5(저장 스키마 확장) 완료**.
+
+### 한 일 (§4-5)
+- 요약 타입 단일 출처 승격 → `src/training/pitch2afc/pitchSummary.ts` 신설(`PitchCompareSummary`). 화면=생산, 저장소=소비.
+- `sessionStore.ts` — `SessionTrack`에 `'pitch2'` 추가 · `SavedPitch2SessionRecord` · `isValidRecord` pitch2 분기(cent 3필드 `number|null` 검증) · `appendPitch2SessionSummary`. **v2 키 신설 없음**(기존 `training.sessionHistory.v1` 유지, §2-2 정본).
+- `PitchCompareScreen.tsx` — 로컬 `PitchSummary`/`EndReason` 제거→공용 타입, 세션 종료 시 `savedRef`로 1건 저장(중복 방지)·요약에 저장 결과 문구(freq/am 동일).
+- `SessionHistoryScreen.tsx` — 유니온 확장으로 깨진 좁히기를 `trackView()` 헬퍼로 분리(freq/am/pitch2 3분기, 인지 복잡도↓).
+- 테스트 — `sessionStore.test.ts`에 pitch2 5건(3트랙 동시·저장/조회·null 허용·손상 폐기 2).
+- 결과: `npx tsc` 0 · 린트 0 · `npm test` **114 통과**(109+5). **리빌드 불필요**(순수 TS/JS).
+
+### 안 한 일 / 다음
+- **실기기 미확인**: 세션 종료→저장→`SessionHistoryScreen` 표시 흐름(제목 「높낮이 비교」·음높이 차이 표시).
+- §4-6: 연습 탭 = 카드 3개 재구성(음고 2 / 떨림 1). 기록 화면 상위 이동은 3종 완성 후(§2-3).
+- §2 나머지: 온보딩 중복(§2-5)·테마 택1(§2-6) — 홈/통계/설정 상위 이식(§4-7) 때.
+
+### 단정 금지
+- `미검증`: 실기기 저장 흐름·A→B 청취·세션 길이/피로.
+- `추정`: `pitchSummary.ts`가 최종 위치라는 보장 없음(3종 UI 통합 시 재검토 가능).
+- `주의`: `sessionStore` `newId`의 `Math.random` sonar 경고는 **기존 코드**·미변경. `PitchCompareEndReason`은 null 없지만 저장소 검증·`endReasonLabel`은 null 허용(상위호환).
+
+### 인계 규칙
+- **추가+시각** · 새 창: `@docs/handoff.md` + 「인계 이어서」.
+
+---
+
+## 인계 — 2026-08-11 16:51
+
+새 채팅 AI용. 최신: `docs/handoff.md` 상단.
+
+### 지금 상태 (병합 §4-4 완료)
+- 브랜치 `merge/harmonitune`. 제품=HarmoniTune · 코드 호스트=mnn_1.
+- 정본: `docs/merge-plan-harmonitune.md`, `docs/merge-host-decision.md`(§4.1 저장). 규칙: `.cursor/rules/android-dev-client.mdc`.
+- §4-2·§4-3(로직 3종 이식 + `cents.ts` 통합) → **§4-4(화면 라우팅) 완료**.
+
+### 한 일 (§4-4)
+- §2-1 결정 = **(a) 훈련 모드 + 웰니스 프레이밍**(사용자 선택). 역치·「평가」 문구 안 씀.
+- `pitch2afc/pitchCompareTrial.ts` 신설 — A(기준)→B(목표) 두 톤 재생(`pureTone` 재사용, 중단 폴링). 게인 0.15(청취 확인과 동일, 트랙 `AUDIO.PEAK_GAIN_WAVE` 0.4 미사용).
+- `pitch2afc/PitchCompareScreen.tsx` 신설 — `SessionManager` 훈련 모드, 2택(「더 낮아요/더 높아요」), phase idle→playing→choose→feedback→summary. 요약은 `SummaryCard`(음높이 차이·가장 쉬움/어려움, 점수·역치 아님). 전환 4 / 시행 40(pitch2afc `ASSESSMENT` 8/30은 평가용이라 미사용).
+- `src/app/explore.tsx` — 「높낮이 비교」 카드(맨 위) + 청취 확인 게이트(음고 트랙 기준음 440Hz) 배선.
+- 결과: `npx tsc --noEmit` 0 · 린트 0 · `npm test` 109 통과(로직 변경 없음). **리빌드 불필요**(순수 JS/TSX·핫리로드).
+
+### 안 한 일 / 다음
+- **실기기 청취 미확인**(A→B·2택 체감).
+- §4-5: 저장 — `SessionTrack`에 `pitch2` 값 추가 + 테스트(`PitchCompareScreen`은 지금 기록 안 함).
+- §2 나머지: 온보딩 중복·테마 택1 — 홈/통계 상위 이식 때.
+
+### 단정 금지
+- `미검증`: 실기기 A→B 청취·세션 길이/피로.
+- `추정`: 톤 1.0s·간격 0.5s(트랙 `AUDIO` 값)·게인 0.15 적정성 실측 안 함. pitch2afc 화면이 trainingFlow의 '다시 듣기' 로직은 아직 안 씀(FreqSessionScreen과 동일하게 자동 재생만).
+
+### 인계 규칙
+- **추가+시각** · 새 창: `@docs/handoff.md` + 「인계 이어서」.
+
+---
+
+## 인계 — 2026-08-11 16:31
+
+새 채팅 AI용. 최신: `docs/handoff.md` 상단.
+
+### 지금 상태 (병합 진행 중)
+- 브랜치 `merge/harmonitune`에서 작업. 제품=HarmoniTune · 코드 호스트=mnn_1.
+- 정본 문서: `docs/merge-plan-harmonitune.md`(계획 §), `docs/merge-host-decision.md`(§4.1 저장 방침). 규칙: `.cursor/rules/android-dev-client.mdc`.
+
+### 한 일 (§4-2·§4-3 완료)
+- HH 음고 2AFC 로직 3종 이식 → `src/training/pitch2afc/{StaircaseEngine,SessionManager,trainingFlow}.ts` + `__tests__/*.test.ts`.
+- 상수는 mnn UI 테마와 분리(§2-4) → `src/training/pitch2afc/constants.ts` 신설(`STAIRCASE/AUDIO/ASSESSMENT`만 HH `theme.ts`에서 이식).
+- pitchUtils 흡수(§4-3) → `src/audio/cents.ts`에 `centsToFreq`(기존 `hzFromCents` 별칭·수식 동일) + `clampFreq` 추가. 오디오→트레이닝 역참조 피하려 `clampFreq` 한도는 인자로, 호출부(StaircaseEngine)가 `AUDIO` 한도 전달.
+- 결과: `npm test` 전체 **109 통과**(pitch2afc 86 + 기존 sessionStore 23), 린트 0. 리빌드 불필요(순수 TS).
+
+### 안 한 일 / 다음
+- §4-4: 「높낮이 비교」 세션 화면을 mnn 라우팅에 붙이고 **실기기 청취 확인**.
+- HH `@harmonitune/sessions` → mnn `sessionStore` 마이그레이션 코드 없음(로직만 이식). 저장은 v2 키 신설 없이 기존 `sessionStore`의 `track` 값 확장(§2-2).
+- §2 미결정: 역치·「평가」 카피(권고 a), 온보딩 중복, 테마 택1 — UI 이식 전에 정해야 카피 안 섞임(§2-1은 실제 충돌).
+
+### 단정 금지
+- `미검증`: 3트랙 합쳤을 때 세션 길이·이탈·피로, 실기기 청취.
+- `추정`: `pitch2afc/constants.ts` 분리가 최종 위치라는 보장 없음(3종 완성 후 재검토 가능).
+
+### 인계 규칙
+- **추가+시각** · 새 창: `@docs/handoff.md` + 「인계 이어서」.
+
+---
+
 ## 인계 — 2026-08-06 17:01
 
 새 채팅 AI용. 최신: `docs/handoff.md` 상단.

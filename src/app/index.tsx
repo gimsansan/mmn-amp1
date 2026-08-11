@@ -30,7 +30,7 @@ export default function HomeScreen() {
             웰니스·훈련 · 병원 검사·진단을 대신하지 않아요
           </ThemedText>
           <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
-            아래 연습 탭에서 「다른 음 찾기」또는 「떨림 찾기」를 시작하세요
+            연습 탭에서 「높낮이 비교 · 다른 음 찾기 · 떨림 찾기」를 시작하고, 통계 탭에서 기록을 확인하세요
           </ThemedText>
         </View>
       </SafeAreaView>

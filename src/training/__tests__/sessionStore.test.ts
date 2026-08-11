@@ -38,11 +38,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { AmSessionSummary } from '@/training/amSession';
 import type { FreqSessionSummary } from '@/training/freqSession';
+import type { PitchCompareSummary } from '@/training/pitch2afc/pitchSummary';
 import {
   MAX_SAVED_SESSIONS,
   SESSION_RECORD_VERSION,
   appendAmSessionSummary,
   appendFreqSessionSummary,
+  appendPitch2SessionSummary,
   clearSavedSessions,
   listSavedSessions,
 } from '@/training/sessionStore';
@@ -74,6 +76,18 @@ function amSummary(trialCount: number): AmSessionSummary {
     meanReversalDepthDb: -17.5,
     easiestDepthDb: 0,
     hardestDepthDb: -22,
+    correctCount: trialCount,
+  };
+}
+
+function pitch2Summary(trialCount: number): PitchCompareSummary {
+  return {
+    trialCount,
+    reversalCount: 4,
+    endReason: 'reversals',
+    meanReversalCents: 45,
+    easiestCents: 150,
+    hardestCents: 20,
     correctCount: trialCount,
   };
 }
@@ -112,6 +126,50 @@ describe('sessionStore — 저장 직렬화', () => {
 
     expect(rows[0].id).toBe(record.id);
     expect(rows[0].track).toBe('freq');
+  });
+
+  it('세 트랙(freq·am·pitch2)을 동시에 저장해도 모두 남는다', async () => {
+    const [freq, am, pitch2] = await Promise.all([
+      appendFreqSessionSummary(freqSummary(15)),
+      appendAmSessionSummary(amSummary(18)),
+      appendPitch2SessionSummary(pitch2Summary(21)),
+    ]);
+
+    const rows = await listSavedSessions();
+
+    expect(rows).toHaveLength(3);
+    expect(rows.map((r) => r.id).sort()).toEqual(
+      [freq.id, am.id, pitch2.id].sort()
+    );
+  });
+});
+
+describe('sessionStore — pitch2 트랙', () => {
+  it('pitch2 요약을 저장하고 track/schemaVersion과 함께 읽는다', async () => {
+    const record = await appendPitch2SessionSummary(pitch2Summary(12));
+    const rows = await listSavedSessions();
+
+    expect(rows[0].id).toBe(record.id);
+    expect(rows[0].track).toBe('pitch2');
+    expect(rows[0].schemaVersion).toBe(SESSION_RECORD_VERSION);
+    expect(rows[0].summary.trialCount).toBe(12);
+  });
+
+  it('요약 수치가 null이어도 정상으로 본다(값 없음이 정상)', async () => {
+    await appendPitch2SessionSummary({
+      trialCount: 0,
+      reversalCount: 0,
+      correctCount: 0,
+      endReason: 'manual',
+      meanReversalCents: null,
+      easiestCents: null,
+      hardestCents: null,
+    });
+
+    const rows = await listSavedSessions();
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].track).toBe('pitch2');
   });
 });
 
@@ -202,6 +260,18 @@ describe('sessionStore — 손상 레코드 방어 (P0-3)', () => {
     [
       'freq 레코드에 am 필드만 있음',
       { ...goodRecord('x'), summary: amSummary(3) },
+    ],
+    [
+      'pitch2 레코드에 freq 필드만 있음',
+      { ...goodRecord('x'), track: 'pitch2', summary: freqSummary(3) },
+    ],
+    [
+      'pitch2 요약의 cent가 문자열',
+      {
+        ...goodRecord('x'),
+        track: 'pitch2',
+        summary: { ...pitch2Summary(3), meanReversalCents: '낮음' },
+      },
     ],
   ])('버린다: %s', async (_label, broken) => {
     seed(broken, goodRecord('survivor'));

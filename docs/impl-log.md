@@ -45,6 +45,146 @@
 
 ## 로그
 
+### 2026-08-11 — 인계문 작성·저장 (17:23)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | §4-7 완료 후 작업 중단·새 창 전환용 인계문. `docs/handoff.md` 상단에 `## 인계 — 2026-08-11 17:23` 블록 추가(덮어쓰기 금지). |
+| 변경 요약 | §4-7(홈/통계/설정 이식·114 tests) 상태와 다음(실기기 확인·§4-8 리브랜딩 리빌드·§4-9 문서)을 인계문에 정리. |
+| 주요 경로 | `docs/handoff.md` |
+| 결과 | 성공(문서) |
+| 확인 | 상단 블록 시각 표기 확인 |
+| 단정 금지 | 없음 |
+| 성능·주의 | 없음 |
+| 다음 | 새 창에서 「인계 이어서」 |
+
+### 2026-08-11 — 홈/통계/설정 이식 (병합 §4-7)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라(UI·IA) |
+| 근거·결정 | §4-7 = HH 홈·통계·설정·결과 이식 + §2-1 카피 적용. **HH 원본 실측**(`d:\harmonic_hear\app\{index,stats,settings,result}.tsx`) 결과, 그대로 이식 불가: (1) HH 통계/결과는 `TrainingStorage.thresholdCents`(역치) 대표 지표 기반인데 mnn은 `sessionStore`(pitch2/freq/am 요약, 역치 없음), (2) 「최고 역치」·「들을 수 있는 최소 차이」·「평가」 배지는 §2-1(역치·평가 금지, 순화)과 정면 충돌, (3) HH는 `COLORS`+Feather, mnn은 `ThemedText/Card/useTheme`, (4) mnn엔 설정 저장소·기준음 프리셋·진동 설정·온보딩 플래그가 **아예 없음**(그 항목은 새 저장소+훈련 로직 배선 필요→범위 밖). **사용자 결정**: IA=하단 탭 확장(홈·연습·통계·설정) · 테마=mnn 디자인 유지(§2-6) · 결과 화면=기존 인라인 `SummaryCard` 유지(HH result 라우트 신설 안 함). §2-3(3종 완성 후 기록 상위 이동) 발동 → 연습 기록을 통계 탭으로 승격, explore에서 기록 카드 제거. §2-5(온보딩 중복)=mnn `ListeningCheckScreen` 유지, HH `onboarding` 미이식. |
+| 변경 요약 | `app-tabs.tsx`: 통계·설정 트리거 추가(전용 PNG 자산 없어 `sf`/`md` 시스템 심볼 사용). `SessionHistoryScreen.tsx`: 제목 「연습 기록」→「연습 통계」, 상단에 누적 요약 카드(`AggregateCard`: 연습 횟수·푼 문항·평균 정답률 + 트랙별 횟수, 「정답률 참고용·점수/진단 아님」 주석) 추가, `computeAggregate` 신설. `src/app/stats.tsx`·`src/app/settings.tsx` 신설(설정=앱 정보/버전(expo-constants)·의료기기 아님 고지·연습 기록 전체 삭제(Alert 확인→`clearSavedSessions`)). `explore.tsx`: 기록 카드·`history` 트랙·`SessionHistoryScreen` import 제거(훈련 3카드만). `index.tsx`: 홈 카피 3트랙+통계 탭 반영. |
+| 주요 경로 | `src/components/app-tabs.tsx` · `src/app/stats.tsx` · `src/app/settings.tsx` · `src/app/explore.tsx` · `src/app/index.tsx` · `src/training/SessionHistoryScreen.tsx` |
+| 결과 | 성공. `npx tsc --noEmit` 0 · 린트 0 · `npm test` **114 통과**. |
+| 확인 | tsc·lint·test 통과(로직 무변경). 실기기 미확인. |
+| 단정 금지 | `미검증`: 실기기에서 통계/설정 탭 표시·탭 아이콘(sf/md) 렌더·데이터 삭제 흐름. `추정`: `sf="chart.bar"/"gearshape"`·`md="bar_chart"/"settings"` 심볼명이 기기에서 의도대로 그려질지 미확인(타입은 통과). `추정`: HH result 라우트를 안 만든 것이 최종이라는 보장 없음(3종 UI 통합 재검토 가능). `주의`: HH의 기준음 프리셋·진동 토글·온보딩 replay는 mnn에 백엔드가 없어 **의도적으로 이식하지 않음**(가짜 컨트롤 방지). 필요해지면 별도 설정 저장소+훈련 배선이 선행돼야 함. |
+| 성능·주의 | 없음(정적 UI). **리빌드 불필요** — `sf`/`md`는 이미 설치된 `expo-symbols`·expo-router 네이티브 탭이 처리(신규 네이티브 의존성·자산 없음). `추정`: 현재 dev client가 `expo-symbols` 포함 상태라는 전제(package.json에 이미 있음). |
+| 다음 | 실기기 확인 · §4-8(`app.json` 이름·slug·패키지·아이콘 HarmoniTune화 — 이때 **리빌드 필요**) · §4-9(설계 문서 3트랙 반영). |
+
+### 2026-08-11 — 연습 탭 섹션 재구성 (병합 §4-6)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라(UI) |
+| 근거·결정 | 병합 계획 §4-6·§0 표: 훈련 3종을 「연습」 한 탭 안에 **계열별 섹션**으로 묶는다(토글 아님). 음고 2(높낮이 비교·다른 음 찾기) / 떨림 1(떨림 찾기, 포락). 기록은 훈련 트랙이 아니므로 섹션 밖 별도 항목 유지(§2-3: 상위 이동은 3종 완성 후). |
+| 변경 요약 | `explore.tsx`의 평면 `TRACKS` 배열(4카드)을 `TRAINING_SECTIONS`(라벨+옵션)와 `HISTORY_OPTION`으로 분리. 카드 렌더를 `renderCard` 헬퍼로 추출(중복 제거). 섹션 라벨(`음고`/`떨림`) + 카드 목록 + 하단 기록 카드 순으로 렌더. 스타일 `sections`/`section`/`sectionLabel` 추가. |
+| 주요 경로 | `src/app/explore.tsx` |
+| 결과 | 성공. `npx tsc --noEmit` 0 · 린트 0. |
+| 확인 | tsc·lint 통과. 로직 변경 없어 테스트 영향 없음(114 통과 유지 추정). |
+| 단정 금지 | `미검증`: 실기기에서 섹션 레이아웃·터치 타깃 체감. `추정`: 기록 카드를 섹션 밖 별도로 둔 배치가 최종이라는 보장 없음(§4-7 홈/통계 상위 이식 때 재검토 가능). |
+| 성능·주의 | 없음(순수 정적 UI, 추가 렌더 부담 없음). 리빌드 불필요. |
+| 다음 | 실기기 확인 · §4-7(홈·통계·설정·결과 이식, 지표 카피 §2-1 적용). |
+
+### 2026-08-11 — 인계문 작성·저장 (17:03)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | §4-5 완료 후 새 창 전환용 인계문. `docs/handoff.md` 상단에 `## 인계 — 2026-08-11 17:03` 블록 추가(덮어쓰기 금지). |
+| 변경 요약 | §4-5(저장 스키마 `pitch2` 확장·114 tests) 상태와 다음(실기기 저장 흐름·§4-6 카드 재구성)을 인계문에 정리. |
+| 주요 경로 | `docs/handoff.md` |
+| 결과 | 성공(문서) |
+| 확인 | 상단 블록 시각 표기 확인 |
+| 단정 금지 | 없음 |
+| 성능·주의 | 없음 |
+| 다음 | 새 창에서 「인계 이어서」 |
+
+### 2026-08-11 — 「높낮이 비교」 세션 저장 (병합 §4-5)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | ② 음고(pitch 2AFC) / 공통·인프라 |
+| 근거·결정 | §2-2 정본(`merge-host-decision.md` §4.1): **새 v2 키 신설 안 함**. 기존 `sessionStore`(`training.sessionHistory.v1`)의 `SessionTrack`에 값 하나(`'pitch2'`)만 추가하고, freq/am과 같은 `append*`·형태 검증 패턴을 그대로 따름. 요약 스키마의 단일 출처를 `PitchCompareScreen`의 로컬 타입에서 `src/training/pitch2afc/pitchSummary.ts`(`PitchCompareSummary`)로 승격 — 화면(생산)과 저장소(소비)가 같은 타입을 참조. cent 값은 진단 역치·점수가 아니라 난이도 참고값(웰니스 방침 유지). |
+| 변경 요약 | `pitchSummary.ts` 신설(타입만). `sessionStore.ts`: `SessionTrack`에 `'pitch2'`, `SavedPitch2SessionRecord`, `isValidRecord`의 `pitch2` 분기(cent 3필드 `number\|null` 검증), `appendPitch2SessionSummary` 추가. `PitchCompareScreen.tsx`: 로컬 `PitchSummary`/`EndReason` 제거→공용 타입 사용, 세션 종료 시 `savedRef`로 1건 저장(중복 방지)·요약 화면에 저장 결과 문구 표시(freq/am 화면과 동일). `SessionHistoryScreen.tsx`: 유니온 확장으로 깨진 좁히기를 `trackView()` 헬퍼로 분리(freq/am/pitch2 3분기, 인지 복잡도도 낮춤). |
+| 주요 경로 | `src/training/pitch2afc/pitchSummary.ts` · `src/training/sessionStore.ts` · `src/training/pitch2afc/PitchCompareScreen.tsx` · `src/training/SessionHistoryScreen.tsx` · `src/training/__tests__/sessionStore.test.ts` |
+| 결과 | 성공(코드). `npx tsc --noEmit` 0, 린트 0(사전 존재 경고 `newId`의 `Math.random` 1건은 무관·미변경), `npm test` 4스위트·**114 tests** 통과(기존 109 + pitch2 5). |
+| 확인 | 타입체크·린트·jest. 신규 테스트: 3트랙 동시 저장·pitch2 저장/조회·null 수치 허용·손상 레코드(pitch2에 freq 필드/문자열 cent) 폐기. **실기기 저장 후 기록 목록 표시는 미확인**. |
+| 단정 금지 | `미검증` 실기기에서 세션 종료→저장→`SessionHistoryScreen` 표시 흐름. `추정` `pitchSummary.ts`가 최종 위치라는 보장 없음(3종 UI 통합 시 재검토 가능). `주의` `PitchCompareEndReason`은 null을 안 갖지만 저장소 검증(`isEndReasonOrNull`)·`endReasonLabel`은 null 허용이라 상위호환. |
+| 성능·주의 | 없음(순수 TS·저장 1건 append, Skia/Rive/Reanimated 미사용). 네이티브·의존성·리소스 변경 없음 → **dev client 리빌드 불필요**(JS만). |
+| 다음 | 실기기 청취+저장 흐름 확인. §4-6 연습 탭 카드 3개 재구성. 기록 화면 상위 이동은 3종 완성 후(§2-3). |
+
+### 2026-08-11 — 인계문 작성·저장 (16:51)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | §4-4 완료 후 새 창 전환용 인계문. `docs/handoff.md` 상단에 `## 인계 — 2026-08-11 16:51` 블록 추가(덮어쓰기 금지). |
+| 변경 요약 | 병합 §4-4(「높낮이 비교」 화면 라우팅·§2-1=(a) 훈련/웰니스) 상태와 다음(실기기 청취·§4-5 저장)을 인계문에 정리. |
+| 주요 경로 | `docs/handoff.md` |
+| 결과 | 성공(문서) |
+| 확인 | 상단 블록 시각 표기 확인 |
+| 단정 금지 | 없음 |
+| 성능·주의 | 없음 |
+| 다음 | 새 창에서 「인계 이어서」 |
+
+### 2026-08-11 — 「높낮이 비교」 세션 화면 라우팅 (병합 §4-4)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | ② 음고(pitch 2AFC) / 공통·인프라 |
+| 근거·결정 | §2-1(역치·평가 카피) 결정 = **(a) 훈련 모드 + 웰니스 프레이밍**(사용자 선택). `SessionManager`의 `thresholdCents`를 대표 지표로 노출하지 않고, 기존 `FreqSessionScreen`처럼 `SummaryCard`에 「음높이 차이(최근 반전 cent 평균)·가장 쉬움/어려움」만 표시(점수·역치·진단 문구 없음). 세션 길이는 freq 파일럿과 동일 전환 4 / 시행 40(pitch2afc `ASSESSMENT` 8/30은 평가용이라 미사용). 재생 게인은 트랙 상수 `AUDIO.PEAK_GAIN_WAVE`(0.4) 대신 청취 확인과 같은 `0.15`로 맞춰 듣기 준비에서 맞춘 볼륨과 어긋나지 않게 함. 저장(영속)은 §4-5로 미룸 — 이 화면은 기록하지 않음. |
+| 변경 요약 | A→B 두 톤 재생 헬퍼 `pitchCompareTrial.ts` 신설(`playPitchPair`, `pureTone` 재사용·중단 폴링). 세션 화면 `PitchCompareScreen.tsx` 신설(훈련 모드 2택: 「더 낮아요/더 높아요」, phase idle→playing→choose→feedback→summary). `explore.tsx`에 `pitch2` 트랙 카드(맨 위, 「높낮이 비교」) + 청취 확인 게이트(음고 트랙은 기준음 440Hz) 배선. |
+| 주요 경로 | `src/training/pitch2afc/pitchCompareTrial.ts` · `src/training/pitch2afc/PitchCompareScreen.tsx` · `src/app/explore.tsx` |
+| 결과 | 성공(코드). `npx tsc --noEmit` 0, 린트 0, `npm test` 4스위트·109 tests 통과(로직 변경 없음). |
+| 확인 | 타입체크·린트·jest. **실기기 청취는 미확인**(아래 단정 금지). |
+| 단정 금지 | `미검증` 실기기 A→B 청취·2택 판정 체감·세션 길이/피로. `추정` 게인 0.15가 1.0초 톤에서 적정한지 실측 안 함. `추정` 톤 길이 1.0s·간격 0.5s(트랙 `AUDIO` 값) 유지 — 파일럿 확정 아님. |
+| 성능·주의 | 없음(정적 UI·순음 2회 재생, Skia/Rive/Reanimated 미사용). 네이티브·의존성·리소스 변경 없음 → **dev client 리빌드 불필요**(JS만, 핫리로드). |
+| 다음 | 실기기 청취 확인 → §4-5 저장(`SessionTrack`에 `pitch2` 값 추가 + 테스트). §2 나머지(온보딩 중복·테마 택1)는 상위 이식 때. |
+
+### 2026-08-11 — 인계문 작성·저장 (16:31)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | 새 창 전환용 인계문. `docs/handoff.md` 상단에 `## 인계 — 2026-08-11 16:31` 블록 추가(추가·덮어쓰기 금지). |
+| 변경 요약 | 병합 §4-2·§4-3(pitch2afc 로직 이식·109 tests) 상태와 다음 작업(§4-4 화면 라우팅·실기기, §2 미결정)을 인계문에 정리. |
+| 주요 경로 | `docs/handoff.md` |
+| 결과 | 성공(문서) |
+| 확인 | 상단 블록 시각 표기 확인 |
+| 단정 금지 | 없음 |
+| 성능·주의 | 없음 |
+| 다음 | 새 창에서 「인계 이어서」 |
+
+### 2026-08-11 — HH 음고 2AFC 로직 3종 이식 (병합 §4-2·§4-3 착수)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | ② 주파수(음고 2AFC) / 공통·인프라 |
+| 근거·결정 | `merge/harmonitune` 브랜치에서 HH 로직만 먼저 이식(UI 미착수). 목적지 `src/training/pitch2afc/`(소스) + `pitch2afc/__tests__/`(테스트). 상수는 mnn UI 테마와 섞지 않고 트랙별 분리(§2-4)하려 `pitch2afc/constants.ts` 신설(`STAIRCASE/AUDIO/ASSESSMENT`만 HH `theme.ts`에서 이식). pitchUtils는 §4-3대로 mnn `cents.ts`에 흡수 — `centsToFreq`가 기존 `hzFromCents`와 수식 동일(`base*2^(cents/1200)`)이라 별칭, `clampFreq` 추가. 오디오→트레이닝 역참조 피하려 `clampFreq` 한도는 인자로 받고 호출부(StaircaseEngine)가 `AUDIO` 한도를 넘김. |
+| 변경 요약 | HH `StaircaseEngine/SessionManager/trainingFlow` + 테스트 3개를 `pitch2afc/`로 배치·경로 교정. `cents.ts`에 `centsToFreq`·`clampFreq` 추가. `pitch2afc/constants.ts` 신설. import를 `./constants`·`../../audio/cents`로 연결. |
+| 주요 경로 | `src/training/pitch2afc/{StaircaseEngine,SessionManager,trainingFlow,constants}.ts` · `src/training/pitch2afc/__tests__/*.test.ts` · `src/audio/cents.ts` |
+| 결과 | 성공. `npm test` 전체 4스위트·109 tests 통과(pitch2afc 86 + 기존 sessionStore 23). |
+| 확인 | `npm test`(jest, jest-expo Android preset). 린트 오류 없음. |
+| 단정 금지 | `미검증` 실기기 청취·세션 길이/피로. `미검증` HH `@harmonitune/sessions` → mnn 키 마이그레이션 코드는 아직 없음(로직만 이식). `추정` `constants.ts` 분리가 최종 위치라는 보장은 없음(3종 완성 후 재검토 가능). |
+| 성능·주의 | 없음(순수 로직·테스트만, UI/렌더 무관). |
+| 다음 | §4-3 나머지(`pitchUtils`의 미사용 함수 정리 여부) · §4-4 높낮이 세션 화면 라우팅 + 실기기 청취 |
+
+### 2026-08-11 — 병합 계획 문서에 저장·기록 방침 반영 + README 등록
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | 저장·기록 합의(v2 키 없이 기존 `sessionStore`의 `track` 값 확장 · 기록 상위 이동은 3종 시점)가 `merge-host-decision.md` §4.1에만 있고 `merge-plan-harmonitune.md`에는 옛 「새 v2 키」 서술이 남아 있던 불일치를 정정. |
+| 변경 요약 | `merge-plan-harmonitune.md` §2에 저장(v2 키 폐기)·기록 위치 항목 반영(뒤 번호 3→4·4→5·5→6), §3 storage 흡수 문구·§4 순서 5번·§7 단정 금지 v2 항목을 새 방침으로 교체. `README.md` 지도(§2 표·§6 목록)에 `merge-plan-harmonitune.md` 등록(이전 미등록). |
+| 주요 경로 | `docs/merge-plan-harmonitune.md` · `docs/README.md` |
+| 결과 | 성공(문서만) |
+| 확인 | 두 병합 문서의 저장 방침이 일치(정본 host-decision §4.1, plan은 링크) |
+| 단정 금지 | `미검증` 실제 병합·HH 세션 마이그레이션 코드 없음. `추정` 트랙 값 이름 예시. |
+| 성능·주의 | 없음 |
+| 다음 | 병합 착수 시 plan §4 순서대로 |
+
 ### 2026-08-11 — HarmoniTune×mnn 호스트 결정 문서 + 저장·기록 방침
 
 | 항목 | 내용 |
