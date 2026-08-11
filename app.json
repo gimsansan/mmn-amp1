@@ -1,18 +1,18 @@
 {
   "expo": {
     "name": "청능 애플리케이션",
-    "slug": "rn-hear-1",
+    "slug": "harmonitune",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "rnhear",
+    "scheme": "harmonitune",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.rnhear.app"
+      "bundleIdentifier": "com.harmonitune.app"
     },
     "android": {
-      "package": "com.rnhear.app",
+      "package": "com.harmonitune.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

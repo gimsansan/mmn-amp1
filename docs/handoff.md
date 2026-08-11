@@ -7,6 +7,47 @@
 
 ---
 
+## 인계 — 2026-08-12 02:25
+
+새 채팅 AI용. 최신: `docs/handoff.md` 상단. **다음 작업 = 통계 탭 추이 그래프 구현**(설계 합의 끝, 코드만 남음).
+
+### 지금 상태 (병합 §4 골격 완료)
+- 브랜치 `merge/harmonitune`. 제품=HarmoniTune · 코드 호스트=mnn_1. 정본: `docs/merge-plan-harmonitune.md`(§4), `docs/merge-host-decision.md`, 설계 `docs/amp-mdt-training-design.md`. 규칙 `.cursor/rules/android-dev-client.mdc`.
+- §4-1~§4-9 **모두 완료**. 이번 세션: §4-8(리브랜딩)·§4-9(설계 문서 3트랙·시작값 정정).
+- **미커밋 4파일**: `app.json`·`package.json`·`docs/amp-mdt-training-design.md`·`docs/impl-log.md` (`git status` 확인). 커밋 안 함.
+
+### 한 일 (이번 세션)
+- 브랜치 정리: 옛 `three_feat` 삭제, `three_feat`의 미커밋(theme accent색·`SessionHistoryScreen` 색점/진행바) **폐기(1번)**, `origin/merge/harmonitune` 이어받음.
+- §4-8: `app.json` `slug`/`scheme`→`harmonitune`, `package`/`bundleId`→`com.harmonitune.app`, **표시이름 `청능 애플리케이션` 한글 유지**(사용자 결정). `package.json` name→`harmonitune`. 온보딩 중복 없음(제거할 것 없음). 코드 문자열 3곳(`index`·`app-tabs.web`·`settings`)은 **미변경**. `tsc` 0·`npm test` 114.
+- §4-9: 설계 문서 §3.1(3트랙 카드 매핑)·§6.1(높낮이 비교 pitch2 계단식·시작 200)·§8 추가. 시작값 **50→200 코드값 채택**.
+- 실기기: WiFi ADB(`172.30.1.82:5555`)로 새 앱 `com.harmonitune.app` **빌드·설치·실행 확인**. 옛 `com.rnhear.app`와 **2개 공존**(폰에 둘 다). Metro 1개 방침.
+
+### 다음 작업 = 통계 탭 추이 그래프 (설계 확정, 구현만)
+현재 통계 탭(`src/training/SessionHistoryScreen.tsx`)은 **텍스트 요약 `AggregateCard`만**(그래프 없음). 여기에 추이 그래프 2종 추가:
+- **그래프 A — 「들을 수 있는 최소 차이 추이」(cent)**: 높낮이 비교(pitch2) + 다른 음 찾기(freq). **둘 다 cent라 같은 축 가능하나, 과제 2택 vs 3택이라 직접 비교 아님 → 겹치지 말고 트랙 선택(필터/탭)으로 하나씩 표시**(사용자 결정).
+- **그래프 B — 「떨림 추이」(dB, 라벨 dB 유지)**: 떨림 찾기(am) 별도.
+- **데이터 이미 저장됨**(`src/training/sessionStore.ts`): freq=`meanReversalDeltaCents/easiest/hardest`, am=`*DepthDb`, pitch2=`meanReversalCents/easiest/hardest`. 그래프 y값=`meanReversal…`(=「들을 수 있는 최소 차이」). `null`(짧은 세션)은 제외 → **대표값 있는 세션 2회 이상일 때만** 그림.
+- **y축 반전(위=잘함)** 채택. cent 작을수록/dB 더 낮을수록(음수) 잘함이므로 위로. 방향 라벨 예: "위로 갈수록 더 작은 차이/더 얕은 떨림까지".
+- **「개선/점수」 라벨 유지**(사용자 결정 — §2-1과 알면서 두는 예외, 나중에 삭제 가능 → **문구·배지를 상수/단일 컴포넌트에 모아** 삭제 쉽게 할 것).
+- **경량**: Skia 금지, RN `View` 기반 경량 라인/막대. (규칙: 훈련 입력 화면 최경량, 연출은 결과 화면 한정)
+
+### 용어 순화 매핑 (통계·요약 UI에 적용)
+- 시행→**문항** · cent→**음 높이 차이** · 변별 역치→**들을 수 있는 최소 차이** · 변별 역치 추이→**들을 수 있는 최소 차이 추이** · `cent · 최근`→**`음 높이 차이 · 최근`** · 방향 전환→**난이도 바뀐 횟수**
+- "세션 2회 이상 쌓이면 변화를 그려 드립니다"→**"들을 수 있는 최소 차이가 나온 세션이 2회 이상이면 변화를 그려 드립니다"**
+- `역치 산출까지 난이도 바뀐 횟수`의 **'역치'는 유지**(UI 공간 좁음 · 사용자 결정).
+
+### 단정 금지
+- `주의`: "개선/점수" 라벨·y축 반전(위=향상)은 §2-1(효과 미검증·성적 프레이밍 지양)과 **알면서 남기는 예외**. 삭제 쉽게 모아둘 것.
+- `주의`: 딥링크가 `exp+rn-hear-1://`로 찍힘 — slug는 `harmonitune`인데 옛 값. `추정`: prebuild/`.expo` 캐시(미확인). 필요 시 `npx expo prebuild --clean` 후 재빌드.
+- `주의`: package 바뀌어 옛 `com.rnhear.app` 로컬 기록(AsyncStorage)은 새 앱에 승계 안 됨.
+- `미검증`: 3카드 묶음 세션 길이·피로, pitch2 상한 300·스텝, 실기기 청취 체감.
+- 그래프는 순수 TSX → **리빌드 불필요**(핫리로드). app.json 추가 변경 시에만 리빌드.
+
+### 인계 규칙
+- **추가+시각** · 새 창: `@docs/handoff.md` + 「인계 이어서」.
+
+---
+
 ## 인계 — 2026-08-11 17:23
 
 새 채팅 AI용. 최신: `docs/handoff.md` 상단.
