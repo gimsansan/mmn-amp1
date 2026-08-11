@@ -45,6 +45,76 @@
 
 ## 로그
 
+### 2026-08-11 — 「Clean Clinical」 시안을 RN 화면으로 옮김(전 화면 재스타일)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라(UI) |
+| 근거·결정 | Claude Design 프로젝트 `6b4737b1…`의 `청능연습-클린클리니컬.dc.html`(폰 목업 10장: 홈 / 연습 선택 / 연습 기록 / 듣기 준비 / ②·① 각 준비·진행·요약)을 **시각·레이아웃 스펙으로만** 참고해 RN 컴포넌트 + `StyleSheet`로 옮김. 시안이 화면마다 같은 카드·버튼·배지·수치 블록을 반복해서 쓰므로, 화면별로 스타일을 복사하지 않고 **공용 프리미티브를 먼저 만들고 6개 화면이 그것을 쓰는** 구조로 감. 시안 문구가 기존 앱 문구 그대로였으므로 **한국어 카피는 한 글자도 바꾸지 않음**. 같이 읽으라고 준 `support.js`는 `.dc.html` 렌더링용 생성 런타임(`dc-runtime`, 편집 금지)이라 **가져올 토큰이 없어 참고만 함**. |
+| 변경 요약 | **토큰**: `theme.ts`에 Clean Clinical 팔레트(시그널 블루 `#1668E3` · 잉크 `#10233A` · 틴트 `#EAF2FE` · 면 `#FFFFFF` / 바탕 `#F6F9FD`)와 `surface`·`border`·`borderSubtle`·`textMuted`·`accent*`·`onAccent` 추가, `Radius`·`Shadows` 신설. `themed-text.tsx`에 `heading`·`screenTitle`·`metric`·`mono`(수치용 모노스페이스) 타입 추가. **공용 UI**(신규): `ui/icon.tsx`(react-native-svg 선 아이콘 8종) · `ui/card.tsx` · `ui/action-button.tsx`(primary/secondary 48px) · `ui/pill.tsx` · `ui/equalizer.tsx`(재생 중 막대 애니메이션). **훈련 공용**: `SummaryCard.tsx` 신규 — 세션 요약(①②)과 기록 목록이 **같은 카드**를 씀(기존엔 두 곳에 따로 있었음). **화면 6개** 재스타일: 홈·연습 선택·듣기 준비·②·①·연습 기록. **①② 세션 화면의 로직·상태 전이·오디오 호출은 건드리지 않음** — 렌더와 스타일만 교체(`progressCaption`에서 요약 분기만 JSX로 옮김). 탭 바는 선택 색만 시그널 블루로. |
+| 주요 경로 | `src/constants/theme.ts` · `src/components/themed-text.tsx` · `src/components/ui/{icon,card,action-button,pill,equalizer}.tsx`(신규) · `src/training/SummaryCard.tsx`(신규) · `src/app/{index,explore}.tsx` · `src/training/{ListeningCheckScreen,FreqSessionScreen,AmSessionScreen,SessionHistoryScreen}.tsx` · `src/components/app-tabs.tsx` |
+| 결과 | 성공 · **실기기 라이트 모드까지 확인됨** |
+| 확인 | `npx tsc --noEmit` 통과 · `npx jest` **23/23 유지** · `npx expo lint` 신규 오류 0(남은 오류 2건은 기존 것: `use-color-scheme.web.ts`, `SessionHistoryScreen`의 `reload` 이펙트) · `npx expo export --platform web` 번들 성공 + 홈·연습 선택이 정적 렌더에서 예외 없이 그려짐 · **실기기(안드로이드 dev client, 리빌드 없이 리로드만) 사용자 육안 확인 — 요약 화면이 스크롤 없이 다 들어옴(최대 우려였음), 수치·카드·배지 이상 없음** |
+| 단정 금지 | 확인은 **육안 대조**이고 시안과 픽셀 단위로 맞춘 것이 아님 — 여백·자간 차이는 남아 있을 수 있음. 확인 기기는 **1대뿐** — 더 작은 화면에서 요약이 넘치는지는 여전히 미확인(`추정`: 이 기기에서 여유가 있었으므로 대부분 통과할 것으로 봄). `추정`: `Shadows`의 안드로이드 `elevation`은 iOS `shadow*`의 blur/offset을 그대로 재현하지 못해 눈대중. `미검증`: `transformOrigin`(Equalizer)은 RN 0.74+ 기능 — 구형 안드로이드에서 확인 안 함. `주의`: 시안의 **설정(톱니) 버튼은 넣지 않음** — 대응 화면이 없어 눌리지 않는 버튼이 되므로. 폰 프레임·상태바·홈 인디케이터·하단 탭 바 그림은 **목업 장식**이라 제외(탭은 `NativeTabs`가 그림). 시안 폰트(Spline Sans / IBM Plex Mono)는 **번들하지 않음** — `Fonts.mono` 등 시스템 폰트로 대체해 자간·굵기가 시안과 다를 수 있음. `주의`: Equalizer는 **실제 파형이 아니라 장식**이며 자극 세기·난이도와 연동하지 않음(수치를 색·게이지에 싣지 않는 기존 방침 유지). |
+| 성능·주의 | 화면당 그림자 있는 View가 늘고, 재생 중에만 막대 4개가 `useNativeDriver` transform 애니메이션을 돎(JS 스레드 부하 없음). 모션 최소화 설정이 켜져 있으면 멈춘 상태로 그림. `추정`: 훈련 입력 화면 경량화 방침에 영향 없다고 봄 — 측정하지 않음. |
+| 다음 | 없음(아래 「다크 모드 안 함」 항목으로 이어짐) |
+
+### 2026-08-11 — 요약 화면에 `ScrollView`(글자 확대 대비)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라(UI) |
+| 근거·결정 | 세로 고정으로 **가로 회전 넘침은 막았지만 글자 크기 확대는 그대로 남아 있었음**(`allowFontScaling`을 끈 곳이 없어 시스템 설정 최대 200%를 그대로 따름). 사용자: **「스크롤뷰도 넣어줘」**. **버튼을 스크롤 안에 넣지 않고 밖에 고정**하는 쪽을 택함 — 안에 넣으면 `contentContainerStyle`에 `flexGrow: 1`을 줘야 시안의 바닥 고정이 유지되고, 무엇보다 **버튼이 화면 밖으로 밀릴 수 있음**. 밖에 두면 「다시 연습」·「연습 목록」이 **항상 보인다**. |
+| 변경 요약 | ①② 세션 화면의 **요약 단계에만** `ScrollView` 추가 — 안에 `✓ 오늘 연습이 끝났어요` + `SummaryCard` + 저장 배지가 들어가고, 화면 제목과 하단 버튼은 밖에 남음. `ScrollView`가 `flex: 1`이라 **버튼이 자연히 바닥에 남으므로** 기존 `actionsBottom`(`marginTop: 'auto'`) 스타일은 **삭제**(두 화면 모두). 진행 중 화면은 **감싸지 않음** — 선택지 3칸이 고정돼야 하므로. |
+| 주요 경로 | `src/training/FreqSessionScreen.tsx` · `src/training/AmSessionScreen.tsx` |
+| 결과 | 성공 · JS만 → **리빌드 불필요**(리로드로 반영) |
+| 확인 | `npx tsc --noEmit` 통과 · `npx jest` **23/23 유지** · `npx expo lint` baseline(오류 1·경고 4) 그대로 · `npx expo export --platform web` 번들 성공 · `actionsBottom` 잔재 0건(grep) |
+| 단정 금지 | **글자를 실제로 키워서 확인하지 않음**(`미검증`) — 시스템 글꼴 200%에서 스크롤이 제대로 도는지는 기기에서 봐야 함. `추정`: 내용이 화면에 다 들어올 때는 스크롤바가 안 보이고 여백도 같은 값이라 **기존과 동일하게 보일 것**으로 봄(간격 토큰을 `safeArea`의 `gap`에서 `contentContainerStyle`의 `gap`으로 옮기며 같은 값을 씀). `주의`: **진행 중 화면과 「듣기 준비」 화면은 여전히 스크롤이 없음** — 글자를 크게 하면 거기가 먼저 깨질 수 있음(후속 후보). `주의`: 기록 목록은 원래 `FlatList`라 이 건과 무관. |
+| 성능·주의 | 요약에서만 `ScrollView` 1개 추가. 진행 중 화면(자극 재생 경로)은 안 건드림 — 훈련 입력 화면 경량화 방침 유지. |
+| 다음 | 리로드 후 요약에서 **시스템 글자 크기를 키워** 스크롤이 도는지 + 버튼이 계속 보이는지 확인 |
+
+### 2026-08-11 — 세로 고정(가로 회전 차단) — **리빌드 필요**
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 요약 화면에 `ScrollView`가 없어 내용이 잘릴 수 있다는 지적에서 출발. 확인해 보니 `app.json`이 `"orientation": "default"`이고 코드에서 `ScreenOrientation.lockAsync`로 잠그는 곳도 **없어 가로 회전이 열려 있었음**(`AndroidManifest`도 `screenOrientation="unspecified"`). 요약 내용 높이를 스타일에서 더하면 **약 610dp**(헤더 90 + ✓줄 30 + 카드 330 + 배지 34 + 버튼 48 + 여백 80)인데 가로 모드 높이는 보통 400dp 미만 → **가로에서는 「다시 연습」 버튼에 닿을 수 없게 됨**. 선택지는 ①요약에 `ScrollView`(요약만 고침·리빌드 불필요) ②세로 고정(가로 문제를 **전 화면** 고침·리빌드 필요) → 사용자: **「세로 고정으로 해줘」**. 소리에 집중하는 훈련 앱이라 가로 레이아웃의 쓸모가 없다는 판단. |
+| 변경 요약 | `app.json` `orientation`을 `default` → **`portrait`**(원본 설정). `android/`가 저장소에 커밋돼 있어 app.json만 고치면 반영되지 않으므로 `AndroidManifest.xml`의 `android:screenOrientation`도 `unspecified` → **`portrait`**로 **직접 수정**(`expo prebuild`를 돌리면 `android/`의 다른 수동 변경까지 덮어쓸 수 있어 손으로 맞춤). 두 곳을 같이 바꿔 **설정 원본과 생성물이 어긋나지 않게** 함. |
+| 주요 경로 | `app.json` · `android/app/src/main/AndroidManifest.xml` |
+| 결과 | 코드 반영 완료 · **네이티브 설정이라 리빌드 전까지는 적용 안 됨**(`npm run android`) |
+| 확인 | `app.json` JSON 파싱 유효 · 매니페스트에 `screenOrientation="portrait"` 1건 반영 확인 · `npx tsc --noEmit` 통과 · `npx jest` **23/23 유지**(JS 변경이 없으므로 회귀 확인 목적) |
+| 단정 금지 | **기기에서 회전 차단을 확인하지 않음** — 리빌드를 안 했기 때문(`미검증`). `주의`: 세로 고정은 **가로 문제만** 막는다 — **시스템 글자 크기 확대(`allowFontScaling`을 끈 곳 없음, 최대 200%)로 인한 넘침은 그대로 남아 있음.** 청능 훈련 앱 특성상 글자를 키워 쓰는 사용자가 있을 수 있어 `추정`으로 가장자리 사례가 아님 — 필요하면 요약에 `ScrollView`를 따로 넣어야 함. `주의`: `ios/` 폴더가 없어 iOS는 `app.json` 값만 반영됨(나중에 prebuild 시 적용). 태블릿에서도 세로로 고정됨 — 의도한 것인지는 확인 안 함. |
+| 성능·주의 | 회전 시 레이아웃 재계산이 아예 없어짐. 부정적 영향 없음. |
+| 다음 | `npm run android`로 리빌드 → 기기에서 **가로로 돌려도 안 돌아가는지** 확인 |
+
+### 2026-08-11 — 죽은 코드 정리(스타터 잔재 3개 + 고아 에셋 2개)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: **「죽은 코드 정리해줘」**. `use-color-scheme`만이 아니라 `src` 전체에서 **들어오는 참조가 0인 파일**을 훑어서 확인함(파일명 기준 1차 집계 → `import`/`require` 문으로 2차 확인). 지운 것은 **전부 참조가 0**이고, 지운 파일이 끌어오던 다른 파일은 여전히 다른 곳에서 쓰여 **연쇄로 죽는 파일은 없었음**. |
+| 변경 요약 | **삭제**: `components/hint-row.tsx` · `components/ui/collapsible.tsx` · `components/web-badge.tsx` (셋 다 Expo 스타터 잔재로 **이번 작업 이전부터 죽어 있던 것**) + `assets/images/expo-badge{,-white}.png` (`web-badge.tsx`만 쓰던 고아 에셋). `hooks/use-color-scheme{,.web}.ts`(다크 고정으로 죽은 것)는 **이 세션 밖에서 이미 지워져 있었음** — 결과적으로 의도한 상태와 같음. |
+| 주요 경로 | `src/components/{hint-row,web-badge}.tsx` · `src/components/ui/collapsible.tsx` · `assets/images/expo-badge*.png` (모두 삭제) |
+| 결과 | 성공 · JS/에셋만 → **리빌드 불필요** |
+| 확인 | `npx tsc --noEmit` 통과 · `npx jest` **23/23 유지** · `npx expo lint` **오류 2 → 1로 줄어듦**(`use-color-scheme.web.ts` 것이 사라짐. 남은 1건은 기존 `SessionHistoryScreen`의 `reload` 이펙트) · `npx expo export --platform web` 번들 성공 + 정적 라우트 4개 그대로 |
+| 단정 금지 | 참조 검사는 **정적 grep 기반** — 문자열로 동적 로딩하는 코드가 있으면 못 잡음(`추정`: 이 앱엔 그런 패턴이 없다고 봄, 전수 확인은 안 함). **삭제한 화면들을 실행해 본 적은 없음**(원래 아무 데서도 안 그려지던 것이라 확인할 화면 자체가 없음). `주의`: `npx expo lint`를 처음 돌릴 때 **`eslint.config.js`가 자동 생성됨**(스캐폴딩) — 내가 의도해서 만든 파일이 아니지만, 없으면 `npm run lint`가 매번 다시 만들려 하므로 남겨 둠. |
+| 성능·주의 | 번들에서 파일 5개가 빠짐(웹 번들 크기 변화는 2.4MB로 표기상 동일 — 원래 트리셰이킹으로 빠지던 것으로 `추정`). 부정적 영향 없음. |
+| 다음 | 없음 |
+
+### 2026-08-11 — 다크 모드 구현 안 함(라이트 고정)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라(UI) |
+| 근거·결정 | 사용자: **「다크 모드는 구현 안할거야」**. 원본 시안(Clean Clinical)이 **라이트 전용**이라 다크 팔레트는 내가 대비 관계만 뒤집어 만든 **추정치였고, 검증할 시안이 없었음** — 근거 없는 색을 코드에 남겨 두는 대신 지우기로 함. 「필요없는 것은 안 한다」는 기존 방침(2026-08-07)과 같은 결. |
+| 변경 요약 | `theme.ts`에서 `Colors.dark` **삭제**, `ThemeColor = keyof typeof Colors.light`로 단순화. `useTheme()`는 OS 설정을 보지 않고 **항상 `Colors.light` 반환**(훅 형태는 유지 — 화면 호출부를 안 건드리고, 나중에 되살리면 여기서만 갈라주면 됨). `app-tabs.tsx`·`app-tabs.web.tsx`·`_layout.tsx`(`ThemeProvider`가 항상 `DefaultTheme`)도 라이트 고정. |
+| 주요 경로 | `src/constants/theme.ts` · `src/hooks/use-theme.ts` · `src/components/app-tabs{,.web}.tsx` · `src/app/_layout.tsx` |
+| 결과 | 성공 · JS만 바뀜 → **리빌드 불필요**(리로드로 반영) |
+| 확인 | `npx tsc --noEmit` 통과 · `npx jest` **23/23 유지** · `npx expo lint` 기존 baseline(오류 2·경고 4) 그대로 |
+| 단정 금지 | **`app.json`의 `userInterfaceStyle`은 `automatic` 그대로 둠** — 이건 네이티브 설정이라 바꾸면 리빌드가 필요해서 건드리지 않음. 따라서 JS가 그리는 화면은 전부 라이트지만, **OS 다크에서 네이티브 쪽(상태바 아이콘 등)이 어떻게 보이는지는 확인 안 함**(`미검증`). 거슬리면 `"light"`로 바꾸고 리빌드해야 함. `주의`: `src/hooks/use-color-scheme{,.web}.ts`가 **더 이상 아무도 안 쓰는 죽은 코드**가 됨 — 지우지 않고 남겨 둠(별도 정리 건). |
+| 성능·주의 | `useTheme`가 훅 호출 없이 상수만 반환 → 리렌더 트리거가 하나 줄어듦. 부정적 영향 없음. |
+| 다음 | 없음 |
+
 ### 2026-08-07 — P2-3 청취 조건 안내 + 백로그 범위 결정(안 함/보류 확정)
 
 | 항목 | 내용 |

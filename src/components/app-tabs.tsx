@@ -1,18 +1,17 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 
 export default function AppTabs() {
-  // RN 구현은 nullable을 반환할 수 있다(타입 선언은 아님) — use-theme.ts와 동일 처리.
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
+  // 라이트 고정 — use-theme.ts와 동일 방침(다크 모드 구현 안 함).
+  const colors = Colors.light;
 
   return (
+    // 시안의 탭 바 — 흰 면 위에 선택된 탭만 시그널 블루.
     <NativeTabs
-      backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
+      backgroundColor={colors.surface}
+      indicatorColor={colors.accentTint}
+      labelStyle={{ color: colors.textMuted, selected: { color: colors.accent } }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>홈</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

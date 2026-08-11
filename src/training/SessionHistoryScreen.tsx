@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { ActionButton } from '@/components/ui/action-button';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { SummaryCard, SummaryCardHeader } from '@/training/SummaryCard';
 import { endReasonLabel } from '@/training/freqSession';
 import {
   listSavedSessions,
@@ -92,78 +93,21 @@ function toCardContent(record: SavedSessionRecord): HistoryCardContent {
   };
 }
 
-function MetricRow({
-  label,
-  value,
-}: Readonly<{ label: string; value: string }>) {
-  return (
-    <View style={styles.metricRow}>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.metricLabel}>
-        {label}
-      </ThemedText>
-      <ThemedText type="default" style={styles.metricValue}>
-        {value}
-      </ThemedText>
-    </View>
-  );
-}
-
 function HistoryCard({ record }: Readonly<{ record: SavedSessionRecord }>) {
   const content = toCardContent(record);
 
   return (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      <View style={styles.cardHeader}>
-        <ThemedText type="default" style={styles.cardTitle}>
-          {content.trackTitle}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary" style={styles.cardDate}>
-          {content.savedAt}
-        </ThemedText>
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={styles.statCell}>
-          <ThemedText type="small" themeColor="textSecondary">
-            연습
-          </ThemedText>
-          <ThemedText type="default" style={styles.statValue}>
-            {content.trialCount}
-          </ThemedText>
-        </View>
-        <View style={styles.statCell}>
-          <ThemedText type="small" themeColor="textSecondary">
-            정답
-          </ThemedText>
-          <ThemedText type="default" style={styles.statValue}>
-            {content.correctCount}
-          </ThemedText>
-        </View>
-        <View style={styles.statCell}>
-          <ThemedText type="small" themeColor="textSecondary">
-            전환
-          </ThemedText>
-          <ThemedText type="default" style={styles.statValue}>
-            {content.reversalCount}
-          </ThemedText>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
-          최근 난이도 참고
-        </ThemedText>
-        <MetricRow label={content.meanLabel} value={content.meanValue} />
-        <MetricRow label="가장 쉬움" value={content.easiestValue} />
-        <MetricRow label="가장 어려움" value={content.hardestValue} />
-      </View>
-
-      {content.reason ? (
-        <ThemedText type="small" themeColor="textSecondary" style={styles.reason}>
-          {content.reason}
-        </ThemedText>
-      ) : null}
-    </ThemedView>
+    <SummaryCard
+      header={<SummaryCardHeader title={content.trackTitle} savedAt={content.savedAt} />}
+      trialCount={content.trialCount}
+      correctCount={content.correctCount}
+      reversalCount={content.reversalCount}
+      meanLabel={content.meanLabel}
+      meanValue={content.meanValue}
+      easiestValue={content.easiestValue}
+      hardestValue={content.hardestValue}
+      footnote={content.reason}
+    />
   );
 }
 
@@ -173,7 +117,6 @@ function HistoryCard({ record }: Readonly<{ record: SavedSessionRecord }>) {
 export function SessionHistoryScreen({
   onBack,
 }: Readonly<SessionHistoryScreenProps>) {
-  const theme = useTheme();
   const [rows, setRows] = useState<SavedSessionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -202,28 +145,26 @@ export function SessionHistoryScreen({
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.screenHeader}>
-          <ThemedText type="subtitle" style={styles.screenTitle}>
-            연습 기록
-          </ThemedText>
+          <ThemedText type="screenTitle">연습 기록</ThemedText>
           <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
             이 기기에만 저장 · 점수·청력 검사·진단 결과 아님
           </ThemedText>
         </View>
 
         {loading ? (
-          <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+          <ThemedText themeColor="textMuted" type="small" style={styles.notice}>
             불러오는 중…
           </ThemedText>
         ) : null}
 
         {error ? (
-          <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+          <ThemedText themeColor="textSecondary" type="small" style={styles.notice}>
             {error}
           </ThemedText>
         ) : null}
 
         {!loading && !error && rows.length === 0 ? (
-          <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+          <ThemedText themeColor="textMuted" type="small" style={styles.notice}>
             아직 기록된 연습이 없어요
           </ThemedText>
         ) : null}
@@ -238,28 +179,8 @@ export function SessionHistoryScreen({
         />
 
         <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={reload}
-            style={({ pressed }) => [
-              styles.actionButton,
-              { backgroundColor: theme.backgroundElement },
-              pressed && styles.pressed,
-            ]}>
-            <ThemedText type="smallBold">새로고침</ThemedText>
-          </Pressable>
-          {onBack ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={onBack}
-              style={({ pressed }) => [
-                styles.actionButton,
-                { backgroundColor: theme.backgroundElement },
-                pressed && styles.pressed,
-              ]}>
-              <ThemedText type="smallBold">연습 목록</ThemedText>
-            </Pressable>
-          ) : null}
+          <ActionButton label="새로고침" onPress={reload} />
+          {onBack ? <ActionButton label="연습 목록" onPress={onBack} /> : null}
         </View>
       </SafeAreaView>
     </ThemedView>
@@ -276,102 +197,32 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
     paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
     alignItems: 'stretch',
-    gap: Spacing.three,
+    gap: Spacing.three - 2,
   },
   screenHeader: {
-    alignItems: 'center',
-    gap: Spacing.one,
-    paddingTop: Spacing.two,
-  },
-  screenTitle: {
-    fontSize: 28,
-    lineHeight: 36,
-    textAlign: 'center',
+    gap: Spacing.one + 2,
   },
   caption: {
+    fontSize: 11.5,
+    lineHeight: 17,
+    // 시안처럼 제목 아래 좁은 폭으로 둔다(오른쪽 여백 확보).
+    maxWidth: 220,
+  },
+  notice: {
     textAlign: 'center',
   },
   list: {
-    alignSelf: 'stretch',
     flex: 1,
   },
   listContent: {
     gap: Spacing.three,
     paddingBottom: Spacing.two,
   },
-  card: {
-    paddingVertical: Spacing.four,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.three,
-    gap: Spacing.three,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: Spacing.two,
-  },
-  cardTitle: {
-    flexShrink: 1,
-    fontWeight: '700',
-  },
-  cardDate: {
-    flexShrink: 0,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  statCell: {
-    flex: 1,
-    alignItems: 'center',
-    gap: Spacing.one,
-    paddingVertical: Spacing.two,
-  },
-  statValue: {
-    fontWeight: '700',
-  },
-  section: {
-    gap: Spacing.two,
-  },
-  sectionTitle: {
-    marginBottom: Spacing.half,
-  },
-  metricRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.two,
-  },
-  metricLabel: {
-    flexShrink: 1,
-  },
-  metricValue: {
-    flexShrink: 0,
-    fontWeight: '600',
-    textAlign: 'right',
-  },
-  reason: {
-    textAlign: 'center',
-    marginTop: Spacing.one,
-  },
   actions: {
-    alignSelf: 'stretch',
     flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  actionButton: {
-    flex: 1,
-    minHeight: 48,
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pressed: {
-    opacity: 0.7,
+    gap: Spacing.three - 4,
   },
 });

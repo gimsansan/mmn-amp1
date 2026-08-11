@@ -4,7 +4,19 @@ import { Fonts, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
+  type?:
+    | 'default'
+    | 'title'
+    | 'small'
+    | 'smallBold'
+    | 'subtitle'
+    | 'heading'
+    | 'screenTitle'
+    | 'metric'
+    | 'mono'
+    | 'link'
+    | 'linkPrimary'
+    | 'code';
   themeColor?: ThemeColor;
 };
 
@@ -20,6 +32,10 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'small' && styles.small,
         type === 'smallBold' && styles.smallBold,
         type === 'subtitle' && styles.subtitle,
+        type === 'heading' && styles.heading,
+        type === 'screenTitle' && styles.screenTitle,
+        type === 'metric' && styles.metric,
+        type === 'mono' && styles.mono,
         type === 'link' && styles.link,
         type === 'linkPrimary' && styles.linkPrimary,
         type === 'code' && styles.code,
@@ -54,6 +70,34 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 32,
     lineHeight: 44,
+    fontWeight: 600,
+  },
+  /** 트랙 진입 화면의 큰 제목. */
+  heading: {
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: 700,
+    letterSpacing: -0.3,
+  },
+  /** 목록·요약 등 일반 화면 제목. */
+  screenTitle: {
+    fontSize: 23,
+    lineHeight: 30,
+    fontWeight: 700,
+    letterSpacing: -0.2,
+  },
+  /** 계기판처럼 읽히는 큰 수치. */
+  metric: {
+    fontFamily: Fonts.mono,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: 600,
+  },
+  /** 배지·타임스탬프 등 작은 수치. */
+  mono: {
+    fontFamily: Fonts.mono,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: 600,
   },
   link: {

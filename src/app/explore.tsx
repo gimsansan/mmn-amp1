@@ -6,7 +6,9 @@ import { DEFAULT_CARRIER_HZ } from '@/audio/amTone';
 import { DEFAULT_REFERENCE_HZ } from '@/audio/pureTone';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Card } from '@/components/ui/card';
+import { Icon, type IconName } from '@/components/ui/icon';
+import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { AmSessionScreen } from '@/training/AmSessionScreen';
 import { FreqSessionScreen } from '@/training/FreqSessionScreen';
@@ -14,6 +16,34 @@ import { ListeningCheckScreen } from '@/training/ListeningCheckScreen';
 import { SessionHistoryScreen } from '@/training/SessionHistoryScreen';
 
 type Track = 'picker' | 'freq' | 'am' | 'history';
+
+type TrackOption = {
+  track: Exclude<Track, 'picker'>;
+  icon: IconName;
+  title: string;
+  description: string;
+};
+
+const TRACKS: readonly TrackOption[] = [
+  {
+    track: 'freq',
+    icon: 'wave',
+    title: '다른 음 찾기',
+    description: '조금 다른 음높이를 찾는 연습',
+  },
+  {
+    track: 'am',
+    icon: 'ripple',
+    title: '떨림 찾기',
+    description: '소리가 떨리는지 찾는 연습',
+  },
+  {
+    track: 'history',
+    icon: 'list',
+    title: '연습 기록',
+    description: '이 기기에 남긴 연습 요약 보기',
+  },
+];
 
 /** 연습 탭 — 트랙 선택 → 듣기 준비 → 정적 훈련 UI. */
 export default function ExploreScreen() {
@@ -67,53 +97,34 @@ export default function ExploreScreen() {
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="subtitle">연습 선택</ThemedText>
-        <ThemedText themeColor="textSecondary" style={styles.caption}>
+        <ThemedText type="screenTitle">연습 선택</ThemedText>
+        <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
           웰니스·훈련 · 병원 검사·진단을 대신하지 않아요
         </ThemedText>
 
         <View style={styles.list}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => openTrack('freq')}
-            style={({ pressed }) => [
-              styles.card,
-              { backgroundColor: theme.backgroundElement },
-              pressed && styles.pressed,
-            ]}>
-            <ThemedText type="smallBold">다른 음 찾기</ThemedText>
-            <ThemedText themeColor="textSecondary" type="small">
-              조금 다른 음높이를 찾는 연습
-            </ThemedText>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => openTrack('am')}
-            style={({ pressed }) => [
-              styles.card,
-              { backgroundColor: theme.backgroundElement },
-              pressed && styles.pressed,
-            ]}>
-            <ThemedText type="smallBold">떨림 찾기</ThemedText>
-            <ThemedText themeColor="textSecondary" type="small">
-              소리가 떨리는지 찾는 연습
-            </ThemedText>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => openTrack('history')}
-            style={({ pressed }) => [
-              styles.card,
-              { backgroundColor: theme.backgroundElement },
-              pressed && styles.pressed,
-            ]}>
-            <ThemedText type="smallBold">연습 기록</ThemedText>
-            <ThemedText themeColor="textSecondary" type="small">
-              이 기기에 남긴 연습 요약 보기
-            </ThemedText>
-          </Pressable>
+          {TRACKS.map((option) => (
+            <Pressable
+              key={option.track}
+              accessibilityRole="button"
+              accessibilityLabel={`${option.title} — ${option.description}`}
+              onPress={() => openTrack(option.track)}
+              style={({ pressed }) => [styles.cardPress, pressed && styles.pressed]}>
+              <Card style={styles.card}>
+                <View style={[styles.cardIcon, { backgroundColor: theme.accentTint }]}>
+                  <Icon name={option.icon} size={22} color={theme.accent} />
+                </View>
+                <View style={styles.cardText}>
+                  <ThemedText type="smallBold" style={styles.cardTitle}>
+                    {option.title}
+                  </ThemedText>
+                  <ThemedText themeColor="textSecondary" type="small" style={styles.cardCaption}>
+                    {option.description}
+                  </ThemedText>
+                </View>
+              </Card>
+            </Pressable>
+          ))}
         </View>
       </SafeAreaView>
     </ThemedView>
@@ -130,25 +141,47 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
     paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.three,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.three,
+    alignItems: 'stretch',
+    gap: Spacing.two,
   },
   caption: {
-    textAlign: 'center',
+    fontSize: 12,
+    lineHeight: 18,
   },
   list: {
-    alignSelf: 'stretch',
-    gap: Spacing.three,
-    marginTop: Spacing.two,
+    gap: Spacing.three - 2,
+    marginTop: Spacing.three,
+  },
+  cardPress: {
+    borderRadius: Radius.large - 2,
   },
   card: {
-    minHeight: 72,
-    paddingVertical: Spacing.four,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.three,
-    gap: Spacing.one,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three - 2,
+    paddingVertical: Spacing.three + 2,
+  },
+  cardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.small + 1,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardText: {
+    flexShrink: 1,
+    gap: Spacing.half,
+  },
+  cardTitle: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  cardCaption: {
+    fontSize: 12,
+    lineHeight: 18,
   },
   pressed: {
     opacity: 0.7,

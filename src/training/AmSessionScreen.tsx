@@ -1,11 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { ActionButton } from "@/components/ui/action-button";
+import { Equalizer } from "@/components/ui/equalizer";
+import { Icon } from "@/components/ui/icon";
+import { Pill } from "@/components/ui/pill";
+import {
+  BottomTabInset,
+  MaxContentWidth,
+  Radius,
+  Shadows,
+  Spacing,
+} from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import {
   abortAmAfcPlayback,
   createAmAfcTrial,
@@ -13,7 +23,7 @@ import {
   scoreAmAfcChoice,
   type AmAfcChoiceResult,
   type AmAfcTrial,
-} from '@/training/amAfcTrial';
+} from "@/training/amAfcTrial";
 import {
   applyAmSessionResult,
   createAmSession,
@@ -22,42 +32,40 @@ import {
   summarizeAmSession,
   type AmSessionState,
   type AmSessionSummary,
-} from '@/training/amSession';
-import { DEFAULT_AFC_N } from '@/training/freqAfcTrial';
+} from "@/training/amSession";
+import { DEFAULT_AFC_N } from "@/training/freqAfcTrial";
 import {
   DEFAULT_MAX_TRIALS,
   DEFAULT_TARGET_REVERSALS,
-} from '@/training/freqSession';
-import { appendAmSessionSummary } from '@/training/sessionStore';
+} from "@/training/freqSession";
+import { appendAmSessionSummary } from "@/training/sessionStore";
+import { SummaryCard } from "@/training/SummaryCard";
 
-type Phase = 'idle' | 'playing' | 'choose' | 'feedback' | 'summary';
+type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
 function phaseCaption(phase: Phase, correct: boolean | undefined): string {
   switch (phase) {
-    case 'playing':
-      return '듣는 중… 소리가 끝난 뒤 고르세요';
-    case 'choose':
-      return '떨리는 소리를 고르세요';
-    case 'feedback':
-      return correct ? '맞았어요' : '아쉬워요';
-    case 'summary':
-      return '오늘 연습이 끝났어요';
+    case "playing":
+      return "듣는 중… 소리가 끝난 뒤 고르세요";
+    case "choose":
+      return "떨리는 소리를 고르세요";
+    case "feedback":
+      return correct ? "맞았어요" : "아쉬워요";
+    case "summary":
+      return "오늘 연습이 끝났어요";
     default:
-      return '시작을 누르면 난이도가 맞춰지는 연습이 이어집니다';
+      return "시작을 누르면 난이도가 맞춰지는 연습이 이어집니다";
   }
 }
 
+/** 진행 배지 문구. 요약의 종료 사유는 `endReasonLabel`이 따로 그린다. */
 function progressCaption(
   phase: Phase,
   trialNumber: number,
   reversalCount: number,
-  summaryReason: string
 ): string {
-  if (phase === 'idle') {
+  if (phase === "idle") {
     return `난이도 전환 ${DEFAULT_TARGET_REVERSALS}번 또는 연습 ${DEFAULT_MAX_TRIALS}번까지`;
-  }
-  if (phase === 'summary') {
-    return summaryReason;
   }
   return `연습 ${trialNumber} · 전환 ${reversalCount}/${DEFAULT_TARGET_REVERSALS}`;
 }
@@ -76,7 +84,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
   const abortRef = useRef(false);
   /** 이번 세션 요약을 이미 저장했는지. 중복 저장 방지(세션 시작 시 리셋). */
   const savedRef = useRef(false);
-  const [phase, setPhase] = useState<Phase>('idle');
+  const [phase, setPhase] = useState<Phase>("idle");
   const [session, setSession] = useState<AmSessionState | null>(null);
   const [trial, setTrial] = useState<AmAfcTrial | null>(null);
   const [result, setResult] = useState<AmAfcChoiceResult | null>(null);
@@ -100,7 +108,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     const nextSummary = summarizeAmSession(next);
     setSession(next);
     setSummary(nextSummary);
-    setPhase('summary');
+    setPhase("summary");
     setTrial(null);
 
     if (savedRef.current) {
@@ -110,10 +118,10 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     setSaveNote(null);
     void appendAmSessionSummary(nextSummary)
       .then(() => {
-        setSaveNote('기기에 기록했어요');
+        setSaveNote("기기에 기록했어요");
       })
       .catch(() => {
-        setSaveNote('기록 저장에 실패했어요');
+        setSaveNote("기록 저장에 실패했어요");
       });
   }, []);
 
@@ -121,7 +129,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     abortRef.current = true;
     savedRef.current = false;
     abortAmAfcPlayback();
-    setPhase('idle');
+    setPhase("idle");
     setSession(null);
     setTrial(null);
     setResult(null);
@@ -130,7 +138,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
   }, []);
 
   const runTrial = useCallback(async (state: AmSessionState) => {
-    if (state.status === 'completed') {
+    if (state.status === "completed") {
       return;
     }
 
@@ -143,7 +151,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
       depthDb: state.stair.depthDb,
     });
     setTrial(next);
-    setPhase('playing');
+    setPhase("playing");
 
     try {
       await playAmAfcTrial(next, {
@@ -152,13 +160,13 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
       if (abortRef.current) {
         return;
       }
-      setPhase('choose');
+      setPhase("choose");
     } catch (e) {
-      if (e instanceof Error && e.message === 'ABORTED') {
+      if (e instanceof Error && e.message === "ABORTED") {
         return;
       }
       setLastError(e instanceof Error ? e.message : String(e));
-      setPhase('idle');
+      setPhase("idle");
       setSession(null);
       setTrial(null);
     }
@@ -176,7 +184,12 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
   const onChoose = useCallback(
     (index: number) => {
       // 완료된 세션은 다시 채점하지 않는다(중지 직후 잔여 UI 방어).
-      if (!trial || !session || phase !== 'choose' || session.status !== 'active') {
+      if (
+        !trial ||
+        !session ||
+        phase !== "choose" ||
+        session.status !== "active"
+      ) {
         return;
       }
       const scored = scoreAmAfcChoice(trial, index);
@@ -184,17 +197,17 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
       setResult(scored);
       setSession(next);
 
-      if (next.status === 'completed') {
+      if (next.status === "completed") {
         goSummary(next);
         return;
       }
-      setPhase('feedback');
+      setPhase("feedback");
     },
-    [goSummary, phase, session, trial]
+    [goSummary, phase, session, trial],
   );
 
   const onNext = useCallback(() => {
-    if (!session || session.status === 'completed') {
+    if (!session || session.status === "completed") {
       return;
     }
     void runTrial(session);
@@ -208,46 +221,149 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     goSummary(endAmSessionManual(session));
   }, [goSummary, resetToIdle, session]);
 
-  const choiceDisabled = phase !== 'choose';
+  const choiceDisabled = phase !== "choose";
   const stair = session?.stair;
   let trialNumber = stair?.trialCount ?? 0;
-  if (phase === 'playing' || phase === 'choose') {
+  if (phase === "playing" || phase === "choose") {
     trialNumber += 1;
   }
 
   const meanText =
     summary?.meanReversalDepthDb == null
-      ? '—'
+      ? "—"
       : `약 ${summary.meanReversalDepthDb.toFixed(1)}`;
   const easiestText =
     summary?.easiestDepthDb == null
-      ? '—'
+      ? "—"
       : `약 ${summary.easiestDepthDb.toFixed(1)}`;
   const hardestText =
     summary?.hardestDepthDb == null
-      ? '—'
+      ? "—"
       : `약 ${summary.hardestDepthDb.toFixed(1)}`;
 
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="subtitle">떨림 찾기</ThemedText>
-        <ThemedText themeColor="textSecondary" style={styles.caption}>
-          웰니스 연습 · 병원 검사·진단을 대신하지 않아요
-        </ThemedText>
-        <ThemedText themeColor="textSecondary" style={styles.caption}>
-          {progressCaption(
-            phase,
-            trialNumber,
-            stair?.reversalCount ?? 0,
-            endReasonLabel(summary?.endReason ?? null)
-          )}
-        </ThemedText>
-        <ThemedText type="smallBold" style={styles.prompt}>
-          {phaseCaption(phase, result?.correct)}
-        </ThemedText>
+  const running =
+    phase === "playing" || phase === "choose" || phase === "feedback";
 
-        {phase !== 'summary' && phase !== 'idle' ? (
+  return (
+    <ThemedView style={styles.fill}>
+      <SafeAreaView style={styles.safeArea}>
+        {phase === "idle" ? (
+          <View style={styles.hero}>
+            <View
+              style={[styles.heroMark, { backgroundColor: theme.accentTint }]}
+            >
+              <View
+                style={[styles.heroRing, { borderColor: theme.accentBorder }]}
+              />
+              <Icon name="ripple" size={42} color={theme.accent} />
+            </View>
+            <ThemedText type="heading">떨림 찾기</ThemedText>
+            <ThemedText
+              themeColor="textSecondary"
+              type="small"
+              style={styles.caption}
+            >
+              웰니스 연습 · 병원 검사·진단을 대신하지 않아요
+            </ThemedText>
+            <Pill
+              mono
+              label={progressCaption(
+                phase,
+                trialNumber,
+                stair?.reversalCount ?? 0,
+              )}
+            />
+            <ThemedText type="smallBold" style={styles.heroPrompt}>
+              {phaseCaption(phase, result?.correct)}
+            </ThemedText>
+          </View>
+        ) : (
+          <View style={styles.header}>
+            <ThemedText type="screenTitle" style={styles.caption}>
+              떨림 찾기
+            </ThemedText>
+            <ThemedText
+              themeColor="textMuted"
+              type="small"
+              style={styles.disclaimer}
+            >
+              웰니스 연습 · 병원 검사·진단을 대신하지 않아요
+            </ThemedText>
+            {phase === "summary" ? (
+              <ThemedText
+                themeColor="textSecondary"
+                type="small"
+                style={styles.caption}
+              >
+                {endReasonLabel(summary?.endReason ?? null)}
+              </ThemedText>
+            ) : (
+              <Pill
+                mono
+                label={progressCaption(
+                  phase,
+                  trialNumber,
+                  stair?.reversalCount ?? 0,
+                )}
+              />
+            )}
+          </View>
+        )}
+
+        {/*
+          요약만 스크롤한다. 글자 크기를 키우면(시스템 설정 최대 200%) 카드가
+          화면을 넘겨 버튼에 닿을 수 없게 되므로. 버튼은 스크롤 밖에 두어
+          항상 보이게 한다 — 진행 중 화면은 선택지가 고정돼야 해서 감싸지 않는다.
+        */}
+        {phase === "summary" ? (
+          <ScrollView
+            style={styles.summaryScroll}
+            contentContainerStyle={styles.summaryScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.headline}>
+              <Icon
+                name="check"
+                size={18}
+                color={theme.accent}
+                strokeWidth={2.2}
+              />
+              <ThemedText type="smallBold" style={styles.headlineText}>
+                {phaseCaption(phase, result?.correct)}
+              </ThemedText>
+            </View>
+
+            {summary ? (
+              <SummaryCard
+                trialCount={summary.trialCount}
+                correctCount={summary.correctCount}
+                reversalCount={summary.reversalCount}
+                meanLabel="떨림 정도"
+                meanValue={meanText}
+                easiestValue={easiestText}
+                hardestValue={hardestText}
+                footnote="숫자가 작을수록 더 얕은 떨림 · 점수·청력 검사·진단 결과 아님"
+              />
+            ) : null}
+
+            {saveNote ? <Pill stretch icon="check" label={saveNote} /> : null}
+          </ScrollView>
+        ) : null}
+
+        {running ? (
+          <View style={styles.statusRow}>
+            {phase === "playing" ? <Equalizer color={theme.accent} /> : null}
+            <ThemedText
+              type="smallBold"
+              themeColor="textSecondary"
+              style={styles.statusText}
+            >
+              {phaseCaption(phase, result?.correct)}
+            </ThemedText>
+          </View>
+        ) : null}
+
+        {running ? (
           <View style={styles.choices}>
             {Array.from({ length: DEFAULT_AFC_N }, (_, i) => (
               <Pressable
@@ -259,194 +375,199 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
                 onPress={() => onChoose(i)}
                 style={({ pressed }) => [
                   styles.choiceButton,
-                  { backgroundColor: theme.backgroundElement },
+                  {
+                    backgroundColor:
+                      pressed && !choiceDisabled
+                        ? theme.accentTint
+                        : theme.surface,
+                    borderColor:
+                      pressed && !choiceDisabled
+                        ? theme.accentBorder
+                        : theme.border,
+                  },
+                  Shadows.card,
                   choiceDisabled && styles.disabled,
-                  pressed && !choiceDisabled && styles.pressed,
-                ]}>
-                <ThemedText type="subtitle">{i + 1}</ThemedText>
+                ]}
+              >
+                <ThemedText type="metric" style={styles.choiceNumber}>
+                  {i + 1}
+                </ThemedText>
               </Pressable>
             ))}
           </View>
         ) : null}
 
-        {phase === 'summary' && summary ? (
-          <ThemedView type="backgroundElement" style={styles.summaryBox}>
-            <ThemedText style={styles.caption}>
-              {`연습 ${summary.trialCount} · 정답 ${summary.correctCount} · 전환 ${summary.reversalCount}`}
-            </ThemedText>
-            <ThemedText style={styles.caption}>
-              {`최근 난이도 참고 · 떨림 정도 ${meanText}`}
-            </ThemedText>
-            <ThemedText style={styles.caption}>
-              {`이번 연습 · 가장 쉬움 ${easiestText} · 가장 어려움 ${hardestText}`}
-            </ThemedText>
-            <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
-              숫자가 작을수록 더 얕은 떨림 · 점수·청력 검사·진단 결과 아님
-            </ThemedText>
-            {saveNote ? (
-              <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
-                {saveNote}
-              </ThemedText>
-            ) : null}
-          </ThemedView>
-        ) : null}
-
-        <View style={styles.actions}>
-          {phase === 'idle' || phase === 'summary' ? (
-            <>
-              <Pressable
-                accessibilityRole="button"
-                onPress={onStart}
-                style={({ pressed }) => [
-                  styles.actionButton,
-                  { backgroundColor: theme.backgroundElement },
-                  pressed && styles.pressed,
-                ]}>
-                <ThemedText type="smallBold">
-                  {phase === 'summary' ? '다시 연습' : '연습 시작'}
-                </ThemedText>
-              </Pressable>
-              {onBack ? (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    abortRef.current = true;
-                    abortAmAfcPlayback();
-                    onBack();
-                  }}
-                  style={({ pressed }) => [
-                    styles.actionButton,
-                    { backgroundColor: theme.backgroundElement },
-                    pressed && styles.pressed,
-                  ]}>
-                  <ThemedText type="smallBold">연습 목록</ThemedText>
-                </Pressable>
-              ) : null}
-            </>
-          ) : null}
-
-          {phase === 'feedback' ? (
-            <>
-              <Pressable
-                accessibilityRole="button"
-                onPress={onNext}
-                style={({ pressed }) => [
-                  styles.actionButton,
-                  { backgroundColor: theme.backgroundElement },
-                  pressed && styles.pressed,
-                ]}>
-                <ThemedText type="smallBold">다음</ThemedText>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={onEndManual}
-                style={({ pressed }) => [
-                  styles.actionButton,
-                  { backgroundColor: theme.backgroundElement },
-                  pressed && styles.pressed,
-                ]}>
-                <ThemedText type="smallBold">끝내기</ThemedText>
-              </Pressable>
-            </>
-          ) : null}
-
-          {phase === 'playing' || phase === 'choose' ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={onEndManual}
-              style={({ pressed }) => [
-                styles.actionButton,
-                { backgroundColor: theme.backgroundElement },
-                pressed && styles.pressed,
-              ]}>
-              <ThemedText type="smallBold">중지</ThemedText>
-            </Pressable>
-          ) : null}
-        </View>
-
-        {phase === 'feedback' && result && stair ? (
-          <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+        {phase === "feedback" && result && stair ? (
+          <ThemedText themeColor="textMuted" type="small" style={styles.detail}>
             {`선택 ${result.chosenIndex + 1} · 정답 ${result.oddIndex + 1}`}
             {` · 방금 떨림 ${result.depthDb.toFixed(0)} · 다음 떨림 ${stair.depthDb.toFixed(0)}`}
           </ThemedText>
         ) : null}
 
         {lastError ? (
-          <ThemedText themeColor="textSecondary" style={styles.error}>
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.caption}
+          >
             {lastError}
           </ThemedText>
         ) : null}
+
+        <View style={styles.actions}>
+          {phase === "idle" || phase === "summary" ? (
+            <>
+              <ActionButton
+                variant="primary"
+                label={phase === "summary" ? "다시 연습" : "연습 시작"}
+                onPress={onStart}
+              />
+              {onBack ? (
+                <ActionButton
+                  label="연습 목록"
+                  onPress={() => {
+                    abortRef.current = true;
+                    abortAmAfcPlayback();
+                    onBack();
+                  }}
+                />
+              ) : null}
+            </>
+          ) : null}
+
+          {phase === "feedback" ? (
+            <>
+              <ActionButton variant="primary" label="다음" onPress={onNext} />
+              <ActionButton label="끝내기" onPress={onEndManual} />
+            </>
+          ) : null}
+
+          {phase === "playing" || phase === "choose" ? (
+            <ActionButton icon="stop" label="중지" onPress={onEndManual} />
+          ) : null}
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  fill: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
   },
   safeArea: {
     flex: 1,
     maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    width: "100%",
     paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.three,
+    alignItems: "stretch",
+    gap: Spacing.two + 2,
+  },
+  hero: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.two + 2,
+  },
+  heroMark: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.three - 2,
+  },
+  /** 타일 바깥으로 한 겹 더 도는 옅은 링(시안의 `inset:-8px`). */
+  heroRing: {
+    position: "absolute",
+    top: -8,
+    left: -8,
+    right: -8,
+    bottom: -8,
+    borderRadius: 52,
+    borderWidth: 1,
+  },
+  heroPrompt: {
+    textAlign: "center",
+    maxWidth: 240,
+    fontSize: 12.5,
+    lineHeight: 19,
+  },
+  header: {
+    alignItems: "center",
+    gap: Spacing.one + 2,
   },
   caption: {
-    textAlign: 'center',
+    textAlign: "center",
   },
-  prompt: {
-    textAlign: 'center',
+  disclaimer: {
+    fontSize: 11.5,
+    lineHeight: 17,
+    textAlign: "center",
+  },
+  headline: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.two - 1,
     marginTop: Spacing.one,
   },
-  summaryBox: {
-    alignSelf: 'stretch',
-    padding: Spacing.three,
-    borderRadius: Spacing.three,
+  headlineText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.two,
+    marginVertical: Spacing.three - 2,
+    minHeight: 20,
+  },
+  statusText: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: "center",
   },
   choices: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    gap: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  actions: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    gap: Spacing.two,
-    marginTop: Spacing.two,
+    flexDirection: "row",
+    gap: Spacing.three - 4,
   },
   choiceButton: {
     flex: 1,
-    minHeight: 72,
-    paddingVertical: Spacing.four,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    justifyContent: 'center',
+    aspectRatio: 1,
+    borderWidth: 1.5,
+    borderRadius: Radius.large,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  actionButton: {
+  choiceNumber: {
+    fontSize: 30,
+    lineHeight: 38,
+  },
+  detail: {
+    fontSize: 11,
+    lineHeight: 16,
+    textAlign: "center",
+  },
+  /** 요약 카드 영역만 스크롤. `flex: 1`이라 버튼이 자연히 바닥에 남는다. */
+  summaryScroll: {
     flex: 1,
-    minHeight: 48,
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: "stretch",
   },
-  pressed: {
-    opacity: 0.7,
+  summaryScrollContent: {
+    gap: Spacing.two + 2,
+    paddingBottom: Spacing.two,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: Spacing.three - 4,
+    marginTop: Spacing.two,
   },
   disabled: {
     opacity: 0.4,
-  },
-  error: {
-    textAlign: 'center',
-    marginTop: Spacing.two,
   },
 });

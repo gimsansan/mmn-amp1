@@ -1,16 +1,12 @@
-/**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
- */
-
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
+/**
+ * 화면 색을 준다. **라이트 고정** — 다크 모드는 구현하지 않기로 했다(2026-08-11).
+ *
+ * OS 설정을 보지 않으므로 `useColorScheme`도 쓰지 않는다. 훅으로 남겨 두는 이유는
+ * 호출부(화면 20여 곳)를 그대로 두기 위해서다 — 다크를 다시 하게 되면
+ * 여기서만 갈라주면 된다.
+ */
 export function useTheme() {
-  // RN 타입은 'light'|'dark'|'unspecified'로 선언돼 있지만 구현은 nullable이라
-  // 런타임에 null/undefined가 올 수 있다(타입 검사로 안 잡힘).
-  // 'dark'만 다크로 보고 나머지는 전부 light로 떨어뜨린다.
-  const scheme = useColorScheme();
-
-  return Colors[scheme === 'dark' ? 'dark' : 'light'];
+  return Colors.light;
 }
