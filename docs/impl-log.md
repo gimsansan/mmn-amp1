@@ -45,6 +45,58 @@
 
 ## 로그
 
+### 2026-08-13 01:52 — 인계문 작성·저장 (통계 버튼 UI·단일홈 후속)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | 사용자: 「인계문 적어줘」. |
+| 변경 요약 | `docs/handoff.md` 상단에 「인계 — 2026-08-13 01:52」 추가(단일홈 기구현·통계 버튼 다색/보더/60×40/`size=28`·다음 실기기·단정 금지). |
+| 주요 경로 | `docs/handoff.md`, `docs/impl-log.md` |
+| 결과 | 저장 완료. |
+| 확인 | 문서만. |
+| 단정 금지 | 없음 |
+| 성능·주의 | 없음 |
+
+### 2026-08-13 — 통계 버튼 accentBorder
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / UI |
+| 근거·결정 | 사용자: 통계 Pressable에 보더가 조화롭게 보이길 원함. 기존 활성 칩 패턴(`accentTint`+`accentBorder`)과 맞춤. |
+| 변경 요약 | `statsButton`에 `borderWidth: 1`, 런타임 `borderColor: theme.accentBorder`. |
+| 주요 경로 | `src/app/index.tsx` |
+| 결과 | 코드 반영. 리빌드 불필요. |
+| 확인 | 실기기 미확인. |
+| 단정 금지 | `미검증`: 실기기에서 다색 chart + 보더 대비 미확인. |
+| 성능·주의 | 없음 |
+
+### 2026-08-13 — 통계 chart 아이콘 막대별 fill (Icon 내)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / UI |
+| 근거·결정 | 사용자: 전용 다색 SVG 대신 `Icon` chart를 막대별 fill/stroke로 나누는 방식으로 재전환. |
+| 변경 요약 | `icon.tsx` `chart`: 기준선 stroke(`color`) + 막대 3개 fill(`accent`/`highlight`/`positive`). `StatsChartIcon` 삭제, 홈 헤더는 다시 `Icon name="chart"`. |
+| 주요 경로 | `src/components/ui/icon.tsx`, `src/app/index.tsx`, (삭제) `stats-chart-icon.tsx` |
+| 결과 | 코드 반영. 리빌드 불필요(JS·SVG만). |
+| 확인 | 타입·실기기 미확인. |
+| 단정 금지 | `미검증`: 실기기 가시성·대비 미확인. `주의`: chart만 다색 예외(단색 선 세트 규칙과 어긋남). |
+| 성능·주의 | Path 1 + Rect 3. 전용 컴포넌트 대비 구조 더 단순. |
+
+### 2026-08-13 — 통계 헤더 아이콘 다색 SVG
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / UI |
+| 근거·결정 | 사용자: 통계 진입점이 UI상 눈에 띄게. 단색 `Icon` chart 대신 **전용 다색 SVG** 합의(단색 선 세트 규칙 유지). |
+| 변경 요약 | `StatsChartIcon` 추가(막대 3개 fill: accent·highlight·positive). 홈 헤더 통계 버튼에서 `Icon name="chart"` 교체. `icon.tsx`의 `chart`는 유지(미사용). |
+| 주요 경로 | `src/components/ui/stats-chart-icon.tsx`, `src/app/index.tsx` |
+| 결과 | 이후 항목에서 Icon 내 fill 방식으로 되돌림·전용 파일 삭제. |
+| 확인 | 타입·실기기 미확인. |
+| 단정 금지 | `미검증`: 실기기에서 가시성·대비(특히 accentTint 배경 위) 미확인. |
+| 성능·주의 | SVG Rect 3개·정적. 홈 헤더 1곳만. 부담 무시 가능 수준. |
+
 ### 2026-08-12 23:40 — 탭 2→1 단일면(홈) 축소 (방식 A: 상태 스와프)
 
 | 항목 | 내용 |

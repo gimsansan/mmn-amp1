@@ -1,41 +1,52 @@
-import Constants from 'expo-constants';
-import { useCallback, useEffect, useState } from 'react';
-import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Constants from "expo-constants";
+import { useCallback, useEffect, useState } from "react";
+import {
+  BackHandler,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { DEFAULT_CARRIER_HZ } from '@/audio/amTone';
-import { DEFAULT_REFERENCE_HZ } from '@/audio/pureTone';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Card, CardDivider } from '@/components/ui/card';
-import { Icon, type IconName } from '@/components/ui/icon';
-import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { AmSessionScreen } from '@/training/AmSessionScreen';
-import { FreqSessionScreen } from '@/training/FreqSessionScreen';
-import { ListeningCheckScreen } from '@/training/ListeningCheckScreen';
-import { PitchCompareScreen } from '@/training/pitch2afc/PitchCompareScreen';
+import { DEFAULT_CARRIER_HZ } from "@/audio/amTone";
+import { DEFAULT_REFERENCE_HZ } from "@/audio/pureTone";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Card, CardDivider } from "@/components/ui/card";
+import { Icon, type IconName } from "@/components/ui/icon";
+import {
+  BottomTabInset,
+  MaxContentWidth,
+  Radius,
+  Spacing,
+} from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { AmSessionScreen } from "@/training/AmSessionScreen";
+import { FreqSessionScreen } from "@/training/FreqSessionScreen";
+import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
+import { PitchCompareScreen } from "@/training/pitch2afc/PitchCompareScreen";
 import {
   SessionHistoryScreen,
   peekLatestSession,
   type LatestSessionPeek,
-} from '@/training/SessionHistoryScreen';
-import { listSavedSessions } from '@/training/sessionStore';
+} from "@/training/SessionHistoryScreen";
+import { listSavedSessions } from "@/training/sessionStore";
 
 // 'stats' = 통계 화면(탭 제거 → 홈 안에서 상태 스와프로 진입).
-type Track = 'picker' | 'pitch2' | 'freq' | 'am' | 'stats';
+type Track = "picker" | "pitch2" | "freq" | "am" | "stats";
 
-const APP_DISPLAY_NAME = '청능 연습';
+const APP_DISPLAY_NAME = "청능 연습";
 
 /** 듣기 준비 화면 제목(훈련 트랙만). */
-const TRACK_TITLE: Record<'pitch2' | 'freq' | 'am', string> = {
-  pitch2: '높낮이 비교',
-  freq: '다른 음 찾기',
-  am: '떨림 찾기',
+const TRACK_TITLE: Record<"pitch2" | "freq" | "am", string> = {
+  pitch2: "높낮이 비교",
+  freq: "다른 음 찾기",
+  am: "떨림 찾기",
 };
 
 type TrackOption = {
-  track: Exclude<Track, 'picker'>;
+  track: Exclude<Track, "picker">;
   icon: IconName;
   title: string;
   description: string;
@@ -49,30 +60,30 @@ type TrackSection = {
 // §4-6: 훈련 3종을 계열별 섹션으로 묶는다. 음고 2(높낮이·다른 음) / 떨림 1(포락).
 const TRAINING_SECTIONS: readonly TrackSection[] = [
   {
-    label: '음고',
+    label: "음고",
     options: [
       {
-        track: 'pitch2',
-        icon: 'wave',
-        title: '높낮이 비교',
-        description: '두 소리 중 어느 쪽이 높은지 맞히는 연습',
+        track: "pitch2",
+        icon: "wave",
+        title: "높낮이 비교",
+        description: "두 소리 중 어느 쪽이 높은지 맞히는 연습",
       },
       {
-        track: 'freq',
-        icon: 'wave',
-        title: '다른 음 찾기',
-        description: '조금 다른 음높이를 찾는 연습',
+        track: "freq",
+        icon: "wave",
+        title: "다른 음 찾기",
+        description: "조금 다른 음높이를 찾는 연습",
       },
     ],
   },
   {
-    label: '떨림',
+    label: "떨림",
     options: [
       {
-        track: 'am',
-        icon: 'ripple',
-        title: '떨림 찾기',
-        description: '소리가 떨리는지 찾는 연습',
+        track: "am",
+        icon: "ripple",
+        title: "떨림 찾기",
+        description: "소리가 떨리는지 찾는 연습",
       },
     ],
   },
@@ -84,7 +95,7 @@ const TRAINING_SECTIONS: readonly TrackSection[] = [
  */
 export default function ExploreScreen() {
   const theme = useTheme();
-  const [track, setTrack] = useState<Track>('picker');
+  const [track, setTrack] = useState<Track>("picker");
   /**
    * 이번 진입에서 듣기 준비를 지났는지. 트랙을 고를 때마다 다시 확인한다
    * — 기기·볼륨은 세션 사이에 바뀔 수 있으므로.
@@ -92,10 +103,10 @@ export default function ExploreScreen() {
   const [checked, setChecked] = useState(false);
   /** 홈 상단 peek 카드용 최근 세션 요약. 기록 없으면 null(카드 숨김). */
   const [peek, setPeek] = useState<LatestSessionPeek | null>(null);
-  const version = Constants.expoConfig?.version ?? '1.0.0';
+  const version = Constants.expoConfig?.version ?? "1.0.0";
 
   const backToPicker = useCallback(() => {
-    setTrack('picker');
+    setTrack("picker");
     setChecked(false);
   }, []);
 
@@ -111,7 +122,7 @@ export default function ExploreScreen() {
   // 홈으로 돌아올 때마다 최근 세션을 다시 읽어 peek을 갱신한다
   // (세션 종료·통계에서 삭제 후에도 반영되도록).
   useEffect(() => {
-    if (track !== 'picker') {
+    if (track !== "picker") {
       return;
     }
     let alive = true;
@@ -134,10 +145,10 @@ export default function ExploreScreen() {
   // 탭 바를 없앴으므로 안드로이드 하드웨어 뒤로가기를 직접 처리한다:
   // 훈련·통계 화면에서는 앱을 종료하지 않고 연습 목록으로 되돌린다.
   useEffect(() => {
-    if (track === 'picker') {
+    if (track === "picker") {
       return;
     }
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       backToPicker();
       return true;
     });
@@ -151,16 +162,23 @@ export default function ExploreScreen() {
         accessibilityRole="button"
         accessibilityLabel={`${option.title} — ${option.description}`}
         onPress={() => openTrack(option.track)}
-        style={({ pressed }) => [styles.cardPress, pressed && styles.pressed]}>
+        style={({ pressed }) => [styles.cardPress, pressed && styles.pressed]}
+      >
         <Card style={styles.card}>
-          <View style={[styles.cardIcon, { backgroundColor: theme.accentTint }]}>
+          <View
+            style={[styles.cardIcon, { backgroundColor: theme.accentTint }]}
+          >
             <Icon name={option.icon} size={22} color={theme.accent} />
           </View>
           <View style={styles.cardText}>
             <ThemedText type="smallBold" style={styles.cardTitle}>
               {option.title}
             </ThemedText>
-            <ThemedText themeColor="textSecondary" type="small" style={styles.cardCaption}>
+            <ThemedText
+              themeColor="textSecondary"
+              type="small"
+              style={styles.cardCaption}
+            >
               {option.description}
             </ThemedText>
           </View>
@@ -171,10 +189,10 @@ export default function ExploreScreen() {
   );
 
   // 훈련 트랙은 듣기 준비를 한 번 지난 뒤에 들어간다(음고·떨림 공통 — 화면 중복 없음).
-  if ((track === 'pitch2' || track === 'freq' || track === 'am') && !checked) {
+  if ((track === "pitch2" || track === "freq" || track === "am") && !checked) {
     const title = TRACK_TITLE[track];
     // ① 떨림 찾기만 반송파, 음고 트랙(높낮이·다른 음)은 기준음을 미리 들려준다.
-    const sampleHz = track === 'am' ? DEFAULT_CARRIER_HZ : DEFAULT_REFERENCE_HZ;
+    const sampleHz = track === "am" ? DEFAULT_CARRIER_HZ : DEFAULT_REFERENCE_HZ;
     return (
       <ListeningCheckScreen
         trackTitle={title}
@@ -185,21 +203,21 @@ export default function ExploreScreen() {
     );
   }
 
-  if (track === 'pitch2') {
+  if (track === "pitch2") {
     return <PitchCompareScreen onBack={backToPicker} />;
   }
 
-  if (track === 'freq') {
+  if (track === "freq") {
     return <FreqSessionScreen onBack={backToPicker} />;
   }
 
-  if (track === 'am') {
+  if (track === "am") {
     return <AmSessionScreen onBack={backToPicker} />;
   }
 
   // 통계 = 별도 탭 대신 홈 안에서 스와프. push가 아니라 매 진입 시 마운트되므로
   // SessionHistoryScreen의 useEffect가 다시 돌아 자동 갱신된다.
-  if (track === 'stats') {
+  if (track === "stats") {
     return <SessionHistoryScreen onBack={backToPicker} />;
   }
 
@@ -209,7 +227,8 @@ export default function ExploreScreen() {
         <ScrollView
           style={styles.fill}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.top}>
             <View style={styles.headerRow}>
               <ThemedText type="screenTitle">연습 선택</ThemedText>
@@ -217,17 +236,25 @@ export default function ExploreScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="연습 통계 보기"
-                onPress={() => openTrack('stats')}
+                onPress={() => openTrack("stats")}
                 hitSlop={8}
                 style={({ pressed }) => [
                   styles.statsButton,
-                  { backgroundColor: theme.accentTint },
+                  {
+                    backgroundColor: theme.accentTint,
+                    borderColor: theme.accentBorder,
+                  },
                   pressed && styles.pressed,
-                ]}>
-                <Icon name="chart" size={20} color={theme.accent} />
+                ]}
+              >
+                <Icon name="chart" size={28} color={theme.accent} />
               </Pressable>
             </View>
-            <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+            <ThemedText
+              themeColor="textSecondary"
+              type="small"
+              style={styles.caption}
+            >
               웰니스·훈련 · 병원 검사·진단을 대신하지 않아요
             </ThemedText>
 
@@ -236,14 +263,26 @@ export default function ExploreScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`최근 연습 ${peek.trackTitle} · 전체 통계 보기`}
-                onPress={() => openTrack('stats')}
-                style={({ pressed }) => [styles.peekPress, pressed && styles.pressed]}>
+                onPress={() => openTrack("stats")}
+                style={({ pressed }) => [
+                  styles.peekPress,
+                  pressed && styles.pressed,
+                ]}
+              >
                 <Card style={styles.peekCard}>
                   <View style={styles.peekText}>
-                    <ThemedText themeColor="textMuted" type="small" style={styles.peekLabel}>
+                    <ThemedText
+                      themeColor="textMuted"
+                      type="small"
+                      style={styles.peekLabel}
+                    >
                       최근 연습 · {peek.savedAt}
                     </ThemedText>
-                    <ThemedText type="smallBold" numberOfLines={1} style={styles.peekValue}>
+                    <ThemedText
+                      type="smallBold"
+                      numberOfLines={1}
+                      style={styles.peekValue}
+                    >
                       {peek.trackTitle} · {peek.meanLabel} {peek.meanValue}
                     </ThemedText>
                   </View>
@@ -260,10 +299,13 @@ export default function ExploreScreen() {
                   <ThemedText
                     themeColor="textSecondary"
                     type="smallBold"
-                    style={styles.sectionLabel}>
+                    style={styles.sectionLabel}
+                  >
                     {section.label}
                   </ThemedText>
-                  <View style={styles.list}>{section.options.map(renderCard)}</View>
+                  <View style={styles.list}>
+                    {section.options.map(renderCard)}
+                  </View>
                 </View>
               ))}
             </View>
@@ -279,9 +321,13 @@ export default function ExploreScreen() {
                 </ThemedText>
               </View>
               <CardDivider />
-              <ThemedText themeColor="textSecondary" type="small" style={styles.appInfoBody}>
-                이 앱은 의료기기가 아니에요. 질병의 진단·치료·예방에 쓸 수 없고, 소리를 듣고
-                견주어 보는 웰니스·훈련 콘텐츠예요.
+              <ThemedText
+                themeColor="textSecondary"
+                type="small"
+                style={styles.appInfoBody}
+              >
+                이 앱은 의료기기가 아니에요. 질병의 진단·치료·예방에 쓸 수 없고,
+                소리를 듣고 견주어 보는 웰니스·훈련 콘텐츠예요.
               </ThemedText>
             </Card>
           </View>
@@ -298,8 +344,8 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
+    alignSelf: "center",
+    width: "100%",
   },
   scrollContent: {
     flexGrow: 1,
@@ -311,16 +357,17 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   statsButton: {
-    width: 40,
+    width: 60,
     height: 40,
     borderRadius: Radius.small + 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
   caption: {
     fontSize: 12,
@@ -331,8 +378,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing.one,
   },
   peekCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.two,
     paddingVertical: Spacing.three - 2,
   },
@@ -369,8 +416,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.large - 2,
   },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.three - 2,
     paddingVertical: Spacing.three + 2,
   },
@@ -379,8 +426,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: Radius.small + 1,
     flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   cardText: {
     flexShrink: 1,
@@ -399,16 +446,16 @@ const styles = StyleSheet.create({
   },
   appInfo: {
     // 카드가 적을 땐 하단으로 밀고, 많아지면 스크롤된다.
-    marginTop: 'auto',
+    marginTop: "auto",
     paddingTop: Spacing.four,
   },
   appInfoCard: {
     gap: Spacing.three - 4,
   },
   appInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   appInfoBody: {
     fontSize: 12.5,

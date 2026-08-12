@@ -7,6 +7,40 @@
 
 ---
 
+## 인계 — 2026-08-13 01:52
+
+새 채팅 AI용. 사용자는 맥락 앎 → 장문 금지. **탭 2→1(단일 홈)은 이미 구현됨. 이번 세션 = 통계 헤더 버튼 발견성·탭 면적 다듬기.**
+
+### 합의·현재 상태
+- `_layout.tsx` = `Stack`(headerShown:false). 탭 바 없음. `index.tsx`의 `track`에 `'stats'` → `SessionHistoryScreen` 스와프.
+- 통계 진입 2경로: 헤더 우측 **stats 버튼** + **peek 카드**(그래프 없음).
+- 통계 아이콘: 전용 `StatsChartIcon` 시도 후 **철회** → `Icon` `chart`를 **막대별 fill**로(기준선 stroke=`color`, 막대=`Colors.light` accent/highlight/positive). `chart`만 다색 예외.
+- 버튼 UI(사용자 손터치 포함): `statsButton` **60×40**, `borderWidth: 2`, `accentTint`+`accentBorder`, 아이콘 `size={28}`. 오른쪽 여백 유지·가로로 넓혀 탭 면적 확보.
+
+### 핵심 경로
+- `src/app/index.tsx` — Pressable `statsButton` ~236–251 · 스타일 ~364–371
+- `src/components/ui/icon.tsx` — `name === 'chart'`
+- `docs/impl-log.md` — 2026-08-13 통계 관련 항목
+
+### 한 일 / 안 한 일
+- 한 일: 다색 chart · 보더 · 버튼/아이콘 크기 조정 · 전용 SVG 삭제.
+- 안 한 일: 커밋 · 실기기 검증 · `icon.tsx`의 미사용 단색 chart 정리(이미 다색으로 교체됨) · peek UX 추가 변경.
+
+### 다음 작업
+1. 실기기: 통계 버튼 발견성·탭 면적·대비(accentTint 위 다색)·진입/뒤로/peek.
+2. 문제 없으면 커밋 여부는 사용자 확인 후.
+3. (선택) 보더 `2` vs `1.5`·아이콘 `28`이 과하면 미세 조정.
+
+### 단정 금지
+- `미검증`: 실기기 가시성·탭 히트 체감 미확인.
+- `주의`: `chart`만 다색 fill — 단색 선 아이콘 세트 규칙과 어긋남(의도적).
+- `추정`: 리빌드 불필요(JS/SVG만) — 미실측이지만 네이티브 변경 없음.
+
+### 인계 규칙
+- **추가+시각** · 새 창: `@docs/handoff.md` + 「인계 이어서」.
+
+---
+
 ## 인계 — 2026-08-12 23:25
 
 새 채팅 AI용. 사용자는 맥락 앎 → 장문 금지. **이번 세션 = 하단 탭 2→1(단일면) 축소 설계 합의 완료, 구현은 아직 시작 안 함.** 사용자가 "제안대로 한 탭으로 수정" 지시 → 이 인계 직후 구현 예정.

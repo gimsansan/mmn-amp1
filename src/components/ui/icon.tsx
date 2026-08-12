@@ -1,5 +1,7 @@
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
+import { Colors } from '@/constants/theme';
+
 export type IconName =
   /** 앱 상징(귀·나선). */
   | 'logo'
@@ -9,7 +11,7 @@ export type IconName =
   | 'ripple'
   /** 연습 기록 — 목록. */
   | 'list'
-  /** 연습 통계 — 막대 그래프. */
+  /** 연습 통계 — 다색 채움 막대(예외: 단색 stroke 아님). */
   | 'chart'
   | 'check'
   | 'headphones'
@@ -55,7 +57,13 @@ export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: Readonly<Ico
       {name === 'list' ? <Path d="M4 5h16M4 12h16M4 19h10" {...stroke} /> : null}
 
       {name === 'chart' ? (
-        <Path d="M4 20h16M7 20v-5M12 20v-9M17 20v-13" {...stroke} />
+        <>
+          {/* 통계 진입점용 — 막대별 fill. color prop은 기준선에만 쓴다. */}
+          <Path d="M4 20h16" {...stroke} />
+          <Rect x="5.5" y="14" width="3" height="6" rx="0.8" fill={Colors.light.accent} />
+          <Rect x="10.5" y="9" width="3" height="11" rx="0.8" fill={Colors.light.highlight} />
+          <Rect x="15.5" y="5" width="3" height="15" rx="0.8" fill={Colors.light.positive} />
+        </>
       ) : null}
 
       {name === 'check' ? <Path d="M20 6L9 17l-5-5" {...stroke} strokeWidth={strokeWidth + 0.4} /> : null}
