@@ -12,15 +12,8 @@ export default function AppTabs() {
       backgroundColor={colors.surface}
       indicatorColor={colors.accentTint}
       labelStyle={{ color: colors.textMuted, selected: { color: colors.accent } }}>
+      {/* 2탭 축소: 홈·설정 제거. 앱 정보는 연습 하단, 기록 삭제는 통계 하단으로 이동. */}
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>홈</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="explore">
         <NativeTabs.Trigger.Label>연습</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
@@ -28,15 +21,10 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      {/* 통계·설정은 전용 PNG 자산이 없어 시스템 심볼(Android Material · iOS SF)로 그린다. */}
+      {/* 통계는 전용 PNG 자산이 없어 시스템 심볼(Android Material · iOS SF)로 그린다. */}
       <NativeTabs.Trigger name="stats">
         <NativeTabs.Trigger.Label>통계</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="chart.bar" md="bar_chart" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="settings">
-        <NativeTabs.Trigger.Label>설정</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="gearshape" md="settings" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

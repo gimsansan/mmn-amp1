@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -17,6 +17,7 @@ import { SummaryCard, SummaryCardHeader } from "@/training/SummaryCard";
 import { TrendChart, type TrendPoint } from "@/training/TrendChart";
 import { endReasonLabel } from "@/training/freqSession";
 import {
+  clearSavedSessions,
   listSavedSessions,
   type SavedSessionRecord,
   type SessionTrack,
@@ -215,7 +216,7 @@ function AggregateCard({ data }: Readonly<{ data: Aggregate }>) {
         type="small"
         style={styles.aggregateNote}
       >
-        정답률은 참고용이에요 · 점수·청력 검사·진단 결과 아님
+        정답률은 참고용이에요
       </ThemedText>
     </Card>
   );
@@ -313,8 +314,12 @@ function TrackChips({
  * 나중에 지우기 쉽게 **이 컴포넌트 한 곳**에만 둔다.
  * (`TrendGraphCard`의 `<ScoreFraming/>` 호출을 빼면 제거 완료.)
  *
- * 대표값은 작을수록 잘함 → 최근값이 처음보다 작으면 「개선」(하강 화살표).
+ * 대표값은 작을수록 잘함 → 최신값이 기준보다 작으면 「개선」.
+ * 기준(baseline): **최신 1회를 뺀 직전 N회 평균**. 점이 많아도 초반 1점에 덜 흔들린다.
+ * 폴백: 평균용 점이 N개 미만이면 **처음↔최근** 단순 비교(A).
  */
+const SCORE_BASELINE_WINDOW = 3;
+
 function ScoreFraming({
   points,
   formatPlain,
@@ -326,10 +331,25 @@ function ScoreFraming({
   if (points.length < 2) {
     return null;
   }
-  const first = points[0].value;
-  const last = points[points.length - 1].value;
-  const improved = last < first;
-  const delta = Math.abs(first - last);
+  const last = points.at(-1)!.value;
+  const prior = points.slice(0, -1); // 최신 제외
+  const useAverage = prior.length >= SCORE_BASELINE_WINDOW;
+
+  let baseline: number;
+  let subText: string;
+  if (useAverage) {
+    const window = prior.slice(-SCORE_BASELINE_WINDOW);
+    baseline = window.reduce((sum, p) => sum + p.value, 0) / window.length;
+    subText = `최근 ${SCORE_BASELINE_WINDOW}회 평균 ${formatPlain(
+      baseline,
+    )} → 최근 ${formatPlain(last)}`;
+  } else {
+    baseline = points[0].value;
+    subText = `처음 ${formatPlain(baseline)} → 최근 ${formatPlain(last)}`;
+  }
+
+  const improved = last < baseline;
+  const delta = Math.abs(baseline - last);
   const deltaText = Number.isInteger(delta) ? `${delta}` : delta.toFixed(1);
 
   return (
@@ -348,7 +368,7 @@ function ScoreFraming({
         </ThemedText>
       </View>
       <ThemedText themeColor="textMuted" type="small" style={styles.framingSub}>
-        {`처음 ${formatPlain(first)} → 최근 ${formatPlain(last)}`}
+        {subText}
       </ThemedText>
     </View>
   );
@@ -463,6 +483,7 @@ export function SessionHistoryScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [graphTrackA, setGraphTrackA] = useState<GraphATrack>("pitch2");
+  const [clearing, setClearing] = useState(false);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -483,6 +504,33 @@ export function SessionHistoryScreen({
   useEffect(() => {
     reload();
   }, [reload]);
+
+  // 설정 탭 제거 → 「연습 기록 전체 삭제」를 통계 화면 하단으로 이동(데이터 성격 일치).
+  const doClear = useCallback(() => {
+    setClearing(true);
+    void clearSavedSessions()
+      .then(() => {
+        Alert.alert("완료", "이 기기의 연습 기록을 지웠어요.");
+        reload();
+      })
+      .catch(() => {
+        Alert.alert("오류", "기록을 지우지 못했어요.");
+      })
+      .finally(() => {
+        setClearing(false);
+      });
+  }, [reload]);
+
+  const confirmClear = useCallback(() => {
+    Alert.alert(
+      "연습 기록 삭제",
+      "이 기기에 저장된 연습 기록을 모두 지울까요? 되돌릴 수 없어요.",
+      [
+        { text: "취소", style: "cancel" },
+        { text: "삭제", style: "destructive", onPress: doClear },
+      ],
+    );
+  }, [doClear]);
 
   const hasRows = rows.length > 0;
 
@@ -522,6 +570,7 @@ export function SessionHistoryScreen({
             themeColor="textSecondary"
             type="small"
             style={styles.caption}
+            numberOfLines={1}
           >
             이 기기에만 저장 · 점수·청력 검사·진단 결과 아님
           </ThemedText>
@@ -563,6 +612,17 @@ export function SessionHistoryScreen({
           <ActionButton label="새로고침" onPress={reload} />
           {onBack ? <ActionButton label="연습 목록" onPress={onBack} /> : null}
         </View>
+
+        {/* 데이터 관리: 되돌릴 수 없으므로 하단 분리 + 확인 Alert로 오탭 방지. */}
+        <View style={styles.dangerZone}>
+          <CardDivider />
+          <ActionButton
+            label={clearing ? "지우는 중…" : "연습 기록 전체 삭제"}
+            disabled={clearing || !hasRows}
+            fill={false}
+            onPress={confirmClear}
+          />
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -589,8 +649,6 @@ const styles = StyleSheet.create({
   caption: {
     fontSize: 11.5,
     lineHeight: 17,
-    // 시안처럼 제목 아래 좁은 폭으로 둔다(오른쪽 여백 확보).
-    maxWidth: 220,
   },
   notice: {
     textAlign: "center",
@@ -696,6 +754,9 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: "row",
+    gap: Spacing.three - 4,
+  },
+  dangerZone: {
     gap: Spacing.three - 4,
   },
 });
