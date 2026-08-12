@@ -45,6 +45,19 @@
 
 ## 로그
 
+### 2026-08-12 23:40 — 탭 2→1 단일면(홈) 축소 (방식 A: 상태 스와프)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / UI |
+| 근거·결정 | 사용자: "제안대로 한 탭으로 수정" + 구현 방식 **A(상태 스와프)** 선택. 기존 `index.tsx`가 이미 `track` 상태 머신이라 변경 최소·기존 패턴 일치. 새 브랜치 `feat/single-tab-home`에서 작업. |
+| 변경 요약 | ① `_layout.tsx`: `NativeTabs`(app-tabs) → `Stack`(headerShown:false)로 교체, 탭 바 제거. ② `index.tsx`: `Track`에 `'stats'` 추가 → `SessionHistoryScreen`을 홈 안에서 스와프 렌더(`onBack=backToPicker`). 헤더 우측 **통계 아이콘**(`chart`) + 홈 상단 **peek 카드**(최근 세션 1줄 요약, 그래프 없음) 두 진입점. 홈 복귀 시 `listSavedSessions`로 peek 갱신. `BackHandler`로 안드로이드 하드웨어 뒤로가기 → 연습 목록 복귀. ③ `icon.tsx`: `chart`(막대 그래프) 추가. ④ `SessionHistoryScreen.tsx`: `peekLatestSession`/`LatestSessionPeek` export(내부 `trackView` 재사용, 중복 없음). ⑤ 삭제: `app-tabs.tsx`·`app-tabs.web.tsx`·`stats.tsx`(탭·구 route). |
+| 주요 경로 | `src/app/_layout.tsx`, `src/app/index.tsx`, `src/components/ui/icon.tsx`, `src/training/SessionHistoryScreen.tsx` |
+| 결과 | `tsc --noEmit` 0 · 편집 파일 린트 0. 리빌드 불필요(JS 라우팅·SVG만). |
+| 확인 | 타입·린트만. 실기기 미확인. |
+| 단정 금지 | `미검증`: 실기기에서 통계 진입/뒤로(하드웨어 back 포함)·peek 표시·자동 갱신·통계 push 마운트 재실행 미확인. `추정`: `NativeTabs`(unstable) 사용 제거는 JS만이라 리빌드 불필요로 보이나 다른 네이티브 설정 영향 미실측. `주의`: 하드웨어 back 핸들러가 훈련 세션 화면에서도 연습 목록으로 되돌림(세션 진행 상태 초기화) — 기존 `onBack` 버튼과 동일 동작이라 의도적. |
+| 성능·주의 | peek는 `Card` 1개·정적, 홈 복귀 시 1회 `listSavedSessions`만. 통계는 매 진입 마운트(push 아님)라 재계산 발생하나 기록 50건 상한이라 부담 낮음. |
+
 ### 2026-08-12 23:25 — 인계문 작성·저장 (탭 2→1 단일면 설계)
 
 | 항목 | 내용 |

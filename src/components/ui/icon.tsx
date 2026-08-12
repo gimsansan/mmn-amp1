@@ -9,6 +9,8 @@ export type IconName =
   | 'ripple'
   /** 연습 기록 — 목록. */
   | 'list'
+  /** 연습 통계 — 막대 그래프. */
+  | 'chart'
   | 'check'
   | 'headphones'
   | 'speaker'
@@ -51,6 +53,10 @@ export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: Readonly<Ico
       ) : null}
 
       {name === 'list' ? <Path d="M4 5h16M4 12h16M4 19h10" {...stroke} /> : null}
+
+      {name === 'chart' ? (
+        <Path d="M4 20h16M7 20v-5M12 20v-9M17 20v-13" {...stroke} />
+      ) : null}
 
       {name === 'check' ? <Path d="M20 6L9 17l-5-5" {...stroke} strokeWidth={strokeWidth + 0.4} /> : null}
 

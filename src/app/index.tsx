@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
-import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DEFAULT_CARRIER_HZ } from '@/audio/amTone';
@@ -15,8 +15,15 @@ import { AmSessionScreen } from '@/training/AmSessionScreen';
 import { FreqSessionScreen } from '@/training/FreqSessionScreen';
 import { ListeningCheckScreen } from '@/training/ListeningCheckScreen';
 import { PitchCompareScreen } from '@/training/pitch2afc/PitchCompareScreen';
+import {
+  SessionHistoryScreen,
+  peekLatestSession,
+  type LatestSessionPeek,
+} from '@/training/SessionHistoryScreen';
+import { listSavedSessions } from '@/training/sessionStore';
 
-type Track = 'picker' | 'pitch2' | 'freq' | 'am';
+// 'stats' = 통계 화면(탭 제거 → 홈 안에서 상태 스와프로 진입).
+type Track = 'picker' | 'pitch2' | 'freq' | 'am' | 'stats';
 
 const APP_DISPLAY_NAME = '청능 연습';
 
@@ -83,6 +90,8 @@ export default function ExploreScreen() {
    * — 기기·볼륨은 세션 사이에 바뀔 수 있으므로.
    */
   const [checked, setChecked] = useState(false);
+  /** 홈 상단 peek 카드용 최근 세션 요약. 기록 없으면 null(카드 숨김). */
+  const [peek, setPeek] = useState<LatestSessionPeek | null>(null);
   const version = Constants.expoConfig?.version ?? '1.0.0';
 
   const backToPicker = useCallback(() => {
@@ -98,6 +107,42 @@ export default function ExploreScreen() {
   const passCheck = useCallback(() => {
     setChecked(true);
   }, []);
+
+  // 홈으로 돌아올 때마다 최근 세션을 다시 읽어 peek을 갱신한다
+  // (세션 종료·통계에서 삭제 후에도 반영되도록).
+  useEffect(() => {
+    if (track !== 'picker') {
+      return;
+    }
+    let alive = true;
+    void listSavedSessions()
+      .then((rows) => {
+        if (alive) {
+          setPeek(peekLatestSession(rows));
+        }
+      })
+      .catch(() => {
+        if (alive) {
+          setPeek(null);
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, [track]);
+
+  // 탭 바를 없앴으므로 안드로이드 하드웨어 뒤로가기를 직접 처리한다:
+  // 훈련·통계 화면에서는 앱을 종료하지 않고 연습 목록으로 되돌린다.
+  useEffect(() => {
+    if (track === 'picker') {
+      return;
+    }
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      backToPicker();
+      return true;
+    });
+    return () => sub.remove();
+  }, [track, backToPicker]);
 
   const renderCard = useCallback(
     (option: TrackOption) => (
@@ -152,6 +197,12 @@ export default function ExploreScreen() {
     return <AmSessionScreen onBack={backToPicker} />;
   }
 
+  // 통계 = 별도 탭 대신 홈 안에서 스와프. push가 아니라 매 진입 시 마운트되므로
+  // SessionHistoryScreen의 useEffect가 다시 돌아 자동 갱신된다.
+  if (track === 'stats') {
+    return <SessionHistoryScreen onBack={backToPicker} />;
+  }
+
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
@@ -160,10 +211,48 @@ export default function ExploreScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
           <View style={styles.top}>
-            <ThemedText type="screenTitle">연습 선택</ThemedText>
+            <View style={styles.headerRow}>
+              <ThemedText type="screenTitle">연습 선택</ThemedText>
+              {/* 탭 제거 → 통계 진입점을 헤더 우측 아이콘으로 노출(발견성). */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="연습 통계 보기"
+                onPress={() => openTrack('stats')}
+                hitSlop={8}
+                style={({ pressed }) => [
+                  styles.statsButton,
+                  { backgroundColor: theme.accentTint },
+                  pressed && styles.pressed,
+                ]}>
+                <Icon name="chart" size={20} color={theme.accent} />
+              </Pressable>
+            </View>
             <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
               웰니스·훈련 · 병원 검사·진단을 대신하지 않아요
             </ThemedText>
+
+            {/* 최근 연습 1줄 요약(그래프 없음) → 통계 화면으로 이동. 발견성 두 번째 경로. */}
+            {peek ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`최근 연습 ${peek.trackTitle} · 전체 통계 보기`}
+                onPress={() => openTrack('stats')}
+                style={({ pressed }) => [styles.peekPress, pressed && styles.pressed]}>
+                <Card style={styles.peekCard}>
+                  <View style={styles.peekText}>
+                    <ThemedText themeColor="textMuted" type="small" style={styles.peekLabel}>
+                      최근 연습 · {peek.savedAt}
+                    </ThemedText>
+                    <ThemedText type="smallBold" numberOfLines={1} style={styles.peekValue}>
+                      {peek.trackTitle} · {peek.meanLabel} {peek.meanValue}
+                    </ThemedText>
+                  </View>
+                  <ThemedText type="smallBold" style={{ color: theme.accent }}>
+                    전체 보기 ›
+                  </ThemedText>
+                </Card>
+              </Pressable>
+            ) : null}
 
             <View style={styles.sections}>
               {TRAINING_SECTIONS.map((section) => (
@@ -221,9 +310,44 @@ const styles = StyleSheet.create({
   top: {
     gap: Spacing.two,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.small + 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   caption: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  peekPress: {
+    borderRadius: Radius.large - 2,
+    marginTop: Spacing.one,
+  },
+  peekCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three - 2,
+  },
+  peekText: {
+    flexShrink: 1,
+    flexGrow: 1,
+    gap: 2,
+  },
+  peekLabel: {
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  peekValue: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   sections: {
     marginTop: Spacing.three,

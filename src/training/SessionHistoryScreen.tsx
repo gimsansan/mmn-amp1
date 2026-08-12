@@ -103,6 +103,31 @@ function trackView(record: SavedSessionRecord): TrackView {
   };
 }
 
+/** 홈 peek 카드용 최근 세션 1줄 요약(대표값). 기록 없으면 null. */
+export type LatestSessionPeek = {
+  trackTitle: string;
+  meanLabel: string;
+  meanValue: string;
+  savedAt: string;
+};
+
+/** 최신이 앞인 목록에서 가장 최근 세션의 peek 요약을 뽑는다. 진단·점수 아님. */
+export function peekLatestSession(
+  rows: readonly SavedSessionRecord[],
+): LatestSessionPeek | null {
+  const latest = rows[0];
+  if (!latest) {
+    return null;
+  }
+  const view = trackView(latest);
+  return {
+    trackTitle: view.trackTitle,
+    meanLabel: view.meanLabel,
+    meanValue: view.meanValue,
+    savedAt: formatSavedAt(latest.savedAt),
+  };
+}
+
 function toCardContent(record: SavedSessionRecord): HistoryCardContent {
   const { summary } = record;
   const view = trackView(record);
