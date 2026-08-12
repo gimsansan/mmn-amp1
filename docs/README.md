@@ -21,7 +21,7 @@
 | 카테고리 | 질문 | 문서 |
 |---------|------|------|
 | **① 설계·기준** | 무엇을 왜 만드는가 | `amp-mdt-training-design.md` |
-| **② 환경·실행** | 어떻게 빌드·실행하는가 | `dev-client-setup-context.md`, `cursor-rules-2-vs-3.md` |
+| **② 환경·실행** | 어떻게 빌드·실행하는가 | `dev-client-setup-context.md`, `dev-client-connection-guide.md`, `cursor-rules-2-vs-3.md` |
 | **③ 할 일·상태** | 무엇이 문제이고 지금 어디까지 왔나 | `improvement-backlog.md` (+ `-easy`) |
 | **④ 기록** | 무엇을 했나 / 어떻게 고쳤나 | `impl-log.md`, `fix-reviews.md` |
 | **⑤ 인계** | 새로 오는 사람에게 넘길 맥락 | `handoff.md` |
@@ -37,7 +37,8 @@
 | `amp-mdt-training-design.md` | 갱신 | 훈련·자극 설계, 근거 문헌, 제품 방침 | **왜 이런 과제·절차인가**, 자극 스펙의 의미 |
 | `merge-host-decision.md` | 갱신 | HarmoniTune×mnn 병합 시 **호스트 선택** 개념·저장·기록 방침 | **어느 저장소를 살리는가**(제품 이름과 별개) |
 | `merge-plan-harmonitune.md` | 갱신 | HarmoniTune×mnn 병합 **절차·이식 매핑·순서** | **무엇을 어디로 옮기나**(저장 방침은 host-decision §4.1 링크) |
-| `dev-client-setup-context.md` | 갱신 | 스택·빌드·Metro/Babel·경량화 방침 | **어떻게 돌리는가** |
+| `dev-client-setup-context.md` | 갱신 | 스택·빌드·Metro/Babel·경량화 방침 | **어떻게 돌리는가**(스택·빌드) |
+| `dev-client-connection-guide.md` | 갱신 | USB/WiFi/ADB·Metro URL·실기기 연결 | **실기기에 어떻게 붙는가** |
 | `improvement-backlog.md` | 갱신 | 개선 후보 P0~P3 + 맨 위 **진행 현황 표** | **무엇이 문제인가 · 지금 상태가 어떤가** |
 | `improvement-backlog-easy.md` | 갱신 | 위 문서를 비유로 푼 것 | 없음(설명 전용 — **상태·근거를 여기서 관리하지 않음**) |
 | `impl-log.md` | 누적 | 날짜별 작업 1건 = 표 1개(근거·결정·결과·확인·단정 금지) | **무엇을 언제 했나** |

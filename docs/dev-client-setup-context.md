@@ -75,7 +75,8 @@
 3. **dev client 최초 빌드·설치**: `npx expo run:android`
    - 네이티브 의존성/플러그인이 바뀔 때마다 **재실행(리빌드)** 필요.
 4. **개발 서버 실행**: `npx expo start --dev-client` → 설치된 dev build에서 접속.
-5. **상태 점검(권장)**: `npm run doctor` (= `npx expo-doctor`)
+5. **실기기 연결(USB / WiFi / ADB)**: [`dev-client-connection-guide.md`](./dev-client-connection-guide.md) — Metro URL·`adb reverse`·WiFi ADB 구분.
+6. **상태 점검(권장)**: `npm run doctor` (= `npx expo-doctor`)
 
 ---
 

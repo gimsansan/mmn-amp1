@@ -1,21 +1,26 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { ActionButton } from '@/components/ui/action-button';
-import { Card, CardDivider } from '@/components/ui/card';
-import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { SummaryCard, SummaryCardHeader } from '@/training/SummaryCard';
-import { TrendChart, type TrendPoint } from '@/training/TrendChart';
-import { endReasonLabel } from '@/training/freqSession';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { ActionButton } from "@/components/ui/action-button";
+import { Card, CardDivider } from "@/components/ui/card";
+import {
+  BottomTabInset,
+  MaxContentWidth,
+  Radius,
+  Spacing,
+} from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { SummaryCard, SummaryCardHeader } from "@/training/SummaryCard";
+import { TrendChart, type TrendPoint } from "@/training/TrendChart";
+import { endReasonLabel } from "@/training/freqSession";
 import {
   listSavedSessions,
   type SavedSessionRecord,
   type SessionTrack,
-} from '@/training/sessionStore';
+} from "@/training/sessionStore";
 
 type SessionHistoryScreenProps = {
   onBack?: () => void;
@@ -40,21 +45,21 @@ function formatSavedAt(iso: string): string {
     return iso;
   }
   const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
   return `${y}-${m}-${day} ${hh}:${mm}`;
 }
 
 /** cent 격차 표시(정수 반올림). 값 없음은 '—'. 점수·역치 아님. */
 function centsText(value: number | null): string {
-  return value == null ? '—' : `약 ${Math.round(value)}`;
+  return value == null ? "—" : `약 ${Math.round(value)}`;
 }
 
 /** 변조 깊이(dB) 표시(소수 1자리). 값 없음은 '—'. */
 function depthText(value: number | null): string {
-  return value == null ? '—' : `약 ${value.toFixed(1)}`;
+  return value == null ? "—" : `약 ${value.toFixed(1)}`;
 }
 
 /** 트랙별로 다른 부분만 담는다. 공통 필드는 `toCardContent`에서 채운다. */
@@ -67,21 +72,21 @@ type TrackView = {
 };
 
 function trackView(record: SavedSessionRecord): TrackView {
-  if (record.track === 'freq') {
+  if (record.track === "freq") {
     const { summary } = record;
     return {
-      trackTitle: '다른 음 찾기',
-      meanLabel: '음높이 차이',
+      trackTitle: "다른 음 찾기",
+      meanLabel: "음높이 차이",
       meanValue: centsText(summary.meanReversalDeltaCents),
       easiestValue: centsText(summary.easiestDeltaCents),
       hardestValue: centsText(summary.hardestDeltaCents),
     };
   }
-  if (record.track === 'am') {
+  if (record.track === "am") {
     const { summary } = record;
     return {
-      trackTitle: '떨림 찾기',
-      meanLabel: '떨림 정도',
+      trackTitle: "떨림 찾기",
+      meanLabel: "떨림 정도",
       meanValue: depthText(summary.meanReversalDepthDb),
       easiestValue: depthText(summary.easiestDepthDb),
       hardestValue: depthText(summary.hardestDepthDb),
@@ -89,8 +94,8 @@ function trackView(record: SavedSessionRecord): TrackView {
   }
   const { summary } = record;
   return {
-    trackTitle: '높낮이 비교',
-    meanLabel: '음높이 차이',
+    trackTitle: "높낮이 비교",
+    meanLabel: "음높이 차이",
     meanValue: centsText(summary.meanReversalCents),
     easiestValue: centsText(summary.easiestCents),
     hardestValue: centsText(summary.hardestCents),
@@ -112,9 +117,9 @@ function toCardContent(record: SavedSessionRecord): HistoryCardContent {
 
 /** 트랙 카드 제목(집계 줄에서 재사용). */
 const TRACK_LABEL: Record<SessionTrack, string> = {
-  pitch2: '높낮이 비교',
-  freq: '다른 음 찾기',
-  am: '떨림 찾기',
+  pitch2: "높낮이 비교",
+  freq: "다른 음 찾기",
+  am: "떨림 찾기",
 };
 
 type Aggregate = {
@@ -142,38 +147,51 @@ function computeAggregate(rows: readonly SavedSessionRecord[]): Aggregate {
     totalSessions: rows.length,
     totalTrials,
     totalCorrect,
-    accuracyPct: totalTrials > 0 ? Math.round((totalCorrect / totalTrials) * 100) : null,
+    accuracyPct:
+      totalTrials > 0 ? Math.round((totalCorrect / totalTrials) * 100) : null,
     perTrack,
   };
 }
 
 /** 화면 상단 누적 요약. 세션이 있을 때만 렌더. */
 function AggregateCard({ data }: Readonly<{ data: Aggregate }>) {
-  const trackLine = (['pitch2', 'freq', 'am'] as const)
+  const trackLine = (["pitch2", "freq", "am"] as const)
     .filter((track) => data.perTrack[track] > 0)
     .map((track) => `${TRACK_LABEL[track]} ${data.perTrack[track]}`)
-    .join(' · ');
+    .join(" · ");
 
   return (
     <Card size="large" style={styles.aggregate}>
       <View style={styles.metricRow}>
         <View style={styles.metric}>
           <ThemedText type="metric">{data.totalSessions}</ThemedText>
-          <ThemedText themeColor="textMuted" type="small" style={styles.metricLabel}>
+          <ThemedText
+            themeColor="textMuted"
+            type="small"
+            style={styles.metricLabel}
+          >
             연습 횟수
           </ThemedText>
         </View>
         <View style={styles.metric}>
           <ThemedText type="metric">{data.totalTrials}</ThemedText>
-          <ThemedText themeColor="textMuted" type="small" style={styles.metricLabel}>
+          <ThemedText
+            themeColor="textMuted"
+            type="small"
+            style={styles.metricLabel}
+          >
             푼 문항
           </ThemedText>
         </View>
         <View style={styles.metric}>
           <ThemedText type="metric">
-            {data.accuracyPct == null ? '—' : `${data.accuracyPct}%`}
+            {data.accuracyPct == null ? "—" : `${data.accuracyPct}%`}
           </ThemedText>
-          <ThemedText themeColor="textMuted" type="small" style={styles.metricLabel}>
+          <ThemedText
+            themeColor="textMuted"
+            type="small"
+            style={styles.metricLabel}
+          >
             평균 정답률
           </ThemedText>
         </View>
@@ -182,13 +200,21 @@ function AggregateCard({ data }: Readonly<{ data: Aggregate }>) {
       {trackLine ? (
         <>
           <CardDivider />
-          <ThemedText themeColor="textSecondary" type="small" style={styles.trackLine}>
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.trackLine}
+          >
             {trackLine}
           </ThemedText>
         </>
       ) : null}
 
-      <ThemedText themeColor="textMuted" type="small" style={styles.aggregateNote}>
+      <ThemedText
+        themeColor="textMuted"
+        type="small"
+        style={styles.aggregateNote}
+      >
         정답률은 참고용이에요 · 점수·청력 검사·진단 결과 아님
       </ThemedText>
     </Card>
@@ -201,7 +227,7 @@ function AggregateCard({ data }: Readonly<{ data: Aggregate }>) {
 
 /** 짧은 세션 등으로 대표값이 부족할 때의 안내(용어 순화). */
 const EMPTY_TREND_COPY =
-  '들을 수 있는 최소 차이가 나온 세션이 2회 이상이면 변화를 그려 드립니다';
+  "들을 수 있는 최소 차이가 나온 세션이 2회 이상이면 변화를 그려 드립니다";
 
 /** cent(음 높이 차이) 큰 값 표기. 단위어는 카드가 따로 붙인다. 점수·역치 아님. */
 function centPlain(v: number): string {
@@ -214,21 +240,21 @@ function dbPlain(v: number): string {
 }
 
 function pickPitchCents(record: SavedSessionRecord): number | null {
-  return record.track === 'pitch2' ? record.summary.meanReversalCents : null;
+  return record.track === "pitch2" ? record.summary.meanReversalCents : null;
 }
 
 function pickFreqCents(record: SavedSessionRecord): number | null {
-  return record.track === 'freq' ? record.summary.meanReversalDeltaCents : null;
+  return record.track === "freq" ? record.summary.meanReversalDeltaCents : null;
 }
 
 function pickAmDepthDb(record: SavedSessionRecord): number | null {
-  return record.track === 'am' ? record.summary.meanReversalDepthDb : null;
+  return record.track === "am" ? record.summary.meanReversalDepthDb : null;
 }
 
 /** 최신이 앞인 목록을 **시간순(오래→최근)** 대표값 점들로 바꾼다(값 없음 제외). */
 function collectPoints(
   rows: readonly SavedSessionRecord[],
-  pick: (record: SavedSessionRecord) => number | null
+  pick: (record: SavedSessionRecord) => number | null,
 ): TrendPoint[] {
   const points: TrendPoint[] = [];
   for (let i = rows.length - 1; i >= 0; i -= 1) {
@@ -242,11 +268,11 @@ function collectPoints(
 
 /** 그래프 A(cent) 트랙 선택 칩. pitch2 vs freq는 과제가 달라 겹치지 않고 하나씩 본다. */
 const GRAPH_A_TRACKS = [
-  { key: 'pitch2', label: '높낮이 비교' },
-  { key: 'freq', label: '다른 음 찾기' },
+  { key: "pitch2", label: "높낮이 비교" },
+  { key: "freq", label: "다른 음 찾기" },
 ] as const;
 
-type GraphATrack = (typeof GRAPH_A_TRACKS)[number]['key'];
+type GraphATrack = (typeof GRAPH_A_TRACKS)[number]["key"];
 
 function TrackChips({
   value,
@@ -292,7 +318,10 @@ function TrackChips({
 function ScoreFraming({
   points,
   formatPlain,
-}: Readonly<{ points: readonly TrendPoint[]; formatPlain: (v: number) => string }>) {
+}: Readonly<{
+  points: readonly TrendPoint[];
+  formatPlain: (v: number) => string;
+}>) {
   const theme = useTheme();
   if (points.length < 2) {
     return null;
@@ -315,7 +344,7 @@ function ScoreFraming({
           type="smallBold"
           style={{ color: improved ? theme.positive : theme.accent }}
         >
-          {improved ? `↓ ${deltaText} 개선` : '유지'}
+          {improved ? `${deltaText} 개선` : "유지"}
         </ThemedText>
       </View>
       <ThemedText themeColor="textMuted" type="small" style={styles.framingSub}>
@@ -350,7 +379,11 @@ function TrendGraphCard({
     <Card size="large" style={styles.graphCard}>
       <View style={styles.graphHeader}>
         <View style={styles.graphHeaderLeft}>
-          <ThemedText type="smallBold" themeColor="accent" style={styles.graphTitle}>
+          <ThemedText
+            type="smallBold"
+            themeColor="accent"
+            style={styles.graphTitle}
+          >
             {title}
           </ThemedText>
           {hasEnough && recent != null ? (
@@ -358,7 +391,11 @@ function TrendGraphCard({
               <ThemedText type="metric" style={styles.recentValue}>
                 {formatPlain(recent)}
               </ThemedText>
-              <ThemedText themeColor="textMuted" type="small" style={styles.recentUnit}>
+              <ThemedText
+                themeColor="textMuted"
+                type="small"
+                style={styles.recentUnit}
+              >
                 {unitLabel}
               </ThemedText>
             </View>
@@ -372,12 +409,20 @@ function TrendGraphCard({
       {hasEnough ? (
         <>
           <TrendChart points={points} />
-          <ThemedText themeColor="textSecondary" type="small" style={styles.graphCaption}>
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.graphCaption}
+          >
             {caption}
           </ThemedText>
         </>
       ) : (
-        <ThemedText themeColor="textMuted" type="small" style={styles.graphEmpty}>
+        <ThemedText
+          themeColor="textMuted"
+          type="small"
+          style={styles.graphEmpty}
+        >
           {EMPTY_TREND_COPY}
         </ThemedText>
       )}
@@ -390,7 +435,12 @@ function HistoryCard({ record }: Readonly<{ record: SavedSessionRecord }>) {
 
   return (
     <SummaryCard
-      header={<SummaryCardHeader title={content.trackTitle} savedAt={content.savedAt} />}
+      header={
+        <SummaryCardHeader
+          title={content.trackTitle}
+          savedAt={content.savedAt}
+        />
+      }
       trialCount={content.trialCount}
       correctCount={content.correctCount}
       reversalCount={content.reversalCount}
@@ -412,7 +462,7 @@ export function SessionHistoryScreen({
   const [rows, setRows] = useState<SavedSessionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [graphTrackA, setGraphTrackA] = useState<GraphATrack>('pitch2');
+  const [graphTrackA, setGraphTrackA] = useState<GraphATrack>("pitch2");
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -422,7 +472,7 @@ export function SessionHistoryScreen({
         setRows(next);
       })
       .catch(() => {
-        setError('기록을 불러오지 못했어요');
+        setError("기록을 불러오지 못했어요");
         setRows([]);
       })
       .finally(() => {
@@ -438,7 +488,7 @@ export function SessionHistoryScreen({
 
   const graphAPoints = collectPoints(
     rows,
-    graphTrackA === 'pitch2' ? pickPitchCents : pickFreqCents
+    graphTrackA === "pitch2" ? pickPitchCents : pickFreqCents,
   );
   const amPoints = collectPoints(rows, pickAmDepthDb);
 
@@ -468,7 +518,11 @@ export function SessionHistoryScreen({
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.screenHeader}>
           <ThemedText type="screenTitle">연습 통계</ThemedText>
-          <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.caption}
+          >
             이 기기에만 저장 · 점수·청력 검사·진단 결과 아님
           </ThemedText>
         </View>
@@ -480,7 +534,11 @@ export function SessionHistoryScreen({
         ) : null}
 
         {error ? (
-          <ThemedText themeColor="textSecondary" type="small" style={styles.notice}>
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.notice}
+          >
             {error}
           </ThemedText>
         ) : null}
@@ -517,12 +575,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
+    alignSelf: "center",
+    width: "100%",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
-    alignItems: 'stretch',
+    alignItems: "stretch",
     gap: Spacing.three - 2,
   },
   screenHeader: {
@@ -535,7 +593,7 @@ const styles = StyleSheet.create({
     maxWidth: 220,
   },
   notice: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   list: {
     flex: 1,
@@ -554,9 +612,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   graphHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
     gap: Spacing.two,
   },
   graphHeaderLeft: {
@@ -567,8 +625,8 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
   },
   recentRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    flexDirection: "row",
+    alignItems: "baseline",
     gap: Spacing.one + 2,
   },
   recentValue: {
@@ -581,7 +639,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   framing: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     gap: Spacing.half,
   },
   framingSub: {
@@ -594,7 +652,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
   },
   chipRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.two,
   },
   chip: {
@@ -610,34 +668,34 @@ const styles = StyleSheet.create({
   graphEmpty: {
     fontSize: 12.5,
     lineHeight: 18,
-    textAlign: 'center',
+    textAlign: "center",
     paddingVertical: Spacing.three,
   },
   metricRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   metric: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     gap: Spacing.half,
   },
   metricLabel: {
     fontSize: 11.5,
     lineHeight: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   trackLine: {
     fontSize: 12.5,
     lineHeight: 18,
-    textAlign: 'center',
+    textAlign: "center",
   },
   aggregateNote: {
     fontSize: 11,
     lineHeight: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.three - 4,
   },
 });

@@ -45,6 +45,19 @@
 
 ## 로그
 
+### 2026-08-12 — Dev Client 연결 학습 문서 추가
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / 문서 |
+| 근거·결정 | WiFi 환경 변경·USB reverse·Development servers·기존 WiFi ADB(`tcpip 5555`) 절차가 혼동되어, Metro(8081) vs adb(5555) 구분을 학습용으로 문서화. |
+| 변경 요약 | `docs/dev-client-connection-guide.md` 신설. `docs/README.md`·`dev-client-setup-context.md`에 링크. |
+| 주요 경로 | `docs/dev-client-connection-guide.md`, `docs/README.md`, `docs/dev-client-setup-context.md` |
+| 결과 | 문서만. 코드·네이티브 변경 없음. |
+| 확인 | 대화에서 USB+`127.0.0.1:8081` 연결 성공 맥락 반영. |
+| 단정 금지 | `ERR_STREAM_PREMATURE_CLOSE` 해석·터널 지연은 **관례/추정**. 모든 LAN에서 WiFi Metro 성공은 **미검증**. |
+| 성능·주의 | 없음 |
+
 ### 2026-08-12 — 추이 그래프 UI 목업 채택 + 실기기 확인
 
 | 항목 | 내용 |
