@@ -40,12 +40,14 @@ import type { AmSessionSummary } from '@/training/amSession';
 import type { FreqSessionSummary } from '@/training/freqSession';
 import type { PitchCompareSummary } from '@/training/pitch2afc/pitchSummary';
 import {
-  MAX_SAVED_SESSIONS,
+  MAX_MEASURE_SESSIONS,
+  MAX_PRACTICE_SESSIONS,
   SESSION_RECORD_VERSION,
   appendAmSessionSummary,
   appendFreqSessionSummary,
   appendPitch2SessionSummary,
   clearSavedSessions,
+  isCountedInStats,
   listSavedSessions,
 } from '@/training/sessionStore';
 
@@ -183,16 +185,46 @@ describe('sessionStore — 기존 동작 유지', () => {
     expect(rows.map((r) => r.id)).toEqual([second.id, first.id]);
   });
 
-  it(`${MAX_SAVED_SESSIONS}건을 넘으면 오래된 것부터 버린다`, async () => {
-    for (let i = 0; i < MAX_SAVED_SESSIONS + 3; i++) {
-      await appendFreqSessionSummary(freqSummary(i));
+  it(`측정이 ${MAX_MEASURE_SESSIONS}건을 넘으면 오래된 측정부터 버린다`, async () => {
+    for (let i = 0; i < MAX_MEASURE_SESSIONS + 3; i++) {
+      await appendFreqSessionSummary(freqSummary(i), 'measure');
     }
 
     const rows = await listSavedSessions();
 
-    expect(rows).toHaveLength(MAX_SAVED_SESSIONS);
+    expect(rows).toHaveLength(MAX_MEASURE_SESSIONS);
     // 최신이 앞 → 마지막에 넣은 trialCount가 맨 앞
-    expect(rows[0].summary.trialCount).toBe(MAX_SAVED_SESSIONS + 2);
+    expect(rows[0].summary.trialCount).toBe(MAX_MEASURE_SESSIONS + 2);
+  });
+
+  it(`연습이 ${MAX_PRACTICE_SESSIONS}건을 넘으면 오래된 연습부터 버린다`, async () => {
+    for (let i = 0; i < MAX_PRACTICE_SESSIONS + 3; i++) {
+      await appendFreqSessionSummary(freqSummary(i), 'practice');
+    }
+
+    const rows = await listSavedSessions();
+
+    expect(rows).toHaveLength(MAX_PRACTICE_SESSIONS);
+    expect(rows[0].summary.trialCount).toBe(MAX_PRACTICE_SESSIONS + 2);
+  });
+
+  it('상한은 모드별 독립 — 연습을 많이 해도 측정 이력은 밀려나지 않는다', async () => {
+    // 측정 상한을 꽉 채운다.
+    for (let i = 0; i < MAX_MEASURE_SESSIONS; i++) {
+      await appendFreqSessionSummary(freqSummary(i), 'measure');
+    }
+    // 연습을 상한을 넘겨 쏟아붓는다.
+    for (let i = 0; i < MAX_PRACTICE_SESSIONS + 10; i++) {
+      await appendAmSessionSummary(amSummary(i), 'practice');
+    }
+
+    const rows = await listSavedSessions();
+    const measureCount = rows.filter((r) => r.mode === 'measure').length;
+    const practiceCount = rows.filter((r) => r.mode === 'practice').length;
+
+    expect(measureCount).toBe(MAX_MEASURE_SESSIONS);
+    expect(practiceCount).toBe(MAX_PRACTICE_SESSIONS);
+    expect(rows).toHaveLength(MAX_MEASURE_SESSIONS + MAX_PRACTICE_SESSIONS);
   });
 
   it('저장된 값이 깨져 있으면 빈 목록으로 시작한다', async () => {
@@ -212,6 +244,68 @@ describe('sessionStore — 기존 동작 유지', () => {
   it('초기화하면 목록이 빈다', async () => {
     await appendFreqSessionSummary(freqSummary(3));
     await clearSavedSessions();
+
+    expect(await listSavedSessions()).toEqual([]);
+  });
+});
+
+describe('sessionStore — 연습/측정 모드', () => {
+  it('mode를 주면 그대로 저장한다', async () => {
+    await appendFreqSessionSummary(freqSummary(4), 'practice');
+    await appendAmSessionSummary(amSummary(4), 'measure');
+
+    const rows = await listSavedSessions();
+    const byTrack = Object.fromEntries(rows.map((r) => [r.track, r.mode]));
+
+    expect(byTrack.freq).toBe('practice');
+    expect(byTrack.am).toBe('measure');
+  });
+
+  it('mode를 생략하면 측정으로 저장한다(호환 기본값)', async () => {
+    await appendPitch2SessionSummary(pitch2Summary(4));
+
+    const rows = await listSavedSessions();
+
+    expect(rows[0].mode).toBe('measure');
+  });
+
+  it('isCountedInStats: 연습만 제외, 측정·구버전(mode 없음)은 포함', async () => {
+    const practice = await appendFreqSessionSummary(freqSummary(4), 'practice');
+    const measure = await appendAmSessionSummary(amSummary(4), 'measure');
+
+    const rows = await listSavedSessions();
+    const counted = rows.filter(isCountedInStats).map((r) => r.id);
+
+    expect(counted).toContain(measure.id);
+    expect(counted).not.toContain(practice.id);
+  });
+
+  it('mode가 없는 구버전 레코드는 통계에 포함(측정 간주)', async () => {
+    const legacy = {
+      id: 'legacy-no-mode',
+      track: 'freq' as const,
+      savedAt: '2026-08-07T00:00:00.000Z',
+      schemaVersion: 1,
+      summary: freqSummary(10),
+    };
+    storageMock.__setRaw(STORAGE_KEY, JSON.stringify([legacy]));
+
+    const rows = await listSavedSessions();
+
+    expect(rows[0].mode).toBeUndefined();
+    expect(isCountedInStats(rows[0])).toBe(true);
+  });
+
+  it('mode가 아는 값이 아니면 레코드를 버린다', async () => {
+    const bad = {
+      id: 'bad-mode',
+      track: 'freq' as const,
+      savedAt: '2026-08-07T00:00:00.000Z',
+      schemaVersion: 1,
+      mode: 'exam',
+      summary: freqSummary(10),
+    };
+    storageMock.__setRaw(STORAGE_KEY, JSON.stringify([bad]));
 
     expect(await listSavedSessions()).toEqual([]);
   });

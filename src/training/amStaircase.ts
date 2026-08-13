@@ -7,16 +7,29 @@
 export const MAX_DEPTH_DB = 0;
 
 /**
- * 하한(가장 어려움). 엔진 분해능·파일럿용 임시값.
- * m ≈ 0.01 (−40 dB).
+ * 하한(가장 어려움). −40은 일반인도 감지 불가라 −30으로 완화(설계 목적값, 미검증).
+ * m ≈ 0.032 (−30 dB).
+ * `주의`: 바닥 반전 몰림(역치 뭉개짐)은 −30으로 완화만, 근본 해결 아님.
  */
-export const MIN_DEPTH_DB = -40;
+export const MIN_DEPTH_DB = -30;
 
 export const COARSE_STEP_DB = 6;
 export const FINE_STEP_DB = 2;
 
-/** 이 반전 수 이후부터 fine step. 설계 §6 제안. */
-export const FINE_STEP_AFTER_REVERSALS = 2;
+/**
+ * 3단계 가변 스텝 표(6→4→2, 전환 반전 2·4). freq/pitch2 스케줄과 같은 구조.
+ * `fromReversal` 이상의 반전 횟수에서 해당 `step`을 적용한다.
+ */
+export const STEP_SCHEDULE_DB = [
+  { fromReversal: 0, step: COARSE_STEP_DB },
+  { fromReversal: 2, step: 4 },
+  { fromReversal: 4, step: FINE_STEP_DB },
+] as const;
+
+/**
+ * @deprecated 2단계 시절 상수. 3단계 `STEP_SCHEDULE_DB`로 대체됨(호환용 유지).
+ */
+export const FINE_STEP_AFTER_REVERSALS = 4;
 
 /** 쉬운 쪽(0 dB)에서 시작 — 설계 §6. */
 export const DEFAULT_START_DEPTH_DB = 0;
@@ -48,25 +61,34 @@ export type CreateAmStaircaseOptions = {
   maxDepthDb?: number;
 };
 
+export type AmStepScheduleEntry = { fromReversal: number; step: number };
+
 export type ApplyAmStaircaseResultOptions = {
   minDepthDb?: number;
   maxDepthDb?: number;
-  coarseStepDb?: number;
-  fineStepDb?: number;
-  fineStepAfterReversals?: number;
+  /** 반전 수 기준 가변 스텝 표. 없으면 `STEP_SCHEDULE_DB`. */
+  stepSchedule?: readonly AmStepScheduleEntry[];
 };
 
 function clampDepth(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+/**
+ * 반전 횟수에 대응하는 조정 폭(dB). 스케줄에서 `fromReversal <= reversalCount`인
+ * 항목 중 마지막 값을 쓴다.
+ */
 function stepSizeFor(
   reversalCount: number,
-  coarse: number,
-  fine: number,
-  after: number
+  schedule: readonly AmStepScheduleEntry[]
 ): number {
-  return reversalCount >= after ? fine : coarse;
+  let step: number = schedule[0].step;
+  for (const entry of schedule) {
+    if (reversalCount >= entry.fromReversal) {
+      step = entry.step;
+    }
+  }
+  return step;
 }
 
 export function createAmStaircase(
@@ -109,10 +131,8 @@ export function applyAmStaircaseResult(
 
   const min = options.minDepthDb ?? MIN_DEPTH_DB;
   const max = options.maxDepthDb ?? MAX_DEPTH_DB;
-  const coarse = options.coarseStepDb ?? COARSE_STEP_DB;
-  const fine = options.fineStepDb ?? FINE_STEP_DB;
-  const after = options.fineStepAfterReversals ?? FINE_STEP_AFTER_REVERSALS;
-  const step = stepSizeFor(state.reversalCount, coarse, fine, after);
+  const schedule = options.stepSchedule ?? STEP_SCHEDULE_DB;
+  const step = stepSizeFor(state.reversalCount, schedule);
   const trialIndex = state.trialCount + 1;
 
   let consecutiveCorrect = state.consecutiveCorrect;

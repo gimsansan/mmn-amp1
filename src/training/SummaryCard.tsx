@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Card, CardDivider } from '@/components/ui/card';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type SummaryCardProps = {
@@ -109,16 +109,27 @@ export function SummaryCard({
   );
 }
 
-/** 기록 목록 카드의 머리줄(트랙명 + 저장 시각). */
+/** 기록 목록 카드의 머리줄(트랙명 + 선택 배지 + 저장 시각). */
 export function SummaryCardHeader({
   title,
   savedAt,
-}: Readonly<{ title: string; savedAt: string }>) {
+  badge,
+}: Readonly<{ title: string; savedAt: string; badge?: string | null }>) {
+  const theme = useTheme();
   return (
     <View style={styles.header}>
-      <ThemedText type="smallBold" style={styles.headerTitle}>
-        {title}
-      </ThemedText>
+      <View style={styles.headerTitleRow}>
+        <ThemedText type="smallBold" style={styles.headerTitle}>
+          {title}
+        </ThemedText>
+        {badge ? (
+          <View style={[styles.badge, { backgroundColor: theme.borderSubtle }]}>
+            <ThemedText type="small" themeColor="textMuted" style={styles.badgeText}>
+              {badge}
+            </ThemedText>
+          </View>
+        ) : null}
+      </View>
       <ThemedText type="mono" themeColor="textMuted" style={styles.headerDate}>
         {savedAt}
       </ThemedText>
@@ -137,9 +148,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.two,
   },
+  headerTitleRow: {
+    flexShrink: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one + 2,
+  },
   headerTitle: {
     flexShrink: 1,
     fontSize: 15,
+  },
+  badge: {
+    flexShrink: 0,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.two - 2,
+    paddingVertical: 1,
+  },
+  badgeText: {
+    fontSize: 10.5,
+    lineHeight: 15,
   },
   headerDate: {
     flexShrink: 0,

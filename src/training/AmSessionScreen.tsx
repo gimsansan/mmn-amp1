@@ -34,12 +34,18 @@ import {
   type AmSessionSummary,
 } from "@/training/amSession";
 import { DEFAULT_AFC_N } from "@/training/freqAfcTrial";
+import { DEFAULT_MAX_TRIALS } from "@/training/freqSession";
 import {
-  DEFAULT_MAX_TRIALS,
-  DEFAULT_TARGET_REVERSALS,
-} from "@/training/freqSession";
+  DEFAULT_SESSION_MODE,
+  targetReversalsFor,
+  type SessionMode,
+} from "@/training/sessionMode";
+import { SessionModeToggle } from "@/training/SessionModeToggle";
 import { appendAmSessionSummary } from "@/training/sessionStore";
 import { SummaryCard } from "@/training/SummaryCard";
+
+/** idle(연습 선택) 화면 텍스트만 균일하게 살짝 키우는 배율(사용자 요청). */
+const TEXT_SCALE = 1.2;
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
@@ -63,11 +69,12 @@ function progressCaption(
   phase: Phase,
   trialNumber: number,
   reversalCount: number,
+  targetReversals: number,
 ): string {
   if (phase === "idle") {
-    return `난이도 전환 ${DEFAULT_TARGET_REVERSALS}번 또는 연습 ${DEFAULT_MAX_TRIALS}번까지`;
+    return `난이도 전환 ${targetReversals}번 또는 연습 ${DEFAULT_MAX_TRIALS}번까지`;
   }
-  return `연습 ${trialNumber} · 전환 ${reversalCount}/${DEFAULT_TARGET_REVERSALS}`;
+  return `연습 ${trialNumber} · 전환 ${reversalCount}/${targetReversals}`;
 }
 
 type AmSessionScreenProps = {
@@ -84,7 +91,11 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
   const abortRef = useRef(false);
   /** 이번 세션 요약을 이미 저장했는지. 중복 저장 방지(세션 시작 시 리셋). */
   const savedRef = useRef(false);
+  /** 이번 세션의 모드(반전 4/8·저장 mode). 세션 시작 시 토글값으로 고정. */
+  const runModeRef = useRef<SessionMode>(DEFAULT_SESSION_MODE);
   const [phase, setPhase] = useState<Phase>("idle");
+  /** idle에서 고른 모드. 진행 중엔 `runModeRef`가 실제 세션 값을 들고 있다. */
+  const [mode, setMode] = useState<SessionMode>(DEFAULT_SESSION_MODE);
   const [session, setSession] = useState<AmSessionState | null>(null);
   const [trial, setTrial] = useState<AmAfcTrial | null>(null);
   const [result, setResult] = useState<AmAfcChoiceResult | null>(null);
@@ -116,7 +127,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     }
     savedRef.current = true;
     setSaveNote(null);
-    void appendAmSessionSummary(nextSummary)
+    void appendAmSessionSummary(nextSummary, runModeRef.current)
       .then(() => {
         setSaveNote("기기에 기록했어요");
       })
@@ -173,13 +184,16 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
   }, []);
 
   const onStart = useCallback(() => {
-    const next = createAmSession();
+    runModeRef.current = mode;
+    const next = createAmSession({
+      targetReversals: targetReversalsFor(mode),
+    });
     savedRef.current = false;
     setSession(next);
     setSummary(null);
     setSaveNote(null);
     void runTrial(next);
-  }, [runTrial]);
+  }, [mode, runTrial]);
 
   const onChoose = useCallback(
     (index: number) => {
@@ -227,6 +241,8 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
   if (phase === "playing" || phase === "choose") {
     trialNumber += 1;
   }
+  // idle은 고른 모드, 진행/요약은 실제 세션의 목표 반전 수를 쓴다.
+  const targetReversals = session?.targetReversals ?? targetReversalsFor(mode);
 
   const meanText =
     summary?.meanReversalDepthDb == null
@@ -243,6 +259,8 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
+  // idle 안내 화면에서만 버튼 글자를 키운다(summary·진행 중은 기본 크기).
+  const idleTextScale = phase === "idle" ? TEXT_SCALE : 1;
 
   return (
     <ThemedView style={styles.fill}>
@@ -257,23 +275,36 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
               />
               <Icon name="ripple" size={42} color={theme.accent} />
             </View>
-            <ThemedText type="heading">떨림 찾기</ThemedText>
+            <ThemedText type="heading" style={styles.heroHeading}>
+              떨림 찾기
+            </ThemedText>
             <ThemedText
               themeColor="textSecondary"
               type="small"
-              style={styles.caption}
+              style={[styles.caption, styles.heroCaption]}
             >
               웰니스 연습 · 병원 검사·진단을 대신하지 않아요
             </ThemedText>
+            <SessionModeToggle
+              value={mode}
+              onChange={setMode}
+              textScale={TEXT_SCALE}
+              style={{ marginBottom: Spacing.six }}
+            />
             <Pill
               mono
+              textScale={TEXT_SCALE}
               label={progressCaption(
                 phase,
                 trialNumber,
                 stair?.reversalCount ?? 0,
+                targetReversals,
               )}
             />
-            <ThemedText type="smallBold" style={styles.heroPrompt}>
+            <ThemedText
+              type="smallBold"
+              style={[styles.heroPrompt, styles.heroPromptScaled]}
+            >
               {phaseCaption(phase, result?.correct)}
             </ThemedText>
           </View>
@@ -304,6 +335,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
                   phase,
                   trialNumber,
                   stair?.reversalCount ?? 0,
+                  targetReversals,
                 )}
               />
             )}
@@ -420,11 +452,13 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
               <ActionButton
                 variant="primary"
                 label={phase === "summary" ? "다시 연습" : "연습 시작"}
+                textScale={idleTextScale}
                 onPress={onStart}
               />
               {onBack ? (
                 <ActionButton
                   label="연습 목록"
+                  textScale={idleTextScale}
                   onPress={() => {
                     abortRef.current = true;
                     abortAmAfcPlayback();
@@ -471,6 +505,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.two + 2,
+  },
+  /** heading(26/34) × TEXT_SCALE. idle 안내 텍스트만 키운다. */
+  heroHeading: {
+    fontSize: 26 * TEXT_SCALE,
+    lineHeight: 34 * TEXT_SCALE,
+  },
+  /** small(14/20) × TEXT_SCALE. */
+  heroCaption: {
+    fontSize: 14 * TEXT_SCALE,
+    lineHeight: 20 * TEXT_SCALE,
+  },
+  /** heroPrompt(12.5/19) × TEXT_SCALE. */
+  heroPromptScaled: {
+    fontSize: 12.5 * TEXT_SCALE,
+    lineHeight: 19 * TEXT_SCALE,
   },
   heroMark: {
     width: 88,

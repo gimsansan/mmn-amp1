@@ -29,15 +29,23 @@ import {
   SessionManager,
   type SessionResult,
 } from "@/training/pitch2afc/SessionManager";
+import {
+  DEFAULT_SESSION_MODE,
+  targetReversalsFor,
+  type SessionMode,
+} from "@/training/sessionMode";
+import { SessionModeToggle } from "@/training/SessionModeToggle";
 import { appendPitch2SessionSummary } from "@/training/sessionStore";
 import { SummaryCard } from "@/training/SummaryCard";
 
 /**
- * 세션 길이 — freq 파일럿과 같은 값(전환 4 / 시행 40, 사용자 합의 2026-08-06).
- * pitch2afc `ASSESSMENT`(전환 8 / 시행 30)는 평가 모드용이라 쓰지 않는다.
+ * 세션 길이 — 연습(전환 4) / 측정(전환 8)을 토글로 고른다.
+ * 반전 수만 모드로 달라지고 스텝·엔진은 동일. pitch2afc `ASSESSMENT`는 쓰지 않는다.
  */
-const TARGET_REVERSALS = 4;
 const MAX_TRIALS = 40;
+
+/** idle(연습 선택) 화면 텍스트만 균일하게 살짝 키우는 배율(사용자 요청). */
+const TEXT_SCALE = 1.2;
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
@@ -100,11 +108,12 @@ function progressCaption(
   phase: Phase,
   trialNumber: number,
   reversalCount: number,
+  targetReversals: number,
 ): string {
   if (phase === "idle") {
-    return `난이도 전환 ${TARGET_REVERSALS}번 또는 연습 ${MAX_TRIALS}번까지`;
+    return `난이도 전환 ${targetReversals}번 또는 연습 ${MAX_TRIALS}번까지`;
   }
-  return `연습 ${trialNumber} · 전환 ${reversalCount}/${TARGET_REVERSALS}`;
+  return `연습 ${trialNumber} · 전환 ${reversalCount}/${targetReversals}`;
 }
 
 function centsText(value: number | null): string {
@@ -159,12 +168,18 @@ function SessionHeader({
   reversalCount,
   correct,
   endReason,
+  targetReversals,
+  mode,
+  onModeChange,
 }: Readonly<{
   phase: Phase;
   trialNumber: number;
   reversalCount: number;
   correct: boolean | undefined;
   endReason: EndReason | null;
+  targetReversals: number;
+  mode: SessionMode;
+  onModeChange: (next: SessionMode) => void;
 }>) {
   const theme = useTheme();
 
@@ -172,15 +187,41 @@ function SessionHeader({
     return (
       <View style={styles.hero}>
         <View style={[styles.heroMark, { backgroundColor: theme.accentTint }]}>
-          <View style={[styles.heroRing, { borderColor: theme.accentBorder }]} />
+          <View
+            style={[styles.heroRing, { borderColor: theme.accentBorder }]}
+          />
           <Icon name="wave" size={40} color={theme.accent} />
         </View>
-        <ThemedText type="heading">높낮이 비교</ThemedText>
-        <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+        <ThemedText type="heading" style={styles.heroHeading}>
+          높낮이 비교
+        </ThemedText>
+        <ThemedText
+          themeColor="textSecondary"
+          type="small"
+          style={[styles.caption, styles.heroCaption]}
+        >
           웰니스 연습 · 병원 검사·진단을 대신하지 않아요
         </ThemedText>
-        <Pill mono label={progressCaption(phase, trialNumber, reversalCount)} />
-        <ThemedText type="smallBold" style={styles.heroPrompt}>
+        <SessionModeToggle
+          value={mode}
+          onChange={onModeChange}
+          textScale={TEXT_SCALE}
+          style={{ marginBottom: Spacing.six }}
+        />
+        <Pill
+          mono
+          textScale={TEXT_SCALE}
+          label={progressCaption(
+            phase,
+            trialNumber,
+            reversalCount,
+            targetReversals,
+          )}
+        />
+        <ThemedText
+          type="smallBold"
+          style={[styles.heroPrompt, styles.heroPromptScaled]}
+        >
           {phaseCaption(phase, correct)}
         </ThemedText>
       </View>
@@ -197,11 +238,23 @@ function SessionHeader({
         웰니스 연습 · 병원 검사·진단을 대신하지 않아요
       </ThemedText>
       {showEndReason ? (
-        <ThemedText themeColor="textSecondary" type="small" style={styles.caption}>
+        <ThemedText
+          themeColor="textSecondary"
+          type="small"
+          style={styles.caption}
+        >
           {endReasonLabel(endReason)}
         </ThemedText>
       ) : (
-        <Pill mono label={progressCaption(phase, trialNumber, reversalCount)} />
+        <Pill
+          mono
+          label={progressCaption(
+            phase,
+            trialNumber,
+            reversalCount,
+            targetReversals,
+          )}
+        />
       )}
     </View>
   );
@@ -225,6 +278,8 @@ function SessionActions({
 }>) {
   const atRest = phase === "idle" || phase === "summary";
   const playingOrChoosing = phase === "playing" || phase === "choose";
+  // idle 안내 화면에서만 버튼 글자를 키운다(summary·진행 중은 기본 크기).
+  const idleTextScale = phase === "idle" ? TEXT_SCALE : 1;
 
   return (
     <View style={styles.actions}>
@@ -233,10 +288,15 @@ function SessionActions({
           <ActionButton
             variant="primary"
             label={phase === "summary" ? "다시 연습" : "연습 시작"}
+            textScale={idleTextScale}
             onPress={onStart}
           />
           {canGoBack ? (
-            <ActionButton label="연습 목록" onPress={onBack} />
+            <ActionButton
+              label="연습 목록"
+              textScale={idleTextScale}
+              onPress={onBack}
+            />
           ) : null}
         </>
       ) : null}
@@ -275,7 +335,11 @@ export function PitchCompareScreen({
   const managerRef = useRef<SessionManager | null>(null);
   /** 이번 세션 요약을 이미 저장했는지. 중복 저장 방지(세션 시작 시 리셋). */
   const savedRef = useRef(false);
+  /** 이번 세션의 모드(반전 4/8·저장 mode). 세션 시작 시 토글값으로 고정. */
+  const runModeRef = useRef<SessionMode>(DEFAULT_SESSION_MODE);
   const [phase, setPhase] = useState<Phase>("idle");
+  /** idle에서 고른 모드. 진행 중엔 `runModeRef`가 실제 세션 값을 들고 있다. */
+  const [mode, setMode] = useState<SessionMode>(DEFAULT_SESSION_MODE);
   const [trialNumber, setTrialNumber] = useState(0);
   const [reversalCount, setReversalCount] = useState(0);
   const [correct, setCorrect] = useState<boolean | undefined>(undefined);
@@ -342,12 +406,13 @@ export function PitchCompareScreen({
     }
     savedRef.current = true;
     setSaveNote(null);
-    void appendPitch2SessionSummary(nextSummary)
+    void appendPitch2SessionSummary(nextSummary, runModeRef.current)
       .then(() => setSaveNote("기기에 기록했어요"))
       .catch(() => setSaveNote("기록 저장에 실패했어요"));
   }, []);
 
   const onStart = useCallback(() => {
+    runModeRef.current = mode;
     const manager = new SessionManager({
       mode: "training",
       baseFreq: AUDIO.BASE_FREQ,
@@ -361,7 +426,7 @@ export function PitchCompareScreen({
     setReversalCount(0);
     setCorrect(undefined);
     void runRound();
-  }, [runRound]);
+  }, [mode, runRound]);
 
   const onAnswer = useCallback(
     (userThinksHigher: boolean) => {
@@ -374,7 +439,7 @@ export function PitchCompareScreen({
       setCorrect(result.isCorrect);
       setReversalCount(state.reversalCount);
 
-      if (state.reversalCount >= TARGET_REVERSALS) {
+      if (state.reversalCount >= targetReversalsFor(runModeRef.current)) {
         finish("reversals");
         return;
       }
@@ -418,6 +483,11 @@ export function PitchCompareScreen({
           reversalCount={reversalCount}
           correct={correct}
           endReason={summary?.endReason ?? null}
+          targetReversals={targetReversalsFor(
+            phase === "idle" ? mode : runModeRef.current,
+          )}
+          mode={mode}
+          onModeChange={setMode}
         />
 
         {phase === "summary" ? (
@@ -427,7 +497,12 @@ export function PitchCompareScreen({
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.headline}>
-              <Icon name="check" size={18} color={theme.accent} strokeWidth={2.2} />
+              <Icon
+                name="check"
+                size={18}
+                color={theme.accent}
+                strokeWidth={2.2}
+              />
               <ThemedText type="smallBold" style={styles.headlineText}>
                 {phaseCaption(phase, correct)}
               </ThemedText>
@@ -531,6 +606,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.two + 2,
+  },
+  /** heading(26/34) × TEXT_SCALE. idle 안내 텍스트만 키운다. */
+  heroHeading: {
+    fontSize: 26 * TEXT_SCALE,
+    lineHeight: 34 * TEXT_SCALE,
+  },
+  /** small(14/20) × TEXT_SCALE. */
+  heroCaption: {
+    fontSize: 14 * TEXT_SCALE,
+    lineHeight: 20 * TEXT_SCALE,
+  },
+  /** heroPrompt(12.5/19) × TEXT_SCALE. */
+  heroPromptScaled: {
+    fontSize: 12.5 * TEXT_SCALE,
+    lineHeight: 19 * TEXT_SCALE,
   },
   heroMark: {
     width: 88,

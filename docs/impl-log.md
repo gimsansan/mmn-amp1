@@ -45,6 +45,127 @@
 
 ## 로그
 
+### 2026-08-13 15:36 — 세션 보관 상한을 모드별 독립으로 분리
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 기존 합 상한(`MAX_SAVED_SESSIONS=50`, 모드 무관 `slice`)에서는 연습을 자주 하면 오래된 **측정**이 밀려 삭제 → 통계·추세 그래프 형상이 연습량에 흔들림(측정만 그래프에 그림). 사용자 결정: **독립 상한**(측정 50·연습 30, 합 최대 80). 로컬 요약 레코드라 80개도 가벼움. |
+| 변경 요약 | 상수 `MAX_SAVED_SESSIONS` → `MAX_MEASURE_SESSIONS=50`·`MAX_PRACTICE_SESSIONS=30`. `capByMode` 신설: `merged`를 `isCountedInStats`로 갈라 각자 `slice` 후 원래 순서로 재구성. `appendRecord`가 이를 사용. 한 모드 초과 시 그 모드 오래된 것만 버림(타 모드 무간섭). |
+| 주요 경로 | `src/training/sessionStore.ts`, `src/training/__tests__/sessionStore.test.ts` |
+| 결과 | 성공. `npx jest sessionStore` **35 passed**, `tsc --noEmit` **0 error**. |
+| 확인 | 테스트(측정 50 상한·연습 30 상한·모드별 독립 무간섭 케이스 신규)·타입체크·ReadLints. |
+| 단정 금지 | `주의`: 기존 저장분에 이미 50개 이상 없으므로 마이그레이션 영향 없음(상한만 상향). `미검증`: 실기기에서 목록 80개 스크롤 체감. `참고`: 페이지네이션 불필요(FlatList 가상화). |
+| 성능·주의 | 없음(JS만, **리빌드 불필요**). 목록 상한 50→80이나 FlatList 가상화라 부담 미미. |
+
+### 2026-08-13 15:03 — 인계문 작성·저장
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | idle UI 다듬기(토글 테두리·간격·글자 배율) 후 인계. |
+| 변경 요약 | 코드 변경 없음. `docs/handoff.md` 상단에 15:03 인계 추가, 본 로그 한 줄. |
+| 주요 경로 | `docs/handoff.md`, `docs/impl-log.md` |
+| 결과 | 성공 (문서만) |
+| 확인 | 수동 |
+| 단정 금지 | `미확인`: 실기기 체감(배율 1.1·간격 64) 미확정. |
+| 성능·주의 | 없음 (문서만) |
+
+### 2026-08-13 15:03 — idle 화면 토글 대비·간격·텍스트 ×1.1
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 토글 tint만으로는 선택 구분 약함 → accent 테두리. 선택 시 글자 밀림 방지용 투명 테두리 상시. idle 안내 글자가 작다 → 비율 ×1.1(토글·버튼 포함, 진행/요약 제외). 공용 컴포넌트는 `textScale` 기본 1로 전역 영향 차단. |
+| 변경 요약 | `SessionModeToggle` 선택 테두리+`textScale`. `ActionButton`/`Pill`에 `textScale`. ListeningCheck·Freq/Am idle·Pitch idle에 `TEXT_SCALE=1.1`. 토글 `marginBottom: Spacing.six`(사용자 적용). |
+| 주요 경로 | `SessionModeToggle.tsx`, `action-button.tsx`, `pill.tsx`, `ListeningCheckScreen.tsx`, `FreqSessionScreen.tsx`, `AmSessionScreen.tsx`, `PitchCompareScreen.tsx` |
+| 결과 | 성공. `tsc --noEmit` 0 error. |
+| 확인 | 타입체크·ReadLints. 실기기 체감은 사용자 확인 중. |
+| 단정 금지 | `미검증`: ×1.1·간격 64는 체감 목적값. |
+| 성능·주의 | 없음. 리빌드 불필요. |
+| 다음 | 배율/간격 실기기 확정. 계단식 값 파일럿 청취. |
+
+### 2026-08-13 11:29 — 인계문 작성·저장
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | 「세 트랙 계단식 통일 + 연습/측정 토글」 구현 완료 후 인계. 연습/측정 UI 신규 생성 확인 포함. |
+| 변경 요약 | 코드 변경 없음. `docs/handoff.md` 상단에 11:29 인계 추가, 본 로그 한 줄. |
+| 주요 경로 | `docs/handoff.md`, `docs/impl-log.md` |
+| 결과 | 성공 (문서만) |
+| 확인 | 수동 |
+| 단정 금지 | `미확인`: 실기기 UI·오디오 미검증(코드/테스트/타입만 통과). |
+| 성능·주의 | 없음 (문서만) |
+
+### 2026-08-13 11:16 — 세 트랙 계단식 통일 + 연습/측정 모드 토글 구현
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | ② 주파수 / ① AM / 공통·인프라 |
+| 근거·결정 | 11:10 인계 지시대로 구현. freq를 pitch2와 통일(시작200·10~300·가변50/20/10), am 하한 −30·3단계 스텝(6/4/2). 연습(반전4)/측정(반전8) 토글을 세 화면에 추가. 연습은 저장하되 `mode='practice'`로 통계·추세 제외(사용자 결정). idle 기본 모드=연습. |
+| 변경 요약 | `freqStaircase`에 `STEP_SCHEDULE`·`stepForReversals`·`currentStep` 신설(pitch2식 가변 스텝 이식, `stepCents` 옵션 주면 고정=하위호환). `amStaircase`는 `stepSizeFor`를 `STEP_SCHEDULE_DB` 순회로 교체, `MIN_DEPTH_DB` −40→−30. `sessionStore`에 `SessionMode`·레코드 `mode?` 선택 필드·`append*(summary, mode)`·`isCountedInStats` 추가(mode 없으면 측정 간주). 통계 화면은 `statRows=rows.filter(isCountedInStats)`로 집계/추세만 필터, 목록엔 「연습」 배지. `peekLatestSession`도 측정 기준. 공통 `sessionMode.ts`+`SessionModeToggle.tsx` 신설, 세 화면(Freq/Am/PitchCompare)에서 세션 생성 시 `targetReversalsFor(mode)`·저장 mode 전달, 세션 중 모드는 `runModeRef`로 고정. |
+| 주요 경로 | `src/training/freqStaircase.ts`, `amStaircase.ts`, `sessionStore.ts`, `SessionHistoryScreen.tsx`, `SummaryCard.tsx`, `sessionMode.ts`(신), `SessionModeToggle.tsx`(신), `FreqSessionScreen.tsx`, `AmSessionScreen.tsx`, `pitch2afc/PitchCompareScreen.tsx`, `__tests__/{freqStaircase,amStaircase}.test.ts`(신)·`sessionStore.test.ts` |
+| 결과 | 성공. `npx jest src/training` 131 passed, `tsc --noEmit` 0 error. |
+| 확인 | Jest(6 suites/131), 타입체크, ReadLints. 실기기 UI·오디오 미확인. |
+| 단정 금지 | `미검증`: 200·10~300·50/20/10·am −30·6→4→2 전부 설계 목적값, 실측 아님. `주의`: am 바닥 반전 몰림은 −30으로 완화만, 근본 해결 아님. `확인됨`: 인계의 `LockedTrackChip` ReferenceError는 현재 코드에 없음(해소). 인계의 "freqStaircase/amStaircase 기존 테스트"는 실제 없었음 → 신규 작성. |
+| 성능·주의 | 상수·토글 추가라 런타임 부담 사실상 없음. 네이티브·플러그인 변경 없음 → **리빌드 불필요**(dev client 재사용). Freq/Am 화면 인지복잡도 경고는 사전 존재(토글로 소폭 증가), 이번 리팩터링 대상 아님. |
+| 다음 | 파일럿 청취로 값(스텝·범위·−30) 체감 검증. 필요 시 화면 컴포넌트 분해로 복잡도 경고 해소. |
+
+### 2026-08-13 11:10 — 인계문 작성·저장 (새 창 구현 시작용)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | 새 창에서 세 트랙 계단식 통일 구현을 바로 시작하기 위한 구현 지시서형 인계. 11:08 인계의 합의를 구현 순서·선행 확인 항목 중심으로 재정리. |
+| 변경 요약 | 코드 변경 없음. `docs/handoff.md` 상단에 11:10 인계 추가, 본 로그 한 줄. |
+| 주요 경로 | `docs/handoff.md`, `docs/impl-log.md` |
+| 결과 | 성공 (문서만) |
+| 확인 | 수동 |
+| 단정 금지 | `미확인`: 구현 전 `sessionStore`·통계 화면 연습/측정 분기 미열람. 나머지 값은 `파일럿`(11:08 기록 참조). |
+| 성능·주의 | 없음 (문서만) |
+| 다음 | 새 창에서 구현 시작. `freqStaircase` 가변 스텝 이식·`amStaircase` 3단계·−30·연습/측정 토글·통계 분리. 테스트 동반 수정. |
+
+### 2026-08-13 11:08 — 인계문 작성·저장 (세 트랙 계단식 통일 설계 합의)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / 문서 |
+| 근거·결정 | 전 구간 Ask 모드 질의응답으로 세 트랙 staircase 통일안 합의. freq를 pitch2에 맞춤(시작200·10~300·가변50/20/10), am은 dB라 값 통일 제외하되 하한 −40→−30·스텝 6→2→6→4→2. 연습(반전4·통계제외)/측정(반전8·통계포함) 토글. |
+| 변경 요약 | 코드 변경 없음. `docs/handoff.md` 상단에 11:08 인계 추가, 본 로그 한 줄. |
+| 주요 경로 | `docs/handoff.md`, `docs/impl-log.md` |
+| 결과 | 성공 (문서만) |
+| 확인 | 수동 |
+| 단정 금지 | `파일럿`: 200·10~300·50/20/10·am −30·6→4→2 전부 미검증 설계값. `미확인`: `sessionStore`·통계 코드 연습/측정 분기 미열람. am 바닥 반전몰림 −30으로 완화만. |
+| 성능·주의 | 없음 (문서만) |
+| 다음 | 사용자가 위 합의대로 구현 요청 예정 (Agent). |
+
+### 2026-08-13 09:56 — 인계문 작성·저장 (밸런스·관례·USB 디버깅 설명)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | 사용자 「인계도 작성해」. 세션 전 구간 Ask 모드 = 코드 변경 없음. 내용: 트랙 간 볼륨/주파수 밸런스 Q&A, 관례 검토, USB 실기기 디버깅(adb reverse·8081/5037/5555·`-c` 캐시) 개념 설명. |
+| 변경 요약 | `docs/handoff.md` 상단에 `## 인계 — 2026-08-13 09:56` 추가(덮어쓰기 없음). |
+| 주요 경로 | `docs/handoff.md` |
+| 결과 | 저장 완료. |
+| 확인 | 문서만. |
+| 단정 금지 | `미확인`: `LockedTrackChip`(`SessionHistoryScreen.tsx:556`) 코드 실재 여부 — 다음 세션 확인 필요. |
+| 성능·주의 | 없음. |
+
+### 2026-08-13 09:10 — 인계문 작성·저장 (원격 브랜치·GitHub Code 탭)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | 사용자 「인계문 작성해」. 세션: `feat/single-tab-home` fetch/checkout + Code 탭 `/` 브랜치명 원인 확정. |
+| 변경 요약 | `docs/handoff.md` 상단에 `## 인계 — 2026-08-13 09:10` 추가(덮어쓰기 없음). |
+| 주요 경로 | `docs/handoff.md` |
+| 결과 | 저장 완료. |
+| 확인 | 문서만. |
+| 단정 금지 | 없음(문서). |
+| 성능·주의 | 없음. |
+
 ### 2026-08-13 01:52 — 인계문 작성·저장 (통계 버튼 UI·단일홈 후속)
 
 | 항목 | 내용 |

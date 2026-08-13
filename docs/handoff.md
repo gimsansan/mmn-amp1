@@ -7,6 +7,213 @@
 
 ---
 
+## 인계 — 2026-08-13 15:03
+
+새 채팅 AI용. 사용자는 맥락 앎 → 장문 금지. **11:29 계단식 통일+연습/측정 토글은 완료. 이번 세션 = idle UI 다듬기(토글 대비·간격·글자 배율).**
+
+### 합의·한 일
+- 토글 선택 강조: tint만으로는 구분 약함 → **선택 칸 `accent` 테두리**. 글자 밀림 방지: `segment`에 `borderWidth:1.5` + 기본 `transparent`, active만 `borderColor` 변경.
+- 토글↔하단 Pill/문구 간격: 세 화면 토글에 `style={{ marginBottom: Spacing.six }}`(64). 사용자가 직접 넣은 값.
+- idle("연습 선택"/"듣기 준비") **텍스트만 ×1.1**. 토글 글자·버튼 글자 포함. 진행/요약은 기본 크기.
+  - 공용에 `textScale` prop(기본 1): `ActionButton`, `Pill`, `SessionModeToggle`. 화면에서만 1.1 전달 → 통계 화면 등 전역 영향 없음.
+  - 적용: `ListeningCheckScreen`(항상 idle), Freq/Am idle 블록, Pitch `SessionHeader` idle + `SessionActions` idle. 상수 `TEXT_SCALE = 1.1`.
+
+### 안 한 일 / 다음
+- 실기기 청취·계단식 값 검증은 그대로 미완.
+- 배율/간격이 크면 `TEXT_SCALE` 또는 `Spacing.six`만 조정.
+
+### 핵심 경로
+- `src/training/SessionModeToggle.tsx`, `sessionMode.ts`
+- `src/components/ui/action-button.tsx`, `pill.tsx`
+- `FreqSessionScreen.tsx`, `AmSessionScreen.tsx`, `pitch2afc/PitchCompareScreen.tsx`, `ListeningCheckScreen.tsx`
+
+### 단정 금지
+- `미검증`: 계단식 값(200·10~300·50/20/10·am −30) 실측 아님. idle ×1.1·간격 64는 체감값.
+- `주의`: am 바닥 반전 몰림은 −30 완화만.
+- **리빌드 불필요**(JS만).
+
+---
+
+## 인계 — 2026-08-13 11:29
+
+새 채팅 AI용. 사용자는 맥락 앎 → 장문 금지. **11:10 인계의 "세 트랙 계단식 통일 + 연습/측정 토글" 구현 완료. 실기기 확인만 남음.**
+
+### 이번 세션에 한 일 (구현 완료)
+- **계단식 통일**: `freqStaircase.ts` 시작150→200·상한150→300·가변스텝 50/20/10(`STEP_SCHEDULE`·`stepForReversals`·`currentStep` 신설, `stepCents` 주면 고정=하위호환). `amStaircase.ts` 하한 −40→−30·3단계 스텝 6/4/2(`STEP_SCHEDULE_DB`). pitch2는 기준이라 변경 없음.
+- **연습/측정**: `sessionStore.ts`에 `SessionMode`·레코드 `mode?` 선택필드·`append*(summary, mode)`·`isCountedInStats` 추가(mode 없으면 측정 간주). 통계/추세는 `rows.filter(isCountedInStats)`로 측정만, 목록엔 「연습」 배지. `peekLatestSession`도 측정 기준.
+- **UI 신규**: `sessionMode.ts`(상수·헬퍼)+`SessionModeToggle.tsx`(연습/측정 세그먼트 토글) 신설. 세 화면(Freq/Am/PitchCompare) idle에 토글, 기본=연습. 세션 모드는 `runModeRef`로 고정 → 생성 시 `targetReversalsFor(mode)`(4/8), 저장 시 mode 전달.
+- **테스트**: `__tests__/freqStaircase.test.ts`·`amStaircase.test.ts` 신규, `sessionStore.test.ts`에 mode 케이스 추가.
+
+### 검증됨 / 안 된 것
+- `npx jest src/training` **131 passed**, `tsc --noEmit` **0 error**.
+- **실기기 UI·오디오 미확인**(코드/테스트/타입만). 확인은 `npm start` dev client. **리빌드 불필요**(네이티브 변경 없음).
+
+### 다음 작업 (제안)
+- 실기기에서 토글 위치·간격·터치 타깃 체감 조정.
+- 파일럿 청취로 값(스텝·범위·am −30) 검증.
+- Freq/Am 화면 인지복잡도 경고(사전 존재, 토글로 소폭↑) — 필요 시 컴포넌트 분해.
+
+### 단정 금지
+- `미검증`: 200·10~300·50/20/10·am −30·6→4→2 전부 설계 목적값, 실측 아님.
+- `주의`: am 바닥 반전 몰림은 −30으로 완화만, 근본 해결 아님.
+- `확인됨`: 인계에 있던 `LockedTrackChip` ReferenceError는 현재 코드에 없음(해소). "freqStaircase/amStaircase 기존 테스트"는 실제로 없었음 → 신규 작성.
+
+---
+
+## 인계 — 2026-08-13 11:10
+
+새 채팅 AI용. 사용자는 맥락 앎 → 장문 금지. **새 창에서 바로 구현 시작 예정. 아래 합의대로 구현할 것. (직전 11:08 인계에 배경·근거 상세 있음 — 중복 최소화)**
+
+### 지금 바로 할 일: 세 트랙 계단식 통일 구현
+
+**공통 (연습/측정 모드)**
+- 토글 2종: **연습**(반전 4회·통계 제외) / **측정**(반전 8회·통계 포함). 둘 다 기록은 남김.
+- 스텝은 **가변 하나**로 두고 반전 횟수(4·8)로만 구분. 모드별로 스텝 정책 쪼개지 말 것.
+- 엔진 2-down-1-up 유지.
+
+**freq — `src/training/freqStaircase.ts` (로직 변경, 단순 상수 아님)**
+- 시작 150→**200**, 범위 10~150→**10~300**, 스텝 고정10→**가변 50→20→10**(전환 반전 2·4).
+- 현재 고정 스텝뿐 → pitch2식 가변 스텝 로직 **신규 이식** 필요.
+
+**pitch2 — 변경 없음** (이미 시작200·10~300·가변50/20/10, 기준 역할).
+
+**am — `src/training/amStaircase.ts` (dB, cent 통일 제외)**
+- 하한 −40→**−30**, 스텝 6→2→**6→4→2**(전환 반전 2·4). 시작 0 dB 유지.
+- `FINE_STEP_AFTER_REVERSALS` 2단계 → 3단계 스케줄 구조로 확장.
+
+### 구현 전 반드시 먼저 읽을 것 (미확인)
+- `sessionStore` + 통계/추세 화면 (`SessionHistoryScreen.tsx`, `SummaryCard.tsx`) — **연습/측정 구분 저장·통계 포함 여부 로직이 아직 미확인**. 여기 구조 보고 토글·통계분리 설계 확정할 것.
+- `src/training/pitch2afc/PitchCompareScreen.tsx`(`TARGET_REVERSALS=4`), `src/training/freqSession.ts`(`DEFAULT_TARGET_REVERSALS=4`) — 4·8 분기 지점.
+
+### 테스트
+- `freqStaircase`·`amStaircase` 스텝/반전 관련 기존 테스트 있음(`__tests__`) → 가변 스텝·3단계·−30 반영해 **같이 수정** 필요.
+
+### 단정 금지
+- `파일럿`/`미검증`: 200·10~300·50/20/10·am −30·6→4→2 전부 설계 목적값, 실측 아님.
+- `주의`: am 바닥 반전 몰림(역치 뭉개짐)은 −30으로 완화만, 근본 해결 아님.
+- `미확인`: `LockedTrackChip` ReferenceError(`SessionHistoryScreen.tsx:556`) 잔존 여부.
+
+---
+
+## 인계 — 2026-08-13 11:08
+
+새 채팅 AI용. 사용자는 맥락 앎 → 장문 금지. **전 구간 Ask 모드(코드 미변경). 이번 세션 = 세 트랙 계단식(staircase) 파라미터 통일 설계 합의. 다음 턴에 사용자가 "이대로 구현 요청" 예정.**
+
+### 합의된 결정 (구현 대상)
+
+**공통 (세션 구조)**
+- 모드 2종 토글: **연습 / 측정**
+  - 연습 = 반전 **4회** 종료, 기록은 남기되 **통계·추세 제외**
+  - 측정 = 반전 **8회** 종료, 기록 + **통계 포함**
+- 스텝 정책: 세 트랙 **가변**(초반 크게→후반 작게). 연습·측정용으로 쪼개지 말 것 → **가변 하나로 두고 반전 횟수(4·8)로만 구분**
+- 엔진 2-down-1-up 유지
+
+**freq (다른 음 찾기, 3AFC) — 값 변경**
+- 시작 150→**200 cent**
+- 범위 10~150 → **10~300** (상한 2배)
+- 스텝 고정10 → **가변 50→20→10** (전환 반전 2·4)
+- → pitch2와 완전 동일하게 통일
+
+**pitch2 (높낮이 비교, 2AFC) — 기존 유지**
+- 시작 200 / 범위 10~300 / 가변 50→20→10 (변경 없음)
+
+**am (떨림, 3AFC) — dB라 cent 통일 대상 아님**
+- 시작 0 dB 유지
+- 하한 −40 → **−30 dB** (−40은 일반인도 감지 불가)
+- 스텝 6→2 → **6→4→2** (전환 반전 2·4)
+- 구조(2-down-1-up·가변·반전 4/8·통계 분리)는 동일 적용
+
+### 핵심 경로 (구현 시 볼 파일)
+- `src/training/freqStaircase.ts` — MIN/MAX/STEP·`DEFAULT_START_DELTA_CENTS`(가변 스텝 로직 신설 필요)
+- `src/training/pitch2afc/constants.ts` — `STAIRCASE`(이미 가변, 참고 기준)
+- `src/training/amStaircase.ts` — `MIN_DEPTH_DB`·`COARSE/FINE_STEP_DB`·`FINE_STEP_AFTER_REVERSALS`(3단계로 확장 필요)
+- `src/training/freqSession.ts` — `DEFAULT_TARGET_REVERSALS=4`(연습/측정 4·8 분기 필요)
+- `src/training/pitch2afc/PitchCompareScreen.tsx` — `TARGET_REVERSALS=4`
+- `sessionStore`·통계 화면 — **연습/측정 구분 저장·통계 로직(미확인, 읽어야 함)**
+
+### 다음 작업
+- 사용자가 위 결정대로 **구현 요청 예정**. Agent에서 진행.
+- freq는 현재 **고정 스텝** → pitch2식 가변 스텝 로직 신규 이식 필요(단순 상수 변경 아님).
+- am 스텝 2단계→3단계 스케줄 구조 변경 필요.
+- 연습/측정 토글 UI + 통계 포함 여부 분기 신설.
+
+### 단정 금지
+- `파일럿`/`미검증`: 시작 200·범위 10~300·스텝 50/20/10·am −30·6→4→2 — 전부 통일·설계 목적값, 실측 검증 아님.
+- `주의`: am 바닥 반전 몰림(역치 뭉개짐)은 −30으로 **완화만**, 근본 해결 아님.
+- `미확인`: 연습 4회 값이 실제 통계/저장에 어떻게 쓰이는지 `sessionStore`·통계 코드 **미열람** — 구현 전 확인 필요.
+- `미확인`(직전 인계 인용): `SessionHistoryScreen.tsx:556` `LockedTrackChip` ReferenceError 잔존 여부 미확인.
+
+---
+
+## 인계 — 2026-08-13 09:56
+
+새 채팅 AI용. 사용자는 맥락 앎 → 장문 금지. **코드 변경 없음(전 구간 Ask 모드). 이번 세션 = ① 트랙 간 볼륨/주파수 밸런스 질의응답 + ② 관례 검토 + ③ USB 실기기 디버깅 개념 설명.**
+
+### 지금 상태
+- 브랜치: `feat/single-tab-home` @ `9daa864`. working tree: `docs/handoff.md`·`docs/impl-log.md`만 M(이 인계 + 09:10 인계). 앱 코드 미변경.
+- 실기기: 사용자가 USB로 연결 성공(`SC_01M`). `npx expo start --dev-client -c`(캐시 클리어)로 화면 뜸 → 폰에 `http://127.0.0.1:8081` 입력해 접속.
+
+### 한 일 (설명만, 파일 변경 없음)
+- **볼륨 밸런스**: 게인은 3트랙 모두 `0.15`(선형, dB 아님). 체감 차이는 **주파수 차이 + AM 피크** 때문 → 정상. 트랙 간 등청감(폰) 보정은 안 함 = 의도된 임시(백로그 「자극 스펙 임시값 유지」). 버그 아님.
+- **주파수 배정**: 440 Hz = 다른 음 찾기·높낮이 비교(음고 2트랙, 기준음 공유) / 1000 Hz = 떨림 찾기. 밸런스용이 아니라 과제별 관례값. 코드 주석 「제품 확정 아님」.
+- **관례 검토**: 2-down-1-up·440 A4·cent·1kHz AM 안전장치는 관례 OK. 벗어난 점 = 세 트랙 계단식 파라미터 제각각(freq 시작150/10~150/고정10·3AFC, pitch2 시작200/10~300/가변50·20·10·2AFC, am 0~−40dB/6→2), 종료 반전 `4`는 관례 6~8보다 짧음(세션 길이 피드백·`제품 확정 아님`).
+- **USB 디버깅 개념**: adb(5037)로 기기 잡음 → Metro(8081) → `adb reverse tcp:8081 tcp:8081`(Expo 자동) 터널 → 폰 `127.0.0.1:8081`이 PC Metro에 도달. WiFi면 터널 없이 PC LAN IP:8081. adb PATH 미등록이라 PowerShell `adb` 직접 실행은 실패하지만 Expo는 자체 adb 사용.
+
+### 안 한 일
+- 앱 코드·설정 수정, 커밋, 자극 스펙 변경, `adb` PATH 등록.
+
+### 발견/미해결
+- `주의`·`미확인`: Metro 로그에 `[ReferenceError: Property 'LockedTrackChip' doesn't exist]` — `SessionHistoryScreen.tsx:556` (`chips={<LockedTrackChip .../>}`). `-c` 캐시 클리어로 화면은 떴지만, **코드에 정의/임포트가 실제로 있는지 미확인**. 남아 있으면 재발 가능 → 다음에 파일 확인 필요.
+
+### 다음 작업
+1. `LockedTrackChip` 참조 실재 여부 확인(정의·import 존재? 캐시만의 문제였나) — `SessionHistoryScreen.tsx` 정독.
+2. (이월) 브랜치 rename `/` 제거, 실기기 통계 버튼 UX — 09:10 인계 그대로.
+
+### 단정 금지
+- `추정`: 게인 0.15·1kHz·8Hz·시작값·반전4는 전부 파일럿/관례 임시값(실측 근거 없음).
+- `미확인`: `LockedTrackChip` 코드 실재 여부(위).
+- `주의`: 자극 스펙은 백로그에서 **임시값 유지** 결정 → 지금 밸런스 손대면 현 결정과 어긋남.
+
+### 인계 규칙
+- **추가+시각** · 새 창: `@docs/handoff.md` + 「인계 이어서」.
+
+---
+
+## 인계 — 2026-08-13 09:10
+
+새 채팅 AI용. 사용자는 맥락 앎 → 장문 금지. **코드 변경 없음. 이번 세션 = 원격 브랜치 가져오기 + GitHub Code 탭 깨짐 원인 확정.**
+
+### 지금 상태
+- 브랜치: `feat/single-tab-home` @ `9daa864` (`origin`과 동일, working tree clean).
+- `merge/harmonitune`보다 커밋 3개 앞: `05f3a44` 인계·로그 → `2177938` one_tab_jicko → `9daa864` 통계 헤더 다색·탭면적.
+- 앱 상태(이전 인계 유지): 탭 바 없음, 홈=`index` + 통계 스와프(`track:'stats'`). 헤더 stats 버튼 60×40·border 2·아이콘 28·다색 `chart`.
+
+### 한 일 / 안 한 일
+- 한 일: `git fetch --all --prune` 후 `feat/single-tab-home` 로컬 추적·체크아웃. GitHub Code 탭 `Unable to load page` 조사.
+- 안 한 일: 앱 코드 수정·커밋·브랜치 이름 변경(rename)·실기기 확인.
+
+### GitHub Code 탭 (확정)
+- **원인**: 브랜치명 `/` (`feat/single-tab-home`, `merge/harmonitune`). Code URL이 브랜치 `feat` + 경로 `single-tab-home`으로 쪼개져 페이지 로드 실패.
+- **아님**: 푸시 미완료·인덱싱 지연. API·트리·커밋 목록은 정상.
+- `/` 없는 `two_feat`는 Code 탭 정상.
+- 되는 주소: [commits %2F](https://github.com/gimsansan/mmn-amp1/commits/feat%2Fsingle-tab-home/) · [tree %2F](https://github.com/gimsansan/mmn-amp1/tree/feat%2Fsingle-tab-home)
+- **합의**: `feat/…` 형식은 쓰지 않음. 다음부터 `feat-single-tab-home`처럼 `/` 없이.
+
+### 다음 작업
+1. (선택) 브랜치 rename `/` 제거 — 사용자 확인 후. 예: `feat-single-tab-home`.
+2. 실기기: 통계 버튼 발견성·탭 면적·진입/뒤로/peek (01:52 인계와 동일).
+3. 문제 없으면 커밋 여부 확인(현재 HEAD는 이미 푸시됨).
+
+### 단정 금지
+- `주의`: GitHub Code 탭 버그(슬래시 브랜치). 재푸시해도 안 고쳐짐.
+- `미검증`: 실기기 통계 버튼 UX (이전과 동일).
+- `추정`: default `main`(=init만)도 저장소 루트가 빈 화면처럼 보임 — Code 탭 에러와는 별개.
+
+### 인계 규칙
+- **추가+시각** · 새 창: `@docs/handoff.md` + 「인계 이어서」.
+
+---
+
 ## 인계 — 2026-08-13 01:52
 
 새 채팅 AI용. 사용자는 맥락 앎 → 장문 금지. **탭 2→1(단일 홈)은 이미 구현됨. 이번 세션 = 통계 헤더 버튼 발견성·탭 면적 다듬기.**

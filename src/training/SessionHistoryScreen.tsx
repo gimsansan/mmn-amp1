@@ -18,6 +18,7 @@ import { TrendChart, type TrendPoint } from "@/training/TrendChart";
 import { endReasonLabel } from "@/training/freqSession";
 import {
   clearSavedSessions,
+  isCountedInStats,
   listSavedSessions,
   type SavedSessionRecord,
   type SessionTrack,
@@ -111,11 +112,14 @@ export type LatestSessionPeek = {
   savedAt: string;
 };
 
-/** 최신이 앞인 목록에서 가장 최근 세션의 peek 요약을 뽑는다. 진단·점수 아님. */
+/**
+ * 최신이 앞인 목록에서 가장 최근 **측정** 세션의 peek 요약을 뽑는다. 진단·점수 아님.
+ * 연습(practice)은 통계 방침과 일관되게 대표값에서 제외한다(구버전 mode 없음은 포함).
+ */
 export function peekLatestSession(
   rows: readonly SavedSessionRecord[],
 ): LatestSessionPeek | null {
-  const latest = rows[0];
+  const latest = rows.find(isCountedInStats);
   if (!latest) {
     return null;
   }
@@ -477,6 +481,8 @@ function TrendGraphCard({
 
 function HistoryCard({ record }: Readonly<{ record: SavedSessionRecord }>) {
   const content = toCardContent(record);
+  // 연습 세션은 통계에서 빠진다는 걸 목록에서 알 수 있게 배지로 표시.
+  const badge = record.mode === "practice" ? "연습" : null;
 
   return (
     <SummaryCard
@@ -484,6 +490,7 @@ function HistoryCard({ record }: Readonly<{ record: SavedSessionRecord }>) {
         <SummaryCardHeader
           title={content.trackTitle}
           savedAt={content.savedAt}
+          badge={badge}
         />
       }
       trialCount={content.trialCount}
@@ -559,15 +566,20 @@ export function SessionHistoryScreen({
 
   const hasRows = rows.length > 0;
 
+  // 통계·추세는 측정(measure) 세션만 집계한다. 연습(practice)은 목록에만 남긴다.
+  // mode가 없는 구버전 레코드는 측정으로 간주(집계 포함).
+  const statRows = rows.filter(isCountedInStats);
+  const hasStatRows = statRows.length > 0;
+
   const graphAPoints = collectPoints(
-    rows,
+    statRows,
     graphTrackA === "pitch2" ? pickPitchCents : pickFreqCents,
   );
-  const amPoints = collectPoints(rows, pickAmDepthDb);
+  const amPoints = collectPoints(statRows, pickAmDepthDb);
 
-  const listHeader = hasRows ? (
+  const listHeader = hasStatRows ? (
     <View style={styles.headerStack}>
-      <AggregateCard data={computeAggregate(rows)} />
+      <AggregateCard data={computeAggregate(statRows)} />
       <TrendGraphCard
         title="들을 수 있는 최소 차이 추이"
         chips={<TrackChips value={graphTrackA} onChange={setGraphTrackA} />}

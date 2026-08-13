@@ -1,25 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { ActionButton } from '@/components/ui/action-button';
-import { Card } from '@/components/ui/card';
-import { Equalizer } from '@/components/ui/equalizer';
-import { Icon, type IconName } from '@/components/ui/icon';
+import { playPureTone, stopPureTone } from "@/audio/pureTone";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { ActionButton } from "@/components/ui/action-button";
+import { Card } from "@/components/ui/card";
+import { Equalizer } from "@/components/ui/equalizer";
+import { Icon, type IconName } from "@/components/ui/icon";
 import {
   BottomTabInset,
   MaxContentWidth,
   Radius,
   Shadows,
   Spacing,
-} from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { playPureTone, stopPureTone } from '@/audio/pureTone';
+} from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 /** 샘플음 길이(초). 볼륨을 맞출 만큼만. 훈련 자극(0.5초)과 별개. */
 const SAMPLE_DURATION_SEC = 1.5;
+
+/** idle 안내 화면 텍스트만 균일하게 살짝 키우는 배율(사용자 요청). */
+const TEXT_SCALE = 1.2;
 
 type ListeningCheckScreenProps = {
   /** 어느 연습으로 들어가는지(제목에 표시). */
@@ -34,13 +37,19 @@ type ListeningCheckScreenProps = {
 };
 
 /** 카드 머리줄 — 파란 선 아이콘 + 굵은 한 줄. */
-function GuideHeader({ icon, title }: Readonly<{ icon: IconName; title: string }>) {
+function GuideHeader({
+  icon,
+  title,
+}: Readonly<{ icon: IconName; title: string }>) {
   const theme = useTheme();
 
   return (
     <View style={styles.guideHeader}>
       <Icon name={icon} size={18} color={theme.accent} />
-      <ThemedText type="smallBold" style={styles.guideTitle}>
+      <ThemedText
+        type="smallBold"
+        style={[styles.guideTitle, styles.guideTitleText]}
+      >
         {title}
       </ThemedText>
     </View>
@@ -86,7 +95,7 @@ export function ListeningCheckScreen({
     })
       .catch(() => {
         if (!abortRef.current) {
-          setError('소리를 재생하지 못했어요. 기기 소리 설정을 확인해 주세요');
+          setError("소리를 재생하지 못했어요. 기기 소리 설정을 확인해 주세요");
         }
       })
       .finally(() => {
@@ -96,38 +105,58 @@ export function ListeningCheckScreen({
       });
   }, [playing, sampleHz]);
 
-  const leave = useCallback(
-    (next: () => void) => {
-      abortRef.current = true;
-      stopPureTone();
-      next();
-    },
-    []
-  );
+  const leave = useCallback((next: () => void) => {
+    abortRef.current = true;
+    stopPureTone();
+    next();
+  }, []);
 
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <ThemedText type="screenTitle" style={styles.centered}>
+          <ThemedText
+            type="screenTitle"
+            style={[styles.centered, styles.title]}
+          >
             듣기 준비
           </ThemedText>
-          <ThemedText themeColor="textSecondary" type="small" style={styles.subtitle}>
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.subtitle}
+          >
             {trackTitle}
           </ThemedText>
         </View>
 
         <Card style={styles.box}>
-          <GuideHeader icon="headphones" title="이어폰이나 헤드폰을 쓰는 게 좋아요" />
-          <ThemedText themeColor="textSecondary" type="small" style={styles.body}>
-            조용한 곳에서, 연습하는 동안 같은 기기를 쓰면 지난 연습과 견주어 보기 쉬워요
+          <GuideHeader
+            icon="headphones"
+            title="이어폰이나 헤드폰을 쓰는 게 좋아요"
+          />
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.body}
+          >
+            조용한 곳에서, 연습하는 동안 같은 기기를 쓰면 지난 연습과 견주어
+            보기 쉬워요
           </ThemedText>
         </Card>
 
         <Card style={styles.box}>
-          <GuideHeader icon="speaker" title="소리 크기를 편안하게 맞춰 주세요" />
-          <ThemedText themeColor="textSecondary" type="small" style={styles.body}>
-            아래 소리를 들으며 기기 볼륨을 조절하세요. 또렷하게 들리되 크게 느껴지지 않는 정도가 좋아요
+          <GuideHeader
+            icon="speaker"
+            title="소리 크기를 편안하게 맞춰 주세요"
+          />
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.body}
+          >
+            아래 소리를 들으며 기기 볼륨을 조절하세요. 또렷하게 들리되 크게
+            느껴지지 않는 정도가 좋아요
           </ThemedText>
           <Pressable
             accessibilityRole="button"
@@ -140,27 +169,50 @@ export function ListeningCheckScreen({
               Shadows.accent,
               playing && styles.playing,
               pressed && !playing && styles.pressed,
-            ]}>
-            {playing ? <Equalizer color={theme.onAccent} height={16} barWidth={3} /> : null}
-            <ThemedText type="smallBold" style={{ color: theme.onAccent }}>
-              {playing ? '재생 중…' : '소리 들어보기'}
+            ]}
+          >
+            {playing ? (
+              <Equalizer color={theme.onAccent} height={16} barWidth={3} />
+            ) : null}
+            <ThemedText
+              type="smallBold"
+              style={[{ color: theme.onAccent }, styles.sampleButtonText]}
+            >
+              {playing ? "재생 중…" : "소리 들어보기"}
             </ThemedText>
           </Pressable>
         </Card>
 
-        <ThemedText themeColor="textMuted" type="small" style={styles.disclaimer}>
+        <ThemedText
+          themeColor="textMuted"
+          type="small"
+          style={styles.disclaimer}
+        >
           웰니스 연습 · 병원 검사·진단을 대신하지 않아요
         </ThemedText>
 
         {error ? (
-          <ThemedText themeColor="textSecondary" type="small" style={styles.centered}>
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.centered}
+          >
             {error}
           </ThemedText>
         ) : null}
 
         <View style={styles.actions}>
-          <ActionButton variant="primary" label="연습 시작" onPress={() => leave(onStart)} />
-          <ActionButton label="연습 목록" onPress={() => leave(onBack)} />
+          <ActionButton
+            variant="primary"
+            label="연습 시작"
+            textScale={TEXT_SCALE}
+            onPress={() => leave(onStart)}
+          />
+          <ActionButton
+            label="연습 목록"
+            textScale={TEXT_SCALE}
+            onPress={() => leave(onBack)}
+          />
         </View>
       </SafeAreaView>
     </ThemedView>
@@ -174,64 +226,79 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
+    alignSelf: "center",
+    width: "100%",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
-    alignItems: 'stretch',
+    alignItems: "stretch",
     gap: Spacing.three - 4,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: Spacing.one,
     marginBottom: Spacing.two,
   },
   centered: {
-    textAlign: 'center',
+    textAlign: "center",
+  },
+  /** screenTitle(23/30) × TEXT_SCALE. */
+  title: {
+    fontSize: 23 * TEXT_SCALE,
+    lineHeight: 30 * TEXT_SCALE,
   },
   subtitle: {
-    fontSize: 12,
-    lineHeight: 18,
-    textAlign: 'center',
+    fontSize: 12 * TEXT_SCALE,
+    lineHeight: 18 * TEXT_SCALE,
+    textAlign: "center",
   },
   box: {
     gap: Spacing.two - 1,
   },
   guideHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.two,
   },
   guideTitle: {
     flexShrink: 1,
   },
+  /** smallBold(14/20) × TEXT_SCALE. */
+  guideTitleText: {
+    fontSize: 14 * TEXT_SCALE,
+    lineHeight: 20 * TEXT_SCALE,
+  },
   body: {
-    fontSize: 12,
-    lineHeight: 19,
+    fontSize: 12 * TEXT_SCALE,
+    lineHeight: 19 * TEXT_SCALE,
+  },
+  /** smallBold(14/20) × TEXT_SCALE. */
+  sampleButtonText: {
+    fontSize: 14 * TEXT_SCALE,
+    lineHeight: 20 * TEXT_SCALE,
   },
   sampleButton: {
     minHeight: 44,
     marginTop: Spacing.two - 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.two + 1,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
     borderRadius: Radius.small,
   },
   disclaimer: {
-    fontSize: 11,
-    lineHeight: 16,
-    textAlign: 'center',
+    fontSize: 11 * TEXT_SCALE,
+    lineHeight: 16 * TEXT_SCALE,
+    textAlign: "center",
     marginTop: Spacing.two,
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.three - 4,
     // 안내 카드가 위에 쌓이므로 버튼은 바닥으로 민다(시안의 `margin-top:auto`).
-    marginTop: 'auto',
+    marginTop: "auto",
     paddingTop: Spacing.three,
   },
   playing: {

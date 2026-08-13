@@ -14,10 +14,27 @@ const STORAGE_KEY = 'training.sessionHistory.v1';
  */
 export const SESSION_RECORD_VERSION = 1;
 
-/** 기기 보관 상한. 오래된 것부터 버림. */
-export const MAX_SAVED_SESSIONS = 50;
+/**
+ * 기기 보관 상한 — **모드별 독립**. 초과분은 그 모드 안에서 오래된 것부터 버림.
+ *
+ * 측정은 통계·추세 그래프의 근거이므로 넉넉히(50) 지킨다. 연습은 목록·배지용이라 30이면 충분.
+ * 두 상한이 독립이라 **연습을 아무리 많이 해도 측정 이력이 밀려나지 않는다**
+ * (그래프 형상이 연습량에 흔들리지 않음). 합계 상한은 두지 않는다(최대 80, 로컬 요약이라 가벼움).
+ */
+export const MAX_MEASURE_SESSIONS = 50;
+export const MAX_PRACTICE_SESSIONS = 30;
 
 export type SessionTrack = 'freq' | 'am' | 'pitch2';
+
+/**
+ * 세션 성격.
+ * - `practice`: 연습(반전 4). 기록은 남기되 통계·추세에서 제외.
+ * - `measure`: 측정(반전 8). 기록 + 통계 포함.
+ *
+ * `주의`: 구버전 레코드에는 이 필드가 없다(`undefined`). 없으면 **측정으로 간주**해
+ * 통계에 포함한다(기존 데이터를 통계에서 빠뜨리지 않기 위해).
+ */
+export type SessionMode = 'practice' | 'measure';
 
 export type SavedFreqSessionRecord = {
   id: string;
@@ -25,6 +42,8 @@ export type SavedFreqSessionRecord = {
   savedAt: string;
   /** 없으면 1(초기 저장분). */
   schemaVersion?: number;
+  /** 없으면 측정으로 간주(구버전 호환). */
+  mode?: SessionMode;
   summary: FreqSessionSummary;
 };
 
@@ -34,6 +53,8 @@ export type SavedAmSessionRecord = {
   savedAt: string;
   /** 없으면 1(초기 저장분). */
   schemaVersion?: number;
+  /** 없으면 측정으로 간주(구버전 호환). */
+  mode?: SessionMode;
   summary: AmSessionSummary;
 };
 
@@ -43,6 +64,8 @@ export type SavedPitch2SessionRecord = {
   savedAt: string;
   /** 없으면 1(초기 저장분). */
   schemaVersion?: number;
+  /** 없으면 측정으로 간주(구버전 호환). */
+  mode?: SessionMode;
   summary: PitchCompareSummary;
 };
 
@@ -60,6 +83,13 @@ function newId(): string {
 // 수동 조작). 형태가 어긋난 레코드는 읽는 시점에 버려서 화면이 넘어지지 않게 한다.
 
 const END_REASONS: ReadonlySet<string> = new Set(['reversals', 'max_trials', 'manual']);
+
+const SESSION_MODES: ReadonlySet<string> = new Set(['practice', 'measure']);
+
+/** mode는 선택 필드 — 없으면(undefined) 허용, 있으면 아는 값이어야 한다. */
+function isSessionModeOrAbsent(value: unknown): value is SessionMode | undefined {
+  return value === undefined || (typeof value === 'string' && SESSION_MODES.has(value));
+}
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
@@ -99,6 +129,9 @@ function isValidRecord(value: unknown): value is SavedSessionRecord {
     return false;
   }
   if (!isPlainObject(value.summary) || !hasValidSummaryBase(value.summary)) {
+    return false;
+  }
+  if (!isSessionModeOrAbsent(value.mode)) {
     return false;
   }
 
@@ -202,57 +235,97 @@ async function writeAllRaw(records: SavedSessionRecord[]): Promise<void> {
 }
 
 /**
- * 레코드 1건 추가(최신이 앞). 상한 초과분은 오래된 것부터 버림.
+ * 모드별 독립 상한을 적용해 초과분을 그 모드 안에서만 버린다.
+ *
+ * `merged`(최신이 앞)를 측정/연습으로 갈라 각자 `slice`한 뒤, **원래 순서를 유지**하며 합친다.
+ * 한 모드가 넘쳐도 잘려나가는 건 그 모드의 오래된 레코드뿐이라 다른 모드는 그대로 남는다.
+ */
+function capByMode(
+  merged: readonly SavedSessionRecord[]
+): SavedSessionRecord[] {
+  const measure = merged
+    .filter(isCountedInStats)
+    .slice(0, MAX_MEASURE_SESSIONS);
+  const practice = merged
+    .filter((r) => !isCountedInStats(r))
+    .slice(0, MAX_PRACTICE_SESSIONS);
+
+  const keep = new Set<string>([
+    ...measure.map((r) => r.id),
+    ...practice.map((r) => r.id),
+  ]);
+  return merged.filter((r) => keep.has(r.id));
+}
+
+/**
+ * 레코드 1건 추가(최신이 앞). 상한 초과분은 **모드별로** 오래된 것부터 버림.
  * `build`는 큐 안에서 실행되므로 `savedAt`·`id`가 **실제 기록 순서와 일치**한다.
  */
 function appendRecord<R extends SavedSessionRecord>(build: () => R): Promise<R> {
   return enqueue(async () => {
     const record = build();
-    const next = [record as SavedSessionRecord, ...(await readAllRaw())].slice(
-      0,
-      MAX_SAVED_SESSIONS
-    );
+    const next = capByMode([
+      record as SavedSessionRecord,
+      ...(await readAllRaw()),
+    ]);
     await writeAllRaw(next);
     return record;
   });
 }
 
-/** 세션 종료 요약만 저장. 진단·역치 아님. 실패 시 throw. */
+/**
+ * 세션 종료 요약만 저장. 진단·역치 아님. 실패 시 throw.
+ * `mode` 생략 시 측정으로 저장(구버전 호출부 호환).
+ */
 export function appendFreqSessionSummary(
-  summary: FreqSessionSummary
+  summary: FreqSessionSummary,
+  mode: SessionMode = 'measure'
 ): Promise<SavedFreqSessionRecord> {
   return appendRecord<SavedFreqSessionRecord>(() => ({
     id: newId(),
     track: 'freq',
     savedAt: new Date().toISOString(),
     schemaVersion: SESSION_RECORD_VERSION,
+    mode,
     summary,
   }));
 }
 
 export function appendAmSessionSummary(
-  summary: AmSessionSummary
+  summary: AmSessionSummary,
+  mode: SessionMode = 'measure'
 ): Promise<SavedAmSessionRecord> {
   return appendRecord<SavedAmSessionRecord>(() => ({
     id: newId(),
     track: 'am',
     savedAt: new Date().toISOString(),
     schemaVersion: SESSION_RECORD_VERSION,
+    mode,
     summary,
   }));
 }
 
 /** 「높낮이 비교」 세션 종료 요약 저장. 진단·역치 아님. 실패 시 throw. */
 export function appendPitch2SessionSummary(
-  summary: PitchCompareSummary
+  summary: PitchCompareSummary,
+  mode: SessionMode = 'measure'
 ): Promise<SavedPitch2SessionRecord> {
   return appendRecord<SavedPitch2SessionRecord>(() => ({
     id: newId(),
     track: 'pitch2',
     savedAt: new Date().toISOString(),
     schemaVersion: SESSION_RECORD_VERSION,
+    mode,
     summary,
   }));
+}
+
+/**
+ * 이 레코드가 통계·추세 집계에 포함되는지.
+ * 연습(`practice`)만 제외한다. `mode`가 없는 구버전 레코드는 포함(측정으로 간주).
+ */
+export function isCountedInStats(record: SavedSessionRecord): boolean {
+  return record.mode !== 'practice';
 }
 
 /** 대기 중인 저장이 있으면 그것들이 끝난 뒤의 목록을 돌려준다. */
