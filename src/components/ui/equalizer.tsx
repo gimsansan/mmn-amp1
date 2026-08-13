@@ -1,15 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, StyleSheet, View } from 'react-native';
 
-/** 막대별 최대 높이 비율 · 시작 지연(ms). 시안의 어긋난 리듬을 그대로 옮김. */
-const BARS = [
-  { ratio: 0.4, delay: 0 },
-  { ratio: 1, delay: 200 },
-  { ratio: 0.65, delay: 400 },
-  { ratio: 0.85, delay: 100 },
-] as const;
-
-const HALF_CYCLE_MS = 550;
+const STAGGER_MS = 150;
+const HALF_CYCLE_MS = 450;
 const MIN_SCALE = 0.35;
 
 type EqualizerProps = {
@@ -17,20 +10,22 @@ type EqualizerProps = {
   /** 가장 긴 막대의 높이(px). */
   height?: number;
   barWidth?: number;
+  /** 2-AFC는 4, 3-AFC는 3. */
+  bars?: 3 | 4;
+  /** 재생 중일 때만 움직임. 아니면 멈춤·흐리게. */
+  playing?: boolean;
 };
 
 function Bar({
   color,
   height,
   width,
-  ratio,
   delay,
   animate,
 }: Readonly<{
   color: string;
   height: number;
   width: number;
-  ratio: number;
   delay: number;
   animate: boolean;
 }>) {
@@ -40,7 +35,7 @@ function Bar({
 
   useEffect(() => {
     if (!animate) {
-      // 모션 최소화 — 중간 높이로 멈춰 둔다(막대가 사라지지 않게).
+      // 모션 최소화·정지 — 중간 높이로 멈춰 둔다(막대가 사라지지 않게).
       scale.setValue(0.7);
       return;
     }
@@ -76,7 +71,7 @@ function Bar({
         styles.bar,
         {
           width,
-          height: height * ratio,
+          height,
           backgroundColor: color,
           transform: [{ scaleY: scale }],
         },
@@ -89,18 +84,24 @@ function Bar({
  * 재생 중을 알리는 막대 애니메이션(장식).
  * `주의`: 실제 소리의 파형이 아니다 — 자극의 세기·난이도와 연동하지 않는다.
  */
-export function Equalizer({ color, height = 18, barWidth = 3.5 }: Readonly<EqualizerProps>) {
-  const [animate, setAnimate] = useState(true);
+export function Equalizer({
+  color,
+  height = 18,
+  barWidth = 3.5,
+  bars = 4,
+  playing = true,
+}: Readonly<EqualizerProps>) {
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
     let alive = true;
     void AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
       if (alive) {
-        setAnimate(!reduced);
+        setReduceMotion(reduced);
       }
     });
     const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (reduced) => {
-      setAnimate(!reduced);
+      setReduceMotion(reduced);
     });
     return () => {
       alive = false;
@@ -108,16 +109,19 @@ export function Equalizer({ color, height = 18, barWidth = 3.5 }: Readonly<Equal
     };
   }, []);
 
+  const animate = playing && !reduceMotion;
+
   return (
-    <View style={[styles.row, { height }]} importantForAccessibility="no-hide-descendants">
-      {BARS.map((bar, i) => (
+    <View
+      style={[styles.row, { height }, !playing && styles.dim]}
+      importantForAccessibility="no-hide-descendants">
+      {Array.from({ length: bars }, (_, i) => (
         <Bar
           key={i}
           color={color}
           height={height}
           width={barWidth}
-          ratio={bar.ratio}
-          delay={bar.delay}
+          delay={i * STAGGER_MS}
           animate={animate}
         />
       ))}
@@ -129,7 +133,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 3,
+    gap: 5,
+  },
+  dim: {
+    opacity: 0.4,
   },
   bar: {
     borderRadius: 2,

@@ -18,6 +18,8 @@ type PillProps = {
   stretch?: boolean;
   /** 라벨 글자 배율(기본 1). idle 안내 화면에서만 살짝 키우는 용도. */
   textScale?: number;
+  /** `surface`는 흰 면+테두리(훈련 진행 pill). 기본은 연한 강조 면. */
+  variant?: 'accent' | 'surface';
 };
 
 /** 시안의 알약 배지 — 옅은 파랑 배경 + 파란 글자. */
@@ -27,15 +29,17 @@ export function Pill({
   mono = false,
   stretch = false,
   textScale = 1,
+  variant = 'accent',
 }: Readonly<PillProps>) {
   const theme = useTheme();
+  const surface = variant === 'surface';
   const base = mono ? MONO_BASE : SMALL_BASE;
   const scaledLabel =
-    textScale === 1
+    textScale === 1 && !surface
       ? null
       : {
-          fontSize: base.fontSize * textScale,
-          lineHeight: base.lineHeight * textScale,
+          fontSize: (surface && mono ? 13 : base.fontSize) * textScale,
+          lineHeight: (surface && mono ? 18 : base.lineHeight) * textScale,
         };
 
   return (
@@ -43,10 +47,27 @@ export function Pill({
       style={[
         styles.pill,
         stretch ? styles.stretch : styles.hug,
-        { backgroundColor: theme.accentTint },
+        surface
+          ? {
+              backgroundColor: theme.surface,
+              borderWidth: 1,
+              borderColor: theme.border,
+              paddingVertical: 6,
+              paddingHorizontal: 14,
+            }
+          : { backgroundColor: theme.accentTint },
       ]}>
-      {icon ? <Icon name={icon} size={14} color={theme.accent} strokeWidth={2.2} /> : null}
-      <ThemedText type={mono ? 'mono' : 'small'} style={[{ color: theme.accent }, scaledLabel]}>
+      {icon ? (
+        <Icon
+          name={icon}
+          size={14}
+          color={surface ? theme.text : theme.accent}
+          strokeWidth={2.2}
+        />
+      ) : null}
+      <ThemedText
+        type={mono ? 'mono' : 'small'}
+        style={[{ color: surface ? theme.text : theme.accent }, scaledLabel]}>
         {label}
       </ThemedText>
     </View>

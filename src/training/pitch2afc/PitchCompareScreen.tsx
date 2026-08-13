@@ -35,6 +35,7 @@ import {
   type SessionMode,
 } from "@/training/sessionMode";
 import { SessionModeToggle } from "@/training/SessionModeToggle";
+import { SessionProgressBar } from "@/training/SessionProgressBar";
 import { appendPitch2SessionSummary } from "@/training/sessionStore";
 import { SummaryCard } from "@/training/SummaryCard";
 
@@ -124,11 +125,13 @@ function centsText(value: number | null): string {
 function ChoiceButton({
   label,
   a11yLabel,
+  icon,
   disabled,
   onPress,
 }: Readonly<{
   label: string;
   a11yLabel: string;
+  icon: "arrowUp" | "arrowDown";
   disabled: boolean;
   onPress: () => void;
 }>) {
@@ -154,6 +157,7 @@ function ChoiceButton({
         ];
       }}
     >
+      <Icon name={icon} size={30} color={theme.accent} strokeWidth={2.2} />
       <ThemedText type="smallBold" style={styles.choiceLabel}>
         {label}
       </ThemedText>
@@ -231,7 +235,7 @@ function SessionHeader({
   const showEndReason = phase === "summary" && endReason != null;
   return (
     <View style={styles.header}>
-      <ThemedText type="screenTitle" style={styles.caption}>
+      <ThemedText type="screenTitle" style={styles.runningTitle}>
         높낮이 비교
       </ThemedText>
       <ThemedText themeColor="textMuted" type="small" style={styles.disclaimer}>
@@ -248,6 +252,7 @@ function SessionHeader({
       ) : (
         <Pill
           mono
+          variant="surface"
           label={progressCaption(
             phase,
             trialNumber,
@@ -282,7 +287,7 @@ function SessionActions({
   const idleTextScale = phase === "idle" ? TEXT_SCALE : 1;
 
   return (
-    <View style={styles.actions}>
+    <View style={[styles.actions, playingOrChoosing && styles.stopActions]}>
       {atRest ? (
         <>
           <ActionButton
@@ -473,6 +478,9 @@ export function PitchCompareScreen({
   const choiceDisabled = phase !== "choose";
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
+  const targetReversals = targetReversalsFor(
+    phase === "idle" ? mode : runModeRef.current,
+  );
 
   return (
     <ThemedView style={styles.fill}>
@@ -483,12 +491,16 @@ export function PitchCompareScreen({
           reversalCount={reversalCount}
           correct={correct}
           endReason={summary?.endReason ?? null}
-          targetReversals={targetReversalsFor(
-            phase === "idle" ? mode : runModeRef.current,
-          )}
+          targetReversals={targetReversals}
           mode={mode}
           onModeChange={setMode}
         />
+        {running ? (
+          <SessionProgressBar
+            current={reversalCount}
+            total={targetReversals}
+          />
+        ) : null}
 
         {phase === "summary" ? (
           <ScrollView
@@ -534,8 +546,14 @@ export function PitchCompareScreen({
         ) : null}
 
         {running ? (
-          <View style={styles.statusRow}>
-            {phase === "playing" ? <Equalizer color={theme.accent} /> : null}
+          <View style={styles.promptArea}>
+            <Equalizer
+              color={theme.accent}
+              height={26}
+              barWidth={4}
+              bars={4}
+              playing={phase === "playing"}
+            />
             <ThemedText
               type="smallBold"
               themeColor="textSecondary"
@@ -551,12 +569,14 @@ export function PitchCompareScreen({
             <ChoiceButton
               label="더 낮아요"
               a11yLabel="두 번째 소리가 더 낮아요"
+              icon="arrowDown"
               disabled={choiceDisabled}
               onPress={() => onAnswer(false)}
             />
             <ChoiceButton
               label="더 높아요"
               a11yLabel="두 번째 소리가 더 높아요"
+              icon="arrowUp"
               disabled={choiceDisabled}
               onPress={() => onAnswer(true)}
             />
@@ -595,9 +615,9 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: "center",
     width: "100%",
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    paddingHorizontal: 22,
+    paddingTop: 20,
+    paddingBottom: BottomTabInset + 26,
     alignItems: "stretch",
     gap: Spacing.two + 2,
   },
@@ -647,13 +667,19 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    gap: Spacing.one + 2,
+    gap: Spacing.two,
+  },
+  runningTitle: {
+    fontSize: 22,
+    lineHeight: 28,
+    letterSpacing: -0.22,
+    textAlign: "center",
   },
   caption: {
     textAlign: "center",
   },
   disclaimer: {
-    fontSize: 11.5,
+    fontSize: 12,
     lineHeight: 17,
     textAlign: "center",
   },
@@ -668,35 +694,37 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-  statusRow: {
-    flexDirection: "row",
+  promptArea: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.two,
-    marginVertical: Spacing.three - 2,
-    minHeight: 20,
+    gap: 12,
+    paddingVertical: 26,
   },
   statusText: {
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "600",
     textAlign: "center",
   },
   choices: {
     flexDirection: "row",
-    gap: Spacing.three - 4,
+    gap: 12,
   },
   choiceButton: {
     flex: 1,
-    minHeight: 96,
+    minHeight: 132,
     borderWidth: 1.5,
     borderRadius: Radius.large,
     alignItems: "center",
     justifyContent: "center",
+    gap: 10,
     paddingHorizontal: Spacing.two,
   },
   choiceLabel: {
-    fontSize: 17,
+    fontSize: 18,
     lineHeight: 24,
+    fontWeight: "600",
   },
   summaryScroll: {
     flex: 1,
@@ -708,8 +736,11 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: "row",
-    gap: Spacing.three - 4,
+    gap: 12,
     marginTop: Spacing.two,
+  },
+  stopActions: {
+    marginTop: 16,
   },
   disabled: {
     opacity: 0.4,

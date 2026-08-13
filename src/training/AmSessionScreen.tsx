@@ -41,6 +41,7 @@ import {
   type SessionMode,
 } from "@/training/sessionMode";
 import { SessionModeToggle } from "@/training/SessionModeToggle";
+import { SessionProgressBar } from "@/training/SessionProgressBar";
 import { appendAmSessionSummary } from "@/training/sessionStore";
 import { SummaryCard } from "@/training/SummaryCard";
 
@@ -310,7 +311,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
           </View>
         ) : (
           <View style={styles.header}>
-            <ThemedText type="screenTitle" style={styles.caption}>
+            <ThemedText type="screenTitle" style={styles.runningTitle}>
               떨림 찾기
             </ThemedText>
             <ThemedText
@@ -331,6 +332,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
             ) : (
               <Pill
                 mono
+                variant="surface"
                 label={progressCaption(
                   phase,
                   trialNumber,
@@ -341,6 +343,13 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
             )}
           </View>
         )}
+
+        {running ? (
+          <SessionProgressBar
+            current={stair?.reversalCount ?? 0}
+            total={targetReversals}
+          />
+        ) : null}
 
         {/*
           요약만 스크롤한다. 글자 크기를 키우면(시스템 설정 최대 200%) 카드가
@@ -383,8 +392,14 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
         ) : null}
 
         {running ? (
-          <View style={styles.statusRow}>
-            {phase === "playing" ? <Equalizer color={theme.accent} /> : null}
+          <View style={styles.promptArea}>
+            <Equalizer
+              color={theme.accent}
+              height={24}
+              barWidth={4}
+              bars={3}
+              playing={phase === "playing"}
+            />
             <ThemedText
               type="smallBold"
               themeColor="textSecondary"
@@ -421,9 +436,22 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
                   choiceDisabled && styles.disabled,
                 ]}
               >
-                <ThemedText type="metric" style={styles.choiceNumber}>
-                  {i + 1}
-                </ThemedText>
+                {({ pressed }) => (
+                  <ThemedText
+                    type="metric"
+                    style={[
+                      styles.choiceNumber,
+                      {
+                        color:
+                          pressed && !choiceDisabled
+                            ? theme.accent
+                            : theme.text,
+                      },
+                    ]}
+                  >
+                    {i + 1}
+                  </ThemedText>
+                )}
               </Pressable>
             ))}
           </View>
@@ -446,7 +474,12 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
           </ThemedText>
         ) : null}
 
-        <View style={styles.actions}>
+        <View
+          style={[
+            styles.actions,
+            (phase === "playing" || phase === "choose") && styles.stopActions,
+          ]}
+        >
           {phase === "idle" || phase === "summary" ? (
             <>
               <ActionButton
@@ -494,9 +527,9 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: "center",
     width: "100%",
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    paddingHorizontal: 22,
+    paddingTop: 20,
+    paddingBottom: BottomTabInset + 26,
     alignItems: "stretch",
     gap: Spacing.two + 2,
   },
@@ -547,13 +580,19 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    gap: Spacing.one + 2,
+    gap: Spacing.two,
+  },
+  runningTitle: {
+    fontSize: 22,
+    lineHeight: 28,
+    letterSpacing: -0.22,
+    textAlign: "center",
   },
   caption: {
     textAlign: "center",
   },
   disclaimer: {
-    fontSize: 11.5,
+    fontSize: 12,
     lineHeight: 17,
     textAlign: "center",
   },
@@ -568,22 +607,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-  statusRow: {
-    flexDirection: "row",
+  promptArea: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.two,
-    marginVertical: Spacing.three - 2,
-    minHeight: 20,
+    gap: 12,
+    paddingVertical: 22,
   },
   statusText: {
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "600",
     textAlign: "center",
   },
   choices: {
     flexDirection: "row",
-    gap: Spacing.three - 4,
+    gap: 12,
   },
   choiceButton: {
     flex: 1,
@@ -594,8 +633,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   choiceNumber: {
-    fontSize: 30,
-    lineHeight: 38,
+    fontSize: 36,
+    lineHeight: 44,
+    fontWeight: "500",
   },
   detail: {
     fontSize: 11,
@@ -613,8 +653,11 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: "row",
-    gap: Spacing.three - 4,
+    gap: 12,
     marginTop: Spacing.two,
+  },
+  stopActions: {
+    marginTop: 16,
   },
   disabled: {
     opacity: 0.4,

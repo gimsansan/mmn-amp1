@@ -45,6 +45,20 @@
 
 ## 로그
 
+### 2026-08-14 00:14 — 훈련 진행 화면 3종 UI (README hifi)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 (훈련 화면 렌더만) |
+| 근거·결정 | `files/README.md` + `HearingTraining.dc.html`. 로직·문구·상태 흐름 유지, 진행 중 레이아웃·위계·간격·색·탭 타겟만. 토큰은 `theme.ts`의 accent/surface/border. |
+| 변경 요약 | 높낮이 비교 2-AFC(132px 타일+화살표), 다른 음/떨림 3-AFC(정사각·36px 숫자)를 시안 레이아웃으로. 진행 pill(흰 면)·슬림 진행바·중앙 이퀄라이저(재생 중에만 움직임). idle·요약·채점·저장은 그대로. |
+| 주요 경로 | `src/training/pitch2afc/PitchCompareScreen.tsx`, `FreqSessionScreen.tsx`, `AmSessionScreen.tsx`, `SessionProgressBar.tsx`, `src/components/ui/equalizer.tsx`, `pill.tsx`, `icon.tsx` |
+| 결과 | 성공 (코드). 실기기 화면 대조는 미실시. |
+| 확인 | 린트 통과. 로직 파일(`*Trial`/`*Session`/`SessionManager`) 미변경. |
+| 단정 금지 | `미검증`: HTML 시안 대비 픽셀 일치(안드로이드 그림자·폰트). `주의`: 이퀄라이저는 장식이며 파형·난이도와 무관. 듣기 준비 화면 EQ 간격이 3→5로 같이 바뀜(같은 컴포넌트). |
+| 성능·주의 | 막대 애니메이션은 기존과 같이 native driver. **리빌드 불필요** (JS/스타일만). |
+| 다음 | 실기기에서 진행 3화면 대조. 홈/듣기준비/요약/통계는 이번 범위 밖. |
+
 ### 2026-08-13 16:49 — 기록 중복 축소 (인계·설계 숫자)
 
 | 항목 | 내용 |

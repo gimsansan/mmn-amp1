@@ -16,7 +16,10 @@ export type IconName =
   | 'check'
   | 'headphones'
   | 'speaker'
-  | 'stop';
+  | 'stop'
+  /** 높낮이 비교 — 더 높아요 / 더 낮아요. */
+  | 'arrowUp'
+  | 'arrowDown';
 
 type IconProps = {
   name: IconName;
@@ -85,6 +88,14 @@ export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: Readonly<Ico
 
       {name === 'stop' ? (
         <Rect x="6" y="6" width="12" height="12" rx="2" {...stroke} strokeWidth={strokeWidth + 0.2} />
+      ) : null}
+
+      {name === 'arrowUp' ? (
+        <Path d="M12 5v14M12 5l-6 6M12 5l6 6" {...stroke} />
+      ) : null}
+
+      {name === 'arrowDown' ? (
+        <Path d="M12 19V5M12 19l-6-6M12 19l6-6" {...stroke} />
       ) : null}
     </Svg>
   );
