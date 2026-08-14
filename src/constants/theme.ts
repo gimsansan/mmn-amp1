@@ -38,6 +38,8 @@ export const Colors = {
     highlight: '#F5833F',
     /** 통계 아이콘 막대 등 긍정 표시. */
     positive: '#1F9D6B',
+    /** 파괴적 행동 글자(전체 삭제 등). 흰 면 유지, 채도 낮은 빨강. */
+    danger: '#9B3B3B',
   },
 } as const;
 

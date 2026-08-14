@@ -38,17 +38,20 @@ type Track = "picker" | "pitch2" | "freq" | "am" | "stats";
 
 const APP_DISPLAY_NAME = "청능 연습";
 
-/** 듣기 준비 화면 제목(훈련 트랙만). */
-const TRACK_TITLE: Record<"pitch2" | "freq" | "am", string> = {
-  pitch2: "높낮이 비교",
-  freq: "다른 음 찾기",
-  am: "떨림 찾기",
+type TrainingTrack = "pitch2" | "freq" | "am";
+
+/**
+ * 트랙의 얼굴 — 아이콘과 제목. 연습 선택 카드·듣기 준비·시작 화면이 모두 이걸 쓴다.
+ * 세 아이콘은 서로 달라야 한다(제목을 읽기 전에 그림으로 구분되게). `icon.tsx` 참고.
+ */
+const TRACK_FACE: Record<TrainingTrack, { icon: IconName; title: string }> = {
+  pitch2: { icon: "bars", title: "높낮이 비교" },
+  freq: { icon: "findTone", title: "다른 음 찾기" },
+  am: { icon: "vibrate", title: "떨림 찾기" },
 };
 
 type TrackOption = {
-  track: Exclude<Track, "picker">;
-  icon: IconName;
-  title: string;
+  track: TrainingTrack;
   description: string;
 };
 
@@ -64,14 +67,10 @@ const TRAINING_SECTIONS: readonly TrackSection[] = [
     options: [
       {
         track: "pitch2",
-        icon: "wave",
-        title: "높낮이 비교",
         description: "두 소리 중 어느 쪽이 높은지 맞히는 연습",
       },
       {
         track: "freq",
-        icon: "wave",
-        title: "다른 음 찾기",
         description: "조금 다른 음높이를 찾는 연습",
       },
     ],
@@ -81,8 +80,6 @@ const TRAINING_SECTIONS: readonly TrackSection[] = [
     options: [
       {
         track: "am",
-        icon: "ripple",
-        title: "떨림 찾기",
         description: "소리가 떨리는지 찾는 연습",
       },
     ],
@@ -156,46 +153,50 @@ export default function ExploreScreen() {
   }, [track, backToPicker]);
 
   const renderCard = useCallback(
-    (option: TrackOption) => (
-      <Pressable
-        key={option.track}
-        accessibilityRole="button"
-        accessibilityLabel={`${option.title} — ${option.description}`}
-        onPress={() => openTrack(option.track)}
-        style={({ pressed }) => [styles.cardPress, pressed && styles.pressed]}
-      >
-        <Card style={styles.card}>
-          <View
-            style={[styles.cardIcon, { backgroundColor: theme.accentTint }]}
-          >
-            <Icon name={option.icon} size={22} color={theme.accent} />
-          </View>
-          <View style={styles.cardText}>
-            <ThemedText type="smallBold" style={styles.cardTitle}>
-              {option.title}
-            </ThemedText>
-            <ThemedText
-              themeColor="textSecondary"
-              type="small"
-              style={styles.cardCaption}
+    (option: TrackOption) => {
+      const face = TRACK_FACE[option.track];
+      return (
+        <Pressable
+          key={option.track}
+          accessibilityRole="button"
+          accessibilityLabel={`${face.title} — ${option.description}`}
+          onPress={() => openTrack(option.track)}
+          style={({ pressed }) => [styles.cardPress, pressed && styles.pressed]}
+        >
+          <Card style={styles.card}>
+            <View
+              style={[styles.cardIcon, { backgroundColor: theme.accentTint }]}
             >
-              {option.description}
-            </ThemedText>
-          </View>
-        </Card>
-      </Pressable>
-    ),
+              <Icon name={face.icon} size={22} color={theme.accent} />
+            </View>
+            <View style={styles.cardText}>
+              <ThemedText type="smallBold" style={styles.cardTitle}>
+                {face.title}
+              </ThemedText>
+              <ThemedText
+                themeColor="textSecondary"
+                type="small"
+                style={styles.cardCaption}
+              >
+                {option.description}
+              </ThemedText>
+            </View>
+          </Card>
+        </Pressable>
+      );
+    },
     [openTrack, theme.accent, theme.accentTint],
   );
 
   // 훈련 트랙은 듣기 준비를 한 번 지난 뒤에 들어간다(음고·떨림 공통 — 화면 중복 없음).
   if ((track === "pitch2" || track === "freq" || track === "am") && !checked) {
-    const title = TRACK_TITLE[track];
+    const face = TRACK_FACE[track];
     // ① 떨림 찾기만 반송파, 음고 트랙(높낮이·다른 음)은 기준음을 미리 들려준다.
     const sampleHz = track === "am" ? DEFAULT_CARRIER_HZ : DEFAULT_REFERENCE_HZ;
     return (
       <ListeningCheckScreen
-        trackTitle={title}
+        trackTitle={face.title}
+        trackIcon={face.icon}
         sampleHz={sampleHz}
         onStart={passCheck}
         onBack={backToPicker}

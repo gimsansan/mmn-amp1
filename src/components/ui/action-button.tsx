@@ -11,13 +11,15 @@ const LABEL_BASE_LINE_HEIGHT = 20;
 
 export type ActionButtonProps = Omit<PressableProps, 'style' | 'children'> & {
   label: string;
-  /** `primary`는 파란 채움(화면당 하나), `secondary`는 흰 배경 + 테두리. */
-  variant?: 'primary' | 'secondary';
+  /** `primary`는 파란 채움(화면당 하나), `secondary`는 흰 배경 + 테두리. `danger`는 흰 면 + 낮은 채도 빨강 글자. */
+  variant?: 'primary' | 'secondary' | 'danger';
   icon?: IconName;
   /** 행 안에서 균등 분할할지. 단독 버튼이면 false. */
   fill?: boolean;
   /** 라벨 글자 배율(기본 1). idle 안내 화면에서만 살짝 키우는 용도. */
   textScale?: number;
+  /** 테두리를 글자색과 같게. 통계 하단 3버튼용. */
+  outlineMatchLabel?: boolean;
 };
 
 /** 시안의 48px 액션 버튼. 화면 하단 행에서 나란히 쓴다. */
@@ -27,12 +29,18 @@ export function ActionButton({
   icon,
   fill = true,
   textScale = 1,
+  outlineMatchLabel = false,
   disabled,
   ...rest
 }: Readonly<ActionButtonProps>) {
   const theme = useTheme();
   const primary = variant === 'primary';
-  const contentColor = primary ? theme.onAccent : theme.text;
+  let contentColor = theme.text;
+  if (primary) {
+    contentColor = theme.onAccent;
+  } else if (variant === 'danger') {
+    contentColor = theme.danger;
+  }
   const scaledLabel =
     textScale === 1
       ? null
@@ -51,7 +59,11 @@ export function ActionButton({
         fill && styles.fill,
         primary
           ? [{ backgroundColor: theme.accent }, Shadows.accent]
-          : { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border },
+          : {
+              backgroundColor: theme.surface,
+              borderWidth: 1,
+              borderColor: outlineMatchLabel ? contentColor : theme.border,
+            },
         disabled && styles.disabled,
         pressed && !disabled && styles.pressed,
       ]}

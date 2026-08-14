@@ -28,6 +28,11 @@ type ListeningCheckScreenProps = {
   /** 어느 연습으로 들어가는지(제목에 표시). */
   trackTitle: string;
   /**
+   * 그 연습의 아이콘. 연습 선택 카드 → 이 화면 → 시작 화면이 **같은 그림**으로 이어져
+   * 제목을 읽기 전에 어떤 연습인지 알아볼 수 있게 한다.
+   */
+  trackIcon: IconName;
+  /**
    * 샘플음 주파수(Hz). **그 연습에서 실제로 듣게 될 음**을 쓴다.
    * ② 다른 음 찾기 = 기준음, ① 떨림 찾기 = 반송파.
    */
@@ -65,6 +70,7 @@ function GuideHeader({
  */
 export function ListeningCheckScreen({
   trackTitle,
+  trackIcon,
   sampleHz,
   onStart,
   onBack,
@@ -115,6 +121,10 @@ export function ListeningCheckScreen({
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
+          {/* 시작 화면 hero 타일을 줄인 것 — 안내 카드가 쌓이는 화면이라 링은 뺀다. */}
+          <View style={[styles.trackMark, { backgroundColor: theme.accentTint }]}>
+            <Icon name={trackIcon} size={30} color={theme.accent} />
+          </View>
           <ThemedText
             type="screenTitle"
             style={[styles.centered, styles.title]}
@@ -238,6 +248,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.one,
     marginBottom: Spacing.two,
+  },
+  trackMark: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.two - 2,
   },
   centered: {
     textAlign: "center",

@@ -675,14 +675,26 @@ export function SessionHistoryScreen({
         />
 
         <View style={styles.actions}>
-          <ActionButton label="새로고침" onPress={reload} />
-          {onBack ? <ActionButton label="연습 목록" onPress={onBack} /> : null}
+          <ActionButton
+            outlineMatchLabel
+            label="새로고침"
+            onPress={reload}
+          />
+          {onBack ? (
+            <ActionButton
+              outlineMatchLabel
+              label="연습 목록"
+              onPress={onBack}
+            />
+          ) : null}
         </View>
 
         {/* 데이터 관리: 되돌릴 수 없으므로 하단 분리 + 확인 Alert로 오탭 방지. */}
         <View style={styles.dangerZone}>
           <CardDivider />
           <ActionButton
+            variant="danger"
+            outlineMatchLabel
             label={clearing ? "지우는 중…" : "기록 전체 삭제"}
             disabled={clearing || !hasRows}
             fill={false}

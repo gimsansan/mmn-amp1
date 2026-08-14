@@ -5,10 +5,12 @@ import { Colors } from '@/constants/theme';
 export type IconName =
   /** 앱 상징(귀·나선). */
   | 'logo'
-  /** ② 다른 음 찾기 — 음높이 파형. */
-  | 'wave'
-  /** ① 떨림 찾기 — 흔들리는 포락선. */
-  | 'ripple'
+  /** 높낮이 비교 — 높이가 다른 두 막대. */
+  | 'bars'
+  /** ② 다른 음 찾기 — 돋보기로 다른 하나를 찾기. */
+  | 'findTone'
+  /** ① 떨림 찾기 — 진동하는 소리. */
+  | 'vibrate'
   /** 연습 기록 — 목록. */
   | 'list'
   /** 연습 통계 — 다색 채움 막대(예외: 단색 stroke 아님). */
@@ -51,10 +53,37 @@ export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: Readonly<Ico
         </>
       ) : null}
 
-      {name === 'wave' ? <Path d="M4 14h3l2-8 3 16 3-11 2 5h3" {...stroke} /> : null}
+      {/*
+        훈련 3종은 **아이콘만으로 구분되어야 한다**. 예전엔 높낮이·다른 음이 같은
+        파형(wave)을 써서 제목을 읽어야 구분됐다. 그래서 각 과제의 성격을 그림에 담는다:
+        높이 대비(bars) / 다른 하나 찾기(findTone) / 진동(vibrate).
+        연습 선택 카드와 시작 화면이 같은 아이콘을 쓰므로 여기서 바꾸면 둘 다 따라온다.
+      */}
+      {name === 'bars' ? (
+        <>
+          {/* 낮은 쪽은 흐리게 — 두 소리의 '높이 차'가 그림의 주제. */}
+          <Rect x="4" y="14" width="5" height="6" rx="1.4" fill={color} opacity={0.4} />
+          <Rect x="15" y="7" width="5" height="13" rx="1.4" fill={color} />
+        </>
+      ) : null}
 
-      {name === 'ripple' ? (
-        <Path d="M3 12c2-5 4-5 6 0s4 5 6 0 4-5 6 0" {...stroke} />
+      {name === 'findTone' ? (
+        <>
+          <Circle cx="10" cy="10" r="6.4" {...stroke} />
+          <Path d="M14.7 14.7L20 20" {...stroke} />
+          {/* 렌즈 안 점 셋 — 가운데 하나만 크다(= 찾아야 할 다른 음). */}
+          <Circle cx="7.7" cy="10" r="0.9" fill={color} opacity={0.5} />
+          <Circle cx="10.6" cy="10" r="1.5" fill={color} />
+          <Circle cx="13" cy="10" r="0.9" fill={color} opacity={0.5} />
+        </>
+      ) : null}
+
+      {name === 'vibrate' ? (
+        <>
+          <Circle cx="12" cy="12" r="2" fill={color} />
+          <Path d="M7.5 8.5a6 6 0 0 0 0 7" {...stroke} />
+          <Path d="M16.5 8.5a6 6 0 0 1 0 7" {...stroke} />
+        </>
       ) : null}
 
       {name === 'list' ? <Path d="M4 5h16M4 12h16M4 19h10" {...stroke} /> : null}

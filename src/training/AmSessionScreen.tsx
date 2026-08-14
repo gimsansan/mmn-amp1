@@ -275,7 +275,8 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
               <View
                 style={[styles.heroRing, { borderColor: theme.accentBorder }]}
               />
-              <Icon name="ripple" size={42} color={theme.accent} />
+              {/* 연습 선택 카드와 같은 아이콘을 키운 것 — 제목 전에 그림으로 알아보게. */}
+              <Icon name="vibrate" size={42} color={theme.accent} />
             </View>
             <ThemedText type="heading" style={styles.heroHeading}>
               떨림 찾기
