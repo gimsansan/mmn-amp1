@@ -16,6 +16,7 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { confirmEndSession } from "@/training/confirmEndSession";
 import { AUDIO } from "@/training/pitch2afc/constants";
 import {
   abortPitchPlayback,
@@ -309,12 +310,19 @@ function SessionActions({
       {phase === "feedback" ? (
         <>
           <ActionButton variant="primary" label="다음" onPress={onNext} />
-          <ActionButton label="끝내기" onPress={onEndManual} />
+          <ActionButton
+            label="끝내기"
+            onPress={() => confirmEndSession(onEndManual)}
+          />
         </>
       ) : null}
 
       {playingOrChoosing ? (
-        <ActionButton icon="stop" label="중지" onPress={onEndManual} />
+        <ActionButton
+          icon="stop"
+          label="중지"
+          onPress={() => confirmEndSession(onEndManual)}
+        />
       ) : null}
     </View>
   );

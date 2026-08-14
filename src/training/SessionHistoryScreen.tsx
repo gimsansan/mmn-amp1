@@ -16,8 +16,10 @@ import { useTheme } from "@/hooks/use-theme";
 import { SummaryCard, SummaryCardHeader } from "@/training/SummaryCard";
 import { TrendChart, type TrendPoint } from "@/training/TrendChart";
 import { endReasonLabel } from "@/training/freqSession";
+import { sessionModeLabel } from "@/training/sessionMode";
 import {
   clearSavedSessions,
+  deleteSavedSession,
   isCountedInStats,
   listSavedSessions,
   type SavedSessionRecord,
@@ -200,7 +202,7 @@ function AggregateCard({ data }: Readonly<{ data: Aggregate }>) {
             type="small"
             style={styles.metricLabel}
           >
-            연습 횟수
+            측정 횟수
           </ThemedText>
         </View>
         <View style={styles.metric}>
@@ -339,13 +341,8 @@ function TrackChips({
 }
 
 /**
- * §2-1 예외: 「개선/점수」 프레이밍. 웰니스 방침상 원래 지양하나, 사용자 결정으로 유지한다.
- * 나중에 지우기 쉽게 **이 컴포넌트 한 곳**에만 둔다.
- * (`TrendGraphCard`의 `<ScoreFraming/>` 호출을 빼면 제거 완료.)
- *
- * 대표값은 작을수록 잘함 → 최신값이 기준보다 작으면 「개선」.
- * 기준(baseline): **최신 1회를 뺀 직전 N회 평균**. 점이 많아도 초반 1점에 덜 흔들린다.
- * 폴백: 평균용 점이 N개 미만이면 **처음↔최근** 단순 비교(A).
+ * 추이 비교 한 줄. 배지·「개선/유지」 문구 없음.
+ * 기준: **최신 1회를 뺀 직전 N회 평균**. 평균용 점이 N개 미만이면 처음↔최근.
  */
 const SCORE_BASELINE_WINDOW = 3;
 
@@ -356,7 +353,6 @@ function ScoreFraming({
   points: readonly TrendPoint[];
   formatPlain: (v: number) => string;
 }>) {
-  const theme = useTheme();
   if (points.length < 2) {
     return null;
   }
@@ -364,42 +360,22 @@ function ScoreFraming({
   const prior = points.slice(0, -1); // 최신 제외
   const useAverage = prior.length >= SCORE_BASELINE_WINDOW;
 
-  let baseline: number;
   let subText: string;
   if (useAverage) {
     const window = prior.slice(-SCORE_BASELINE_WINDOW);
-    baseline = window.reduce((sum, p) => sum + p.value, 0) / window.length;
+    const baseline =
+      window.reduce((sum, p) => sum + p.value, 0) / window.length;
     subText = `최근 ${SCORE_BASELINE_WINDOW}회 평균 ${formatPlain(
       baseline,
     )} → 최근 ${formatPlain(last)}`;
   } else {
-    baseline = points[0].value;
-    subText = `처음 ${formatPlain(baseline)} → 최근 ${formatPlain(last)}`;
+    subText = `처음 ${formatPlain(points[0].value)} → 최근 ${formatPlain(last)}`;
   }
 
-  const improved = last < baseline;
-  const delta = Math.abs(baseline - last);
-  const deltaText = Number.isInteger(delta) ? `${delta}` : delta.toFixed(1);
-
   return (
-    <View style={styles.framing}>
-      <View
-        style={[
-          styles.badge,
-          { backgroundColor: improved ? theme.positiveTint : theme.accentTint },
-        ]}
-      >
-        <ThemedText
-          type="smallBold"
-          style={{ color: improved ? theme.positive : theme.accent }}
-        >
-          {improved ? `${deltaText} 개선` : "유지"}
-        </ThemedText>
-      </View>
-      <ThemedText themeColor="textMuted" type="small" style={styles.framingSub}>
-        {subText}
-      </ThemedText>
-    </View>
+    <ThemedText themeColor="textMuted" type="small" style={styles.framingSub}>
+      {subText}
+    </ThemedText>
   );
 }
 
@@ -479,29 +455,51 @@ function TrendGraphCard({
   );
 }
 
-function HistoryCard({ record }: Readonly<{ record: SavedSessionRecord }>) {
+function HistoryCard({
+  record,
+  onDelete,
+}: Readonly<{
+  record: SavedSessionRecord;
+  onDelete: (id: string) => void;
+}>) {
   const content = toCardContent(record);
-  // 연습 세션은 통계에서 빠진다는 걸 목록에서 알 수 있게 배지로 표시.
-  const badge = record.mode === "practice" ? "연습" : null;
+  // 연습/측정 구분을 목록에서 보이게. mode 없는 구버전은 배지 없음.
+  const badge = record.mode ? sessionModeLabel(record.mode) : null;
 
   return (
-    <SummaryCard
-      header={
-        <SummaryCardHeader
-          title={content.trackTitle}
-          savedAt={content.savedAt}
-          badge={badge}
-        />
-      }
-      trialCount={content.trialCount}
-      correctCount={content.correctCount}
-      reversalCount={content.reversalCount}
-      meanLabel={content.meanLabel}
-      meanValue={content.meanValue}
-      easiestValue={content.easiestValue}
-      hardestValue={content.hardestValue}
-      footnote={content.reason}
-    />
+    <View>
+      <SummaryCard
+        header={
+          <SummaryCardHeader
+            title={content.trackTitle}
+            savedAt={content.savedAt}
+            badge={badge}
+          />
+        }
+        trialCount={content.trialCount}
+        correctCount={content.correctCount}
+        reversalCount={content.reversalCount}
+        meanLabel={content.meanLabel}
+        meanValue={content.meanValue}
+        easiestValue={content.easiestValue}
+        hardestValue={content.hardestValue}
+        footnote={content.reason}
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="이 기록 삭제"
+        onPress={() => onDelete(record.id)}
+        style={styles.rowDelete}
+      >
+        <ThemedText
+          themeColor="textMuted"
+          type="small"
+          style={styles.rowDeleteLabel}
+        >
+          삭제
+        </ThemedText>
+      </Pressable>
+    </View>
   );
 }
 
@@ -542,7 +540,7 @@ export function SessionHistoryScreen({
     setClearing(true);
     void clearSavedSessions()
       .then(() => {
-        Alert.alert("완료", "이 기기의 연습 기록을 지웠어요.");
+        Alert.alert("완료", "이 기기의 기록을 지웠어요.");
         reload();
       })
       .catch(() => {
@@ -555,14 +553,43 @@ export function SessionHistoryScreen({
 
   const confirmClear = useCallback(() => {
     Alert.alert(
-      "연습 기록 삭제",
-      "이 기기에 저장된 연습 기록을 모두 지울까요? 되돌릴 수 없어요.",
+      "기록 삭제",
+      "이 기기에 저장된 기록을 모두 지울까요? 되돌릴 수 없어요.",
       [
         { text: "취소", style: "cancel" },
         { text: "삭제", style: "destructive", onPress: doClear },
       ],
     );
   }, [doClear]);
+
+  const doDeleteOne = useCallback(
+    (id: string) => {
+      void deleteSavedSession(id)
+        .then(() => {
+          reload();
+        })
+        .catch(() => {
+          Alert.alert("오류", "기록을 지우지 못했어요.");
+        });
+    },
+    [reload],
+  );
+
+  const confirmDeleteOne = useCallback(
+    (id: string) => {
+      Alert.alert("기록 삭제", "이 기록을 지울까요? 되돌릴 수 없어요.", [
+        { text: "취소", style: "cancel" },
+        {
+          text: "삭제",
+          style: "destructive",
+          onPress: () => {
+            doDeleteOne(id);
+          },
+        },
+      ]);
+    },
+    [doDeleteOne],
+  );
 
   const hasRows = rows.length > 0;
 
@@ -602,7 +629,7 @@ export function SessionHistoryScreen({
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.screenHeader}>
-          <ThemedText type="screenTitle">연습 통계</ThemedText>
+          <ThemedText type="screenTitle">측정 통계</ThemedText>
           <ThemedText
             themeColor="textSecondary"
             type="small"
@@ -642,7 +669,9 @@ export function SessionHistoryScreen({
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={listHeader}
-          renderItem={({ item }) => <HistoryCard record={item} />}
+          renderItem={({ item }) => (
+            <HistoryCard record={item} onDelete={confirmDeleteOne} />
+          )}
         />
 
         <View style={styles.actions}>
@@ -654,7 +683,7 @@ export function SessionHistoryScreen({
         <View style={styles.dangerZone}>
           <CardDivider />
           <ActionButton
-            label={clearing ? "지우는 중…" : "연습 기록 전체 삭제"}
+            label={clearing ? "지우는 중…" : "기록 전체 삭제"}
             disabled={clearing || !hasRows}
             fill={false}
             onPress={confirmClear}
@@ -733,18 +762,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
-  framing: {
-    alignItems: "flex-end",
-    gap: Spacing.half,
-  },
   framingSub: {
     fontSize: 11.5,
     lineHeight: 16,
-  },
-  badge: {
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.three - 6,
-    paddingVertical: Spacing.one,
+    flexShrink: 1,
+    textAlign: "right",
   },
   chipRow: {
     flexDirection: "row",
@@ -788,6 +810,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     textAlign: "center",
+  },
+  rowDelete: {
+    alignSelf: "flex-end",
+    minHeight: 48,
+    justifyContent: "center",
+    paddingHorizontal: Spacing.two,
+  },
+  rowDeleteLabel: {
+    fontSize: 12.5,
+    lineHeight: 18,
   },
   actions: {
     flexDirection: "row",

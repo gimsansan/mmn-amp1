@@ -36,9 +36,8 @@ export const Colors = {
     onAccent: '#FFFFFF',
     /** 추이 그래프 최근 점 강조(따뜻한 대비색). 점수·역치 색 아님. */
     highlight: '#F5833F',
-    /** 「개선」 배지 등 긍정 표시. §2-1 예외 프레이밍용. */
+    /** 통계 아이콘 막대 등 긍정 표시. */
     positive: '#1F9D6B',
-    positiveTint: '#E4F5EE',
   },
 } as const;
 

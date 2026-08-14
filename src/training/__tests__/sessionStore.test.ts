@@ -47,6 +47,7 @@ import {
   appendFreqSessionSummary,
   appendPitch2SessionSummary,
   clearSavedSessions,
+  deleteSavedSession,
   isCountedInStats,
   listSavedSessions,
 } from '@/training/sessionStore';
@@ -244,6 +245,36 @@ describe('sessionStore — 기존 동작 유지', () => {
   it('초기화하면 목록이 빈다', async () => {
     await appendFreqSessionSummary(freqSummary(3));
     await clearSavedSessions();
+
+    expect(await listSavedSessions()).toEqual([]);
+  });
+});
+
+describe('sessionStore — 건별 삭제', () => {
+  it('지정한 1건만 지우고 나머지는 순서를 유지한다', async () => {
+    const a = await appendFreqSessionSummary(freqSummary(1), 'measure');
+    const b = await appendAmSessionSummary(amSummary(2), 'practice');
+    const c = await appendPitch2SessionSummary(pitch2Summary(3), 'measure');
+
+    await deleteSavedSession(b.id);
+
+    const rows = await listSavedSessions();
+    expect(rows.map((r) => r.id)).toEqual([c.id, a.id]);
+  });
+
+  it('없는 id면 목록을 그대로 둔다', async () => {
+    const kept = await appendFreqSessionSummary(freqSummary(1));
+
+    await deleteSavedSession('missing-id');
+
+    const rows = await listSavedSessions();
+    expect(rows.map((r) => r.id)).toEqual([kept.id]);
+  });
+
+  it('마지막 1건을 지우면 목록이 빈다', async () => {
+    const only = await appendAmSessionSummary(amSummary(1), 'practice');
+
+    await deleteSavedSession(only.id);
 
     expect(await listSavedSessions()).toEqual([]);
   });

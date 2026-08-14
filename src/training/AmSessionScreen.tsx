@@ -16,6 +16,7 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { confirmEndSession } from "@/training/confirmEndSession";
 import {
   abortAmAfcPlayback,
   createAmAfcTrial,
@@ -505,12 +506,19 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
           {phase === "feedback" ? (
             <>
               <ActionButton variant="primary" label="다음" onPress={onNext} />
-              <ActionButton label="끝내기" onPress={onEndManual} />
+              <ActionButton
+                label="끝내기"
+                onPress={() => confirmEndSession(onEndManual)}
+              />
             </>
           ) : null}
 
           {phase === "playing" || phase === "choose" ? (
-            <ActionButton icon="stop" label="중지" onPress={onEndManual} />
+            <ActionButton
+              icon="stop"
+              label="중지"
+              onPress={() => confirmEndSession(onEndManual)}
+            />
           ) : null}
         </View>
       </SafeAreaView>

@@ -339,3 +339,22 @@ export function clearSavedSessions(): Promise<void> {
     await AsyncStorage.removeItem(STORAGE_KEY);
   });
 }
+
+/**
+ * 기록 1건 삭제. 연습·측정 구분 없음.
+ * 없는 id면 아무 것도 하지 않는다. 마지막 1건이면 저장 키를 제거한다.
+ */
+export function deleteSavedSession(id: string): Promise<void> {
+  return enqueue(async () => {
+    const prev = await readAllRaw();
+    const next = prev.filter((r) => r.id !== id);
+    if (next.length === prev.length) {
+      return;
+    }
+    if (next.length === 0) {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    await writeAllRaw(next);
+  });
+}
