@@ -26,19 +26,26 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
+import { Ling6ProgressPanel } from "@/training/ling6/Ling6ProgressPanel";
 import {
+  collectPhonemeResults,
   createLing6Trials,
+  isCompletePhonemeMap,
+  ling6HighFreqCopy,
   ling6ProgressCopy,
   ling6ResultCopy,
   scoreLing6Choice,
-  summarizeLing6Session,
+  toDailySummary,
   TOTAL_TRIAL_COUNT,
-  type Ling6SessionSummary,
   type Ling6Trial,
+  type Ling6TrialOutcome,
 } from "@/training/ling6/ling6Session";
 import {
-  appendLing6SessionSummary,
-  peekPreviousCorrectCount,
+  listLing6DailyRecords,
+  peekHighFreqBaseline,
+  peekPreviousDayPassCount,
+  upsertLing6DailyRecord,
+  type SavedLing6Record,
 } from "@/training/ling6/ling6Store";
 import { playLing6Target, stopLing6Playback } from "@/training/ling6/ling6Synth";
 import {
@@ -62,7 +69,7 @@ export function Ling6SessionScreen() {
   const abortRef = useRef(false);
   const savedRef = useRef(false);
   const trialsRef = useRef<Ling6Trial[]>([]);
-  const resultsRef = useRef<boolean[]>([]);
+  const outcomesRef = useRef<Ling6TrialOutcome[]>([]);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [trialIndex, setTrialIndex] = useState(0);
@@ -70,10 +77,12 @@ export function Ling6SessionScreen() {
     undefined,
   );
   const [lastTarget, setLastTarget] = useState<Ling6Choice | null>(null);
-  const [summary, setSummary] = useState<Ling6SessionSummary | null>(null);
+  const [passCount, setPassCount] = useState<number | null>(null);
   const [progressLine, setProgressLine] = useState<string | null>(null);
+  const [highFreqLine, setHighFreqLine] = useState<string | null>(null);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [history, setHistory] = useState<SavedLing6Record[]>([]);
 
   const running = phase === "playing" || phase === "choose" || phase === "feedback";
   const choiceDisabled = phase !== "choose";
@@ -82,26 +91,36 @@ export function Ling6SessionScreen() {
     abortRef.current = true;
     stopLing6Playback();
     trialsRef.current = [];
-    resultsRef.current = [];
+    outcomesRef.current = [];
     savedRef.current = false;
     setTrialIndex(0);
     setLastCorrect(undefined);
     setLastTarget(null);
-    setSummary(null);
+    setPassCount(null);
     setProgressLine(null);
+    setHighFreqLine(null);
     setSaveNote(null);
     setLastError(null);
     setPhase("idle");
   }, []);
 
+  const refreshHistory = useCallback(async () => {
+    try {
+      setHistory(await listLing6DailyRecords());
+    } catch {
+      setHistory([]);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       abortRef.current = false;
+      void refreshHistory();
       return () => {
         abortRef.current = true;
         stopLing6Playback();
       };
-    }, []),
+    }, [refreshHistory]),
   );
 
   useEffect(() => {
@@ -149,35 +168,49 @@ export function Ling6SessionScreen() {
     abortRef.current = false;
     savedRef.current = false;
     trialsRef.current = createLing6Trials();
-    resultsRef.current = [];
+    outcomesRef.current = [];
     setTrialIndex(0);
     setLastCorrect(undefined);
     setLastTarget(null);
-    setSummary(null);
+    setPassCount(null);
     setProgressLine(null);
+    setHighFreqLine(null);
     setSaveNote(null);
     void playCurrent(0);
   }, [playCurrent]);
 
   const finishSession = useCallback(async () => {
     stopLing6Playback();
-    const nextSummary = summarizeLing6Session(resultsRef.current);
-    setSummary(nextSummary);
     setPhase("summary");
+
+    const byPhoneme = collectPhonemeResults(outcomesRef.current);
+    if (!isCompletePhonemeMap(byPhoneme)) {
+      setPassCount(null);
+      setProgressLine(null);
+      setHighFreqLine(null);
+      setSaveNote("6음을 다 고르지 않아 날짜 기록에는 안 남겼어요");
+      return;
+    }
+
+    const nextSummary = toDailySummary(byPhoneme);
+    setPassCount(nextSummary.passCount);
 
     if (savedRef.current) {
       return;
     }
     savedRef.current = true;
     try {
-      const previous = await peekPreviousCorrectCount();
-      await appendLing6SessionSummary(nextSummary);
-      setProgressLine(ling6ProgressCopy(previous, nextSummary.correctCount));
+      const previous = await peekPreviousDayPassCount();
+      const highFreqPrev = await peekHighFreqBaseline();
+      await upsertLing6DailyRecord(byPhoneme);
+      setProgressLine(ling6ProgressCopy(previous, nextSummary.passCount));
+      setHighFreqLine(ling6HighFreqCopy(highFreqPrev, byPhoneme));
       setSaveNote("기기에 기록했어요");
+      await refreshHistory();
     } catch {
       setSaveNote("기록에 남기지 못했어요");
     }
-  }, []);
+  }, [refreshHistory]);
 
   const onChoose = useCallback(
     (choice: Ling6Choice) => {
@@ -189,7 +222,10 @@ export function Ling6SessionScreen() {
         return;
       }
       const correct = scoreLing6Choice(trial.target, choice);
-      resultsRef.current = [...resultsRef.current, correct];
+      outcomesRef.current = [
+        ...outcomesRef.current,
+        { target: trial.target, correct },
+      ];
       setLastCorrect(correct);
       setLastTarget(trial.target);
       setPhase("feedback");
@@ -229,7 +265,7 @@ export function Ling6SessionScreen() {
 
         {running ? (
           <SessionProgressBar
-            current={resultsRef.current.length}
+            current={outcomesRef.current.length}
             total={TOTAL_TRIAL_COUNT}
           />
         ) : null}
@@ -252,11 +288,15 @@ export function Ling6SessionScreen() {
                 있어요. 그때는 「못 들었어요」를 누르세요.
               </ThemedText>
             </Card>
-            <View style={styles.previewGrid}>
-              {LING6_SOUNDS.map((sound) => (
-                <PreviewCell key={sound.id} sound={sound} />
-              ))}
-            </View>
+            {history.length > 0 ? (
+              <Ling6ProgressPanel records={history} />
+            ) : (
+              <View style={styles.previewGrid}>
+                {LING6_SOUNDS.map((sound) => (
+                  <PreviewCell key={sound.id} sound={sound} />
+                ))}
+              </View>
+            )}
           </ScrollView>
         ) : null}
 
@@ -277,10 +317,10 @@ export function Ling6SessionScreen() {
                 오늘 연습이 끝났어요
               </ThemedText>
             </View>
-            {summary ? (
+            {passCount != null ? (
               <Card size="large" style={styles.summaryCard}>
                 <ThemedText type="heading" style={styles.resultLine}>
-                  {ling6ResultCopy(summary)}
+                  {ling6ResultCopy(passCount)}
                 </ThemedText>
                 {progressLine ? (
                   <ThemedText
@@ -288,6 +328,11 @@ export function Ling6SessionScreen() {
                     style={{ color: theme.accent }}
                   >
                     {progressLine}
+                  </ThemedText>
+                ) : null}
+                {highFreqLine ? (
+                  <ThemedText type="smallBold" style={{ color: theme.positive }}>
+                    {highFreqLine}
                   </ThemedText>
                 ) : null}
                 <ThemedText
@@ -300,6 +345,9 @@ export function Ling6SessionScreen() {
               </Card>
             ) : null}
             {saveNote ? <Pill stretch icon="check" label={saveNote} /> : null}
+            {history.length > 0 ? (
+              <Ling6ProgressPanel records={history} />
+            ) : null}
           </ScrollView>
         ) : null}
 

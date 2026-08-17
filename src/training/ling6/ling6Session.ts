@@ -8,15 +8,26 @@ export type Ling6Trial = {
   target: Ling6Choice;
 };
 
-export type Ling6SessionSummary = {
-  trialCount: number;
-  correctCount: number;
+export type Ling6TrialOutcome = {
+  target: Ling6Choice;
+  correct: boolean;
+};
+
+export type Ling6PhonemeMap = Record<Ling6SoundId, boolean>;
+
+/** 하루 점검 기록. 무음 시행은 넣지 않는다. 통과 개수는 0~6. */
+export type Ling6DailySummary = {
+  passCount: number;
+  byPhoneme: Ling6PhonemeMap;
 };
 
 /** 소리 시행 = 6음소 각 1회. 예측 방지를 위해 무음 2회를 섞는다. */
 export const SOUND_TRIAL_COUNT = LING6_SOUND_IDS.length;
 export const SILENCE_TRIAL_COUNT = 2;
 export const TOTAL_TRIAL_COUNT = SOUND_TRIAL_COUNT + SILENCE_TRIAL_COUNT;
+
+/** 고음역. 그리드 아래쪽·변화 문구용. */
+export const LING6_HIGH_FREQ_IDS: readonly Ling6SoundId[] = ["sh", "s"];
 
 export type Rng = () => number;
 
@@ -58,35 +69,83 @@ export function scoreLing6Choice(
   return target === choice;
 }
 
-export function summarizeLing6Session(
-  results: readonly boolean[],
-): Ling6SessionSummary {
+/** 소리 시행만 모아 음소별 통과/실패. 같은 음소가 두 번이면 나중 값이 남는다. */
+export function collectPhonemeResults(
+  outcomes: readonly Ling6TrialOutcome[],
+): Partial<Record<Ling6SoundId, boolean>> {
+  const map: Partial<Record<Ling6SoundId, boolean>> = {};
+  for (const outcome of outcomes) {
+    if (outcome.target === "silence") {
+      continue;
+    }
+    map[outcome.target] = outcome.correct;
+  }
+  return map;
+}
+
+export function isCompletePhonemeMap(
+  map: Partial<Record<Ling6SoundId, boolean>>,
+): map is Ling6PhonemeMap {
+  return LING6_SOUND_IDS.every((id) => typeof map[id] === "boolean");
+}
+
+export function passCountOf(map: Ling6PhonemeMap): number {
+  return LING6_SOUND_IDS.reduce(
+    (sum, id) => sum + (map[id] ? 1 : 0),
+    0,
+  );
+}
+
+export function highFreqPassCount(map: Ling6PhonemeMap): number {
+  return LING6_HIGH_FREQ_IDS.reduce(
+    (sum, id) => sum + (map[id] ? 1 : 0),
+    0,
+  );
+}
+
+export function toDailySummary(map: Ling6PhonemeMap): Ling6DailySummary {
   return {
-    trialCount: results.length,
-    correctCount: results.filter(Boolean).length,
+    passCount: passCountOf(map),
+    byPhoneme: map,
   };
 }
 
 /**
- * 그래프·요약 옆 문구. 판정("청력은 ○○")이 아니라 이번·지난 연습 비교.
- * 주 단위 집계는 아직 없어서 직전 연습과 비교한다.
+ * 그래프·요약 옆 문구. 판정("청력은 ○○")이 아니라 직전 **날짜 기록**과 비교.
  */
 export function ling6ProgressCopy(
-  previousCorrect: number | null,
-  thisCorrect: number,
+  previousPass: number | null,
+  thisPass: number,
 ): string | null {
-  if (previousCorrect === null) {
+  if (previousPass === null) {
     return null;
   }
-  if (thisCorrect > previousCorrect) {
-    return "지난번보다 맞힌 개수가 늘었어요";
+  const delta = thisPass - previousPass;
+  if (delta > 0) {
+    return `지난 기록보다 ${delta}개 늘었어요`;
   }
-  if (thisCorrect < previousCorrect) {
-    return "지난번보다 맞힌 개수가 줄었어요";
+  if (delta < 0) {
+    return `지난 기록보다 ${-delta}개 줄었어요`;
   }
-  return "지난번과 같은 개수를 맞혔어요";
+  return "지난 기록과 같은 개수를 맞혔어요";
 }
 
-export function ling6ResultCopy(summary: Ling6SessionSummary): string {
-  return `이번 연습에서 ${summary.trialCount}개 중 ${summary.correctCount}개를 맞혔어요`;
+export function ling6ResultCopy(passCount: number): string {
+  return `이번 기록에서 6개 중 ${passCount}개를 맞혔어요`;
+}
+
+/**
+ * 고음 2개(/ʃ/·/s/)가 지난주 기록보다 늘었을 때만. 판정 문구 아님.
+ */
+export function ling6HighFreqCopy(
+  previousWeek: Ling6PhonemeMap | null,
+  current: Ling6PhonemeMap,
+): string | null {
+  if (previousWeek === null) {
+    return null;
+  }
+  if (highFreqPassCount(current) > highFreqPassCount(previousWeek)) {
+    return "고음(/s/·/ʃ/)이 지난주보다 좋아지고 있어요";
+  }
+  return null;
 }

@@ -9,6 +9,8 @@ export type Ling6Sound = {
   id: Ling6SoundId;
   /** 화면에 보이는 한글 음소. */
   label: string;
+  /** 그리드·변화 문구용 IPA. */
+  ipa: string;
   image: ImageSourcePropType;
 };
 
@@ -20,31 +22,37 @@ export const LING6_SOUNDS: readonly Ling6Sound[] = [
   {
     id: "m",
     label: "음",
+    ipa: "m",
     image: require("@/assets/ling6/001.png"),
   },
   {
     id: "u",
     label: "우",
+    ipa: "u",
     image: require("@/assets/ling6/002.png"),
   },
   {
     id: "a",
     label: "아",
+    ipa: "a",
     image: require("@/assets/ling6/003.png"),
   },
   {
     id: "i",
     label: "이",
+    ipa: "i",
     image: require("@/assets/ling6/004.png"),
   },
   {
     id: "sh",
     label: "쉬",
+    ipa: "ʃ",
     image: require("@/assets/ling6/005.png"),
   },
   {
     id: "s",
     label: "스",
+    ipa: "s",
     image: require("@/assets/ling6/006.png"),
   },
 ];
