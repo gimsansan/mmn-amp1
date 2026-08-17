@@ -1,0 +1,598 @@
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  BackHandler,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { ActionButton } from "@/components/ui/action-button";
+import { Card } from "@/components/ui/card";
+import { Equalizer } from "@/components/ui/equalizer";
+import { Icon } from "@/components/ui/icon";
+import { Pill } from "@/components/ui/pill";
+import {
+  BottomTabInset,
+  MaxContentWidth,
+  Radius,
+  Shadows,
+  Spacing,
+} from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { confirmEndSession } from "@/training/confirmEndSession";
+import {
+  createLing6Trials,
+  ling6ProgressCopy,
+  ling6ResultCopy,
+  scoreLing6Choice,
+  summarizeLing6Session,
+  TOTAL_TRIAL_COUNT,
+  type Ling6SessionSummary,
+  type Ling6Trial,
+} from "@/training/ling6/ling6Session";
+import {
+  appendLing6SessionSummary,
+  peekPreviousCorrectCount,
+} from "@/training/ling6/ling6Store";
+import { playLing6Target, stopLing6Playback } from "@/training/ling6/ling6Synth";
+import {
+  LING6_SOUNDS,
+  type Ling6Choice,
+  type Ling6Sound,
+} from "@/training/ling6/sounds";
+import { SessionProgressBar } from "@/training/SessionProgressBar";
+
+type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
+
+function soundLabel(choice: Ling6Choice): string {
+  if (choice === "silence") {
+    return "못 들었어요";
+  }
+  return LING6_SOUNDS.find((sound) => sound.id === choice)?.label ?? choice;
+}
+
+export function Ling6SessionScreen() {
+  const theme = useTheme();
+  const abortRef = useRef(false);
+  const savedRef = useRef(false);
+  const trialsRef = useRef<Ling6Trial[]>([]);
+  const resultsRef = useRef<boolean[]>([]);
+
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [trialIndex, setTrialIndex] = useState(0);
+  const [lastCorrect, setLastCorrect] = useState<boolean | undefined>(
+    undefined,
+  );
+  const [lastTarget, setLastTarget] = useState<Ling6Choice | null>(null);
+  const [summary, setSummary] = useState<Ling6SessionSummary | null>(null);
+  const [progressLine, setProgressLine] = useState<string | null>(null);
+  const [saveNote, setSaveNote] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
+
+  const running = phase === "playing" || phase === "choose" || phase === "feedback";
+  const choiceDisabled = phase !== "choose";
+
+  const resetRun = useCallback(() => {
+    abortRef.current = true;
+    stopLing6Playback();
+    trialsRef.current = [];
+    resultsRef.current = [];
+    savedRef.current = false;
+    setTrialIndex(0);
+    setLastCorrect(undefined);
+    setLastTarget(null);
+    setSummary(null);
+    setProgressLine(null);
+    setSaveNote(null);
+    setLastError(null);
+    setPhase("idle");
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      abortRef.current = false;
+      return () => {
+        abortRef.current = true;
+        stopLing6Playback();
+      };
+    }, []),
+  );
+
+  useEffect(() => {
+    return () => {
+      abortRef.current = true;
+      stopLing6Playback();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (phase === "idle" || phase === "summary") {
+      return;
+    }
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      confirmEndSession(resetRun);
+      return true;
+    });
+    return () => sub.remove();
+  }, [phase, resetRun]);
+
+  const playCurrent = useCallback(async (index: number) => {
+    const trial = trialsRef.current[index];
+    if (!trial) {
+      return;
+    }
+    abortRef.current = false;
+    setLastError(null);
+    setPhase("playing");
+    try {
+      await playLing6Target(trial.target);
+      if (abortRef.current) {
+        return;
+      }
+      setPhase("choose");
+    } catch {
+      if (abortRef.current) {
+        return;
+      }
+      setLastError("소리를 재생하지 못했어요. 다시 시작해 주세요.");
+      setPhase("choose");
+    }
+  }, []);
+
+  const onStart = useCallback(() => {
+    abortRef.current = false;
+    savedRef.current = false;
+    trialsRef.current = createLing6Trials();
+    resultsRef.current = [];
+    setTrialIndex(0);
+    setLastCorrect(undefined);
+    setLastTarget(null);
+    setSummary(null);
+    setProgressLine(null);
+    setSaveNote(null);
+    void playCurrent(0);
+  }, [playCurrent]);
+
+  const finishSession = useCallback(async () => {
+    stopLing6Playback();
+    const nextSummary = summarizeLing6Session(resultsRef.current);
+    setSummary(nextSummary);
+    setPhase("summary");
+
+    if (savedRef.current) {
+      return;
+    }
+    savedRef.current = true;
+    try {
+      const previous = await peekPreviousCorrectCount();
+      await appendLing6SessionSummary(nextSummary);
+      setProgressLine(ling6ProgressCopy(previous, nextSummary.correctCount));
+      setSaveNote("기기에 기록했어요");
+    } catch {
+      setSaveNote("기록에 남기지 못했어요");
+    }
+  }, []);
+
+  const onChoose = useCallback(
+    (choice: Ling6Choice) => {
+      if (phase !== "choose") {
+        return;
+      }
+      const trial = trialsRef.current[trialIndex];
+      if (!trial) {
+        return;
+      }
+      const correct = scoreLing6Choice(trial.target, choice);
+      resultsRef.current = [...resultsRef.current, correct];
+      setLastCorrect(correct);
+      setLastTarget(trial.target);
+      setPhase("feedback");
+    },
+    [phase, trialIndex],
+  );
+
+  const onNext = useCallback(() => {
+    const nextIndex = trialIndex + 1;
+    if (nextIndex >= trialsRef.current.length) {
+      void finishSession();
+      return;
+    }
+    setTrialIndex(nextIndex);
+    setLastCorrect(undefined);
+    setLastTarget(null);
+    void playCurrent(nextIndex);
+  }, [finishSession, playCurrent, trialIndex]);
+
+  const onEndManual = useCallback(() => {
+    void finishSession();
+  }, [finishSession]);
+
+  return (
+    <ThemedView style={styles.fill}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
+        <View style={styles.header}>
+          <ThemedText type="screenTitle">링 6</ThemedText>
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.caption}
+          >
+            들은 소리를 그림에서 고르는 연습 · 병원 검사가 아니에요
+          </ThemedText>
+        </View>
+
+        {running ? (
+          <SessionProgressBar
+            current={resultsRef.current.length}
+            total={TOTAL_TRIAL_COUNT}
+          />
+        ) : null}
+
+        {phase === "idle" ? (
+          <ScrollView
+            style={styles.fill}
+            contentContainerStyle={styles.idleContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Card style={styles.idleCard}>
+              <ThemedText type="smallBold">이렇게 연습해요</ThemedText>
+              <ThemedText
+                themeColor="textSecondary"
+                type="small"
+                style={styles.idleBody}
+              >
+                말소리 6개(음·우·아·이·쉬·스) 중 하나를 들려 줘요. 어떤
+                소리인지 그림에서 고르면 됩니다. 가끔 아무 소리도 없을 수
+                있어요. 그때는 「못 들었어요」를 누르세요.
+              </ThemedText>
+            </Card>
+            <View style={styles.previewGrid}>
+              {LING6_SOUNDS.map((sound) => (
+                <PreviewCell key={sound.id} sound={sound} />
+              ))}
+            </View>
+          </ScrollView>
+        ) : null}
+
+        {phase === "summary" ? (
+          <ScrollView
+            style={styles.fill}
+            contentContainerStyle={styles.summaryContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.headline}>
+              <Icon
+                name="check"
+                size={18}
+                color={theme.accent}
+                strokeWidth={2.2}
+              />
+              <ThemedText type="smallBold" style={styles.headlineText}>
+                오늘 연습이 끝났어요
+              </ThemedText>
+            </View>
+            {summary ? (
+              <Card size="large" style={styles.summaryCard}>
+                <ThemedText type="heading" style={styles.resultLine}>
+                  {ling6ResultCopy(summary)}
+                </ThemedText>
+                {progressLine ? (
+                  <ThemedText
+                    type="smallBold"
+                    style={{ color: theme.accent }}
+                  >
+                    {progressLine}
+                  </ThemedText>
+                ) : null}
+                <ThemedText
+                  type="small"
+                  themeColor="textMuted"
+                  style={styles.footnote}
+                >
+                  연습 기록이에요. 청력 검사·진단 결과가 아니에요.
+                </ThemedText>
+              </Card>
+            ) : null}
+            {saveNote ? <Pill stretch icon="check" label={saveNote} /> : null}
+          </ScrollView>
+        ) : null}
+
+        {running ? (
+          <View style={styles.promptArea}>
+            <Equalizer
+              color={theme.accent}
+              height={24}
+              barWidth={4}
+              bars={3}
+              playing={phase === "playing"}
+            />
+            <ThemedText
+              type="smallBold"
+              themeColor="textSecondary"
+              style={styles.statusText}
+            >
+              {phase === "playing"
+                ? "듣는 중… 소리가 끝난 뒤 고르세요"
+                : null}
+              {phase === "choose" ? "들은 소리를 고르세요" : null}
+              {phase === "feedback"
+                ? lastCorrect
+                  ? "맞았어요"
+                  : `아쉬워요 · 정답은 ${soundLabel(lastTarget ?? "silence")}`
+                : null}
+            </ThemedText>
+          </View>
+        ) : null}
+
+        {running ? (
+          <View style={styles.choiceGrid}>
+            {LING6_SOUNDS.map((sound) => (
+              <ChoiceCell
+                key={sound.id}
+                sound={sound}
+                disabled={choiceDisabled}
+                marked={
+                  phase === "feedback" && lastTarget === sound.id
+                    ? "answer"
+                    : null
+                }
+                onPress={() => onChoose(sound.id)}
+              />
+            ))}
+          </View>
+        ) : null}
+
+        {running ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="못 들었어요"
+            accessibilityState={{ disabled: choiceDisabled }}
+            disabled={choiceDisabled}
+            onPress={() => onChoose("silence")}
+            style={({ pressed }) => [
+              styles.silenceButton,
+              {
+                backgroundColor: theme.surface,
+                borderColor:
+                  phase === "feedback" && lastTarget === "silence"
+                    ? theme.accent
+                    : theme.border,
+              },
+              pressed && !choiceDisabled && styles.pressed,
+              choiceDisabled && styles.disabled,
+            ]}
+          >
+            <ThemedText type="smallBold">못 들었어요</ThemedText>
+          </Pressable>
+        ) : null}
+
+        {lastError ? (
+          <ThemedText
+            themeColor="textSecondary"
+            type="small"
+            style={styles.caption}
+          >
+            {lastError}
+          </ThemedText>
+        ) : null}
+
+        <View style={styles.actions}>
+          {phase === "idle" || phase === "summary" ? (
+            <ActionButton
+              variant="primary"
+              label={phase === "summary" ? "다시 연습" : "연습 시작"}
+              onPress={onStart}
+            />
+          ) : null}
+
+          {phase === "summary" ? (
+            <ActionButton label="처음으로" onPress={resetRun} />
+          ) : null}
+
+          {phase === "feedback" ? (
+            <>
+              <ActionButton variant="primary" label="다음" onPress={onNext} />
+              <ActionButton
+                label="끝내기"
+                onPress={() => confirmEndSession(onEndManual)}
+              />
+            </>
+          ) : null}
+
+          {phase === "playing" || phase === "choose" ? (
+            <ActionButton
+              label="중지"
+              onPress={() => confirmEndSession(onEndManual)}
+            />
+          ) : null}
+        </View>
+      </SafeAreaView>
+    </ThemedView>
+  );
+}
+
+function PreviewCell({ sound }: Readonly<{ sound: Ling6Sound }>) {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.previewCell,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+      ]}
+    >
+      <Image source={sound.image} style={styles.previewImage} resizeMode="contain" />
+      <ThemedText type="smallBold" style={styles.previewLabel}>
+        {sound.label}
+      </ThemedText>
+    </View>
+  );
+}
+
+function ChoiceCell({
+  sound,
+  disabled,
+  marked,
+  onPress,
+}: Readonly<{
+  sound: Ling6Sound;
+  disabled: boolean;
+  marked: "answer" | null;
+  onPress: () => void;
+}>) {
+  const theme = useTheme();
+  const answer = marked === "answer";
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={sound.label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.choiceCell,
+        {
+          backgroundColor: theme.surface,
+          borderColor: answer
+            ? theme.accent
+            : pressed && !disabled
+              ? theme.accentBorder
+              : theme.border,
+        },
+        Shadows.card,
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
+      ]}
+    >
+      <Image source={sound.image} style={styles.choiceImage} resizeMode="contain" />
+      <ThemedText type="smallBold">{sound.label}</ThemedText>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
+  safe: {
+    flex: 1,
+    maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    width: "100%",
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    paddingBottom: BottomTabInset + Spacing.three,
+    gap: Spacing.three,
+  },
+  header: {
+    gap: Spacing.one,
+  },
+  caption: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  idleContent: {
+    gap: Spacing.three,
+    paddingBottom: Spacing.two,
+  },
+  idleCard: {
+    gap: Spacing.two,
+  },
+  idleBody: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  previewGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+  },
+  previewCell: {
+    width: "31.5%",
+    flexGrow: 1,
+    borderWidth: 1,
+    borderRadius: Radius.large - 4,
+    padding: Spacing.one,
+    alignItems: "center",
+    gap: 2,
+  },
+  previewImage: {
+    width: "100%",
+    height: 72,
+  },
+  previewLabel: {
+    fontSize: 13,
+  },
+  summaryContent: {
+    gap: Spacing.three,
+    paddingBottom: Spacing.two,
+  },
+  headline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  headlineText: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  summaryCard: {
+    gap: Spacing.two,
+  },
+  resultLine: {
+    fontSize: 20,
+    lineHeight: 28,
+  },
+  footnote: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  promptArea: {
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  statusText: {
+    textAlign: "center",
+  },
+  choiceGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+    justifyContent: "space-between",
+  },
+  choiceCell: {
+    width: "31.5%",
+    borderWidth: 1.5,
+    borderRadius: Radius.large - 4,
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.one,
+    alignItems: "center",
+    gap: 2,
+  },
+  choiceImage: {
+    width: "100%",
+    height: 78,
+  },
+  silenceButton: {
+    borderWidth: 1.5,
+    borderRadius: Radius.medium,
+    paddingVertical: Spacing.three,
+    alignItems: "center",
+  },
+  actions: {
+    marginTop: "auto",
+    gap: Spacing.two,
+  },
+  pressed: {
+    opacity: 0.85,
+  },
+  disabled: {
+    opacity: 0.55,
+  },
+});

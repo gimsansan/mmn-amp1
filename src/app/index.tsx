@@ -33,7 +33,7 @@ import {
 } from "@/training/SessionHistoryScreen";
 import { listSavedSessions } from "@/training/sessionStore";
 
-// 'stats' = 통계 화면(탭 제거 → 홈 안에서 상태 스와프로 진입).
+// 'stats' = 통계 화면(연습 탭 안에서 상태 스와프). 하단 왼쪽 탭은 링 6.
 type Track = "picker" | "pitch2" | "freq" | "am" | "stats";
 
 const APP_DISPLAY_NAME = "청능 연습";
@@ -87,8 +87,8 @@ const TRAINING_SECTIONS: readonly TrackSection[] = [
 ];
 
 /**
- * 연습 탭(= 앱 진입 화면) — 트랙 선택 → 듣기 준비 → 정적 훈련 UI.
- * 기록·통계는 통계 탭으로 분리(§2-3). 2탭 축소로 앱 정보(고지·버전)를 이 화면 하단에 둔다.
+ * 연습 탭 — 트랙 선택 → 듣기 준비 → 정적 훈련 UI.
+ * 통계는 이 탭 안에서 스와프. 앱 정보(고지·버전)는 이 화면 하단.
  */
 export default function ExploreScreen() {
   const theme = useTheme();
@@ -139,8 +139,7 @@ export default function ExploreScreen() {
     };
   }, [track]);
 
-  // 탭 바를 없앴으므로 안드로이드 하드웨어 뒤로가기를 직접 처리한다:
-  // 훈련·통계 화면에서는 앱을 종료하지 않고 연습 목록으로 되돌린다.
+  // 안드로이드 하드웨어 뒤로가기: 훈련·통계에서는 앱을 종료하지 않고 연습 목록으로.
   useEffect(() => {
     if (track === "picker") {
       return;
@@ -233,7 +232,7 @@ export default function ExploreScreen() {
           <View style={styles.top}>
             <View style={styles.headerRow}>
               <ThemedText type="screenTitle">연습 선택</ThemedText>
-              {/* 탭 제거 → 통계 진입점을 헤더 우측 아이콘으로 노출(발견성). */}
+              {/* 통계 진입점(헤더 우측). 하단 탭은 링 6 · 연습. */}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="연습 통계 보기"
@@ -312,7 +311,7 @@ export default function ExploreScreen() {
             </View>
           </View>
 
-          {/* 설정 탭 제거 → 앱 정보(고지·버전)를 연습 화면 하단으로 이동. */}
+          {/* 앱 정보(고지·버전). 설정 탭은 없음. */}
           <View style={styles.appInfo}>
             <Card style={styles.appInfoCard}>
               <View style={styles.appInfoRow}>
