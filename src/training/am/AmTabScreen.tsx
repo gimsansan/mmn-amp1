@@ -1,21 +1,27 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { BackHandler, StyleSheet, View } from "react-native";
+import { BackHandler } from "react-native";
 
 import { DEFAULT_CARRIER_HZ } from "@/audio/amTone";
 import { AmSessionScreen } from "@/training/am/AmSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { SessionHistoryScreen } from "@/training/SessionHistoryScreen";
+import {
+  DEFAULT_SESSION_MODE,
+  type SessionMode,
+} from "@/training/sessionMode";
 
 /**
  * 떨림 탭 — 링 6·단어인지도처럼 탭이 곧 그 연습.
- * 듣기 준비는 첫 시작 전에만. 통계는 헤더 버튼.
+ * 듣기 준비는 첫 시작 전에만, 소리 높낮이처럼 화면을 갈아끼움(오버레이 아님).
+ * 통계는 헤더 버튼.
  */
 export function AmTabScreen() {
   const [showStats, setShowStats] = useState(false);
   const [showCheck, setShowCheck] = useState(false);
   const [checked, setChecked] = useState(false);
   const [autoStart, setAutoStart] = useState(false);
+  const [mode, setMode] = useState<SessionMode>(DEFAULT_SESSION_MODE);
 
   const closeStats = useCallback(() => {
     setShowStats(false);
@@ -68,34 +74,26 @@ export function AmTabScreen() {
     return <SessionHistoryScreen onBack={closeStats} clearTracks={["am"]} />;
   }
 
-  return (
-    <View style={styles.fill}>
-      <AmSessionScreen
-        onOpenStats={openStats}
-        onBeforeStart={onBeforeStart}
-        autoStart={autoStart}
-        onAutoStartConsumed={consumeAutoStart}
+  if (showCheck) {
+    return (
+      <ListeningCheckScreen
+        trackTitle="떨림 찾기"
+        trackIcon="vibrate"
+        sampleHz={DEFAULT_CARRIER_HZ}
+        onStart={passCheck}
+        onBack={closeCheck}
       />
-      {showCheck ? (
-        <View style={styles.cover}>
-          <ListeningCheckScreen
-            trackTitle="떨림 찾기"
-            trackIcon="vibrate"
-            sampleHz={DEFAULT_CARRIER_HZ}
-            onStart={passCheck}
-            onBack={closeCheck}
-          />
-        </View>
-      ) : null}
-    </View>
+    );
+  }
+
+  return (
+    <AmSessionScreen
+      onOpenStats={openStats}
+      onBeforeStart={onBeforeStart}
+      autoStart={autoStart}
+      onAutoStartConsumed={consumeAutoStart}
+      initialMode={mode}
+      onModeChange={setMode}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-  cover: {
-    ...StyleSheet.absoluteFillObject,
-  },
-});
