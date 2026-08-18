@@ -7,16 +7,11 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ActionButton } from "@/components/ui/action-button";
 import { Card, CardDivider } from "@/components/ui/card";
-import {
-  BottomTabInset,
-  MaxContentWidth,
-  Radius,
-  Spacing,
-} from "@/constants/theme";
+import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { SummaryCard, SummaryCardHeader } from "@/training/SummaryCard";
 import { TrendChart, type TrendPoint } from "@/training/TrendChart";
-import { endReasonLabel } from "@/training/freqSession";
+import { endReasonLabel } from "@/training/freq/freqSession";
 import { sessionModeLabel } from "@/training/sessionMode";
 import {
   clearSavedSessions,
@@ -616,12 +611,12 @@ export function SessionHistoryScreen({
     <View style={styles.headerStack}>
       <AggregateCard data={computeAggregate(statRows)} />
       <TrendGraphCard
-        title="들을 수 있는 최소 차이 추이"
+        title="들을 수 있는 최소 차이 변화"
         chips={<TrackChips value={graphTrackA} onChange={setGraphTrackA} />}
         points={graphAPoints}
         formatPlain={centPlain}
-        unitLabel="음 높이 차이 · 최근"
-        caption="들을 수 있는 가장 작은 음 높이 차이예요. 낮을수록 더 작은 차이까지 들려요."
+        unitLabel="음높이 차이 · 최근"
+        caption="들을 수 있는 가장 작은 음높이 차이예요. 낮을수록 더 작은 차이까지 들려요."
       />
       <TrendGraphCard
         title="떨림 추이"
@@ -635,7 +630,7 @@ export function SessionHistoryScreen({
 
   return (
     <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <View style={styles.screenHeader}>
           <ThemedText type="screenTitle">훈련 기록</ThemedText>
           <ThemedText
@@ -685,21 +680,33 @@ export function SessionHistoryScreen({
         <View style={styles.actions}>
           <ActionButton outlineMatchLabel label="새로고침" onPress={reload} />
           {onBack ? (
-            <ActionButton outlineMatchLabel label="돌아가기" onPress={onBack} />
+            <ActionButton variant="primary" label="돌아가기" onPress={onBack} />
           ) : null}
         </View>
 
         {/* 데이터 관리: 되돌릴 수 없으므로 하단 분리 + 확인 Alert로 오탭 방지. */}
         <View style={styles.dangerZone}>
           <CardDivider />
-          <ActionButton
-            variant="danger"
-            outlineMatchLabel
-            label={clearing ? "지우는 중…" : "기록 전체 삭제"}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="기록 전체 삭제"
+            accessibilityState={{ disabled: clearing || !hasRows }}
             disabled={clearing || !hasRows}
-            fill={false}
             onPress={confirmClear}
-          />
+            style={({ pressed }) => [
+              styles.clearAll,
+              (clearing || !hasRows) && styles.clearAllDisabled,
+              pressed && !(clearing || !hasRows) && styles.clearAllPressed,
+            ]}
+          >
+            <ThemedText
+              themeColor="danger"
+              type="small"
+              style={styles.clearAllLabel}
+            >
+              {clearing ? "지우는 중…" : "기록 전체 삭제"}
+            </ThemedText>
+          </Pressable>
         </View>
       </SafeAreaView>
     </ThemedView>
@@ -717,7 +724,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    paddingBottom: Spacing.three,
     alignItems: "stretch",
     gap: Spacing.three - 2,
   },
@@ -839,5 +846,22 @@ const styles = StyleSheet.create({
   },
   dangerZone: {
     gap: Spacing.three - 4,
+  },
+  clearAll: {
+    alignSelf: "flex-end",
+    minHeight: 32,
+    justifyContent: "center",
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+  },
+  clearAllLabel: {
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  clearAllPressed: {
+    opacity: 0.7,
+  },
+  clearAllDisabled: {
+    opacity: 0.4,
   },
 });

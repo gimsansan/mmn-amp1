@@ -122,7 +122,9 @@ export function ListeningCheckScreen({
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           {/* 시작 화면 hero 타일을 줄인 것 — 안내 카드가 쌓이는 화면이라 링은 뺀다. */}
-          <View style={[styles.trackMark, { backgroundColor: theme.accentTint }]}>
+          <View
+            style={[styles.trackMark, { backgroundColor: theme.accentTint }]}
+          >
             <Icon name={trackIcon} size={30} color={theme.accent} />
           </View>
           <ThemedText
@@ -219,7 +221,7 @@ export function ListeningCheckScreen({
             onPress={() => leave(onStart)}
           />
           <ActionButton
-            label="연습 목록"
+            label="뒤로가기"
             textScale={TEXT_SCALE}
             onPress={() => leave(onBack)}
           />

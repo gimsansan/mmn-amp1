@@ -9,7 +9,7 @@ import {
   STEP_SCHEDULE_DB,
   applyAmStaircaseResult,
   createAmStaircase,
-} from '@/training/amStaircase';
+} from '@/training/am/amStaircase';
 
 /** 연속 정답 2회 → 한 번 하강(더 어렵게, 더 음수). */
 function down(state: ReturnType<typeof createAmStaircase>) {

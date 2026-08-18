@@ -1,8 +1,10 @@
-# 구현 · 결과 로그
+# 구현 · 결과 로그 (과거)
 
+> **이 파일에는 새 항목을 넣지 않음.** 이후 정본: [`impl-log_1.md`](./impl-log_1.md) (2026-08-19 01:06~).  
+> 여기 로그는 **2026-08-19 01:04**까지. 과거 블록은 수정하지 않음.  
 > **목적**: 기능 구현·설정 변경 후 **무엇을 했는지 / 결과가 어땠는지**를 날짜별로 남긴다.  
 > **대상**: 코드·네이티브·오디오·훈련 로직 등 실질 변경. 대화만으로 끝난 합의·설계는 `amp-mdt-training-design.md` 쪽(같은 표기 원칙 적용).  
-> **규칙**: `.cursor/rules/android-dev-client.mdc` — 작업이 끝나면 이 파일에 항목을 추가한다.
+> **규칙**: `.cursor/rules/android-dev-client.mdc`
 
 ---
 
@@ -44,6 +46,76 @@
 ---
 
 ## 로그
+
+### 2026-08-19 01:04 — 기록 전체 삭제를 작은 텍스트로
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 확인 Alert가 있어도 기록 전체 삭제 버튼이 너무 큼. |
+| 변경 요약 | 하단 `ActionButton`(높이 48·가로 꽉)을 카드 행 「삭제」와 비슷한 작은 텍스트로. 오른쪽 정렬, 확인 Alert 유지. |
+| 주요 경로 | `src/training/SessionHistoryScreen.tsx` |
+| 결과 | 코드 반영. |
+| 확인 | 파일 확인. 실기기 미확인. |
+| 단정 금지 | `추정`: **리빌드 불필요**. `미검증`: 실기기 탭 영역·가독성. |
+| 성능·주의 | 없음. **dev client 리빌드 불필요.** |
+| 다음 | 실기기에서 크기·돌아가기 색 확인. |
+
+### 2026-08-19 01:02 — 기록 화면 돌아가기 = 연습 시작 색
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 훈련 기록의 「돌아가기」를 연습 시작 버튼과 같은 컬러로. |
+| 변경 요약 | `SessionHistoryScreen` 하단 「돌아가기」를 `outlineMatchLabel` 테두리에서 `variant="primary"`(파란 채움)로. 「새로고침」은 유지. |
+| 주요 경로 | `src/training/SessionHistoryScreen.tsx` |
+| 결과 | 코드 반영. |
+| 확인 | 파일 확인. 실기기 미확인. |
+| 단정 금지 | `추정`: **리빌드 불필요**. `미검증`: 실기기에서 하단 두 버튼 대비. |
+| 성능·주의 | 없음. **dev client 리빌드 불필요.** |
+| 다음 | 실기기에서 돌아가기 색 확인. |
+
+### 2026-08-19 00:19 — 귀풀기 무제한 · 연습 전환 6
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 연습→귀풀기(전환·시행 한도 없음, 「전환 N」만). 측정→연습(전환 6, 통계 포함). 토글 옆 안내 없음. 뱃지로 구분. 웰니스라 6회 최근4 평균 스텝 섞임은 수용. 저장 키 `practice`/`measure` 유지. |
+| 변경 요약 | `targetReversalsFor`/`maxTrialsFor`가 귀풀기에서 `null`. 세 화면 자동종료 생략·진행바 숨김. 토글 라벨 귀풀기/연습. |
+| 주요 경로 | `src/training/sessionMode.ts`, `SessionModeToggle.tsx`, `freq/freqSession.ts`, `am/amSession.ts`, `freq/FreqSessionScreen.tsx`, `am/AmSessionScreen.tsx`, `pitch2afc/PitchCompareScreen.tsx`, `docs/amp-mdt-training-design.md` |
+| 결과 | 코드 반영. 테스트 139 passed. |
+| 확인 | `npx jest` freq·am·pitch2afc·sessionStore |
+| 단정 금지 | `추정`: **리빌드 불필요**. `미검증`: 실기기에서 귀풀기 길게 돌리기·연습 6회 종료. `주의`: 기존 전환 8 기록과 6은 프로토콜이 다름(사용자는 초기화 예정). |
+| 성능·주의 | 귀풀기는 시행 상한이 없어 세션이 길어질 수 있음. **dev client 리빌드 불필요.** |
+| 다음 | 실기기: 토글 라벨, 귀풀기 직접 종료, 연습 6회 종료·통계 포함. |
+
+### 2026-08-18 23:59 — freq·am을 트랙 폴더로 이동
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 다른 음 찾기·떨림 찾기도 높낮이 비교(`pitch2afc/`)처럼 폴더로. |
+| 변경 요약 | `src/training/freq/`, `src/training/am/`로 화면·로직·테스트 이동. import·설계 정본 경로만 맞춤. |
+| 주요 경로 | `src/training/freq/`, `src/training/am/`, `src/training/pta/PtaSessionScreen.tsx`, `src/app/index.tsx`, `src/training/sessionStore.ts`, `src/training/SessionHistoryScreen.tsx`, `docs/amp-mdt-training-design.md` |
+| 결과 | 이동 완료. `freqStaircase`·`amStaircase`·`sessionStore` 테스트 50 passed. |
+| 확인 | `npx jest src/training/freq src/training/am src/training/__tests__/sessionStore.test.ts` |
+| 단정 금지 | `추정`: JS 경로만이라 **리빌드 불필요**. 과거 impl-log·handoff 경로 문자열은 그대로 둠. |
+| 성능·주의 | 없음(파일 이동). **dev client 리빌드 불필요.** |
+| 다음 | 없음(구조만). |
+
+### 2026-08-18 23:14 — 통계 화면 하단 버튼을 탭 가까이
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 새로고침·돌아가기·기록 전체 삭제가 화면 중반부터 보여 집계·그래프 공간이 줄어듦. 버튼 모양은 그대로, 아래 빈 칸만 줄여 하단 탭 가까이. |
+| 변경 요약 | `SessionHistoryScreen` 하단 `SafeAreaView`에서 bottom edge를 빼고, `paddingBottom`을 `BottomTabInset + Spacing.three`에서 `Spacing.three`로. 버튼 묶음은 리스트 밖 고정 푸터 유지. |
+| 주요 경로 | `src/training/SessionHistoryScreen.tsx` |
+| 결과 | 코드 반영. 실기기에서 탭과 겹침 여부는 이 세션에서 안 봄. |
+| 확인 | 린트. |
+| 단정 금지 | `추정`: JS만이라 **리빌드 불필요**. `미검증`: 실기기에서 버튼이 네이티브 탭과 겹치지 않는지. `주의`: 다른 탭 화면은 `BottomTabInset`을 그대로 둠. |
+| 성능·주의 | 없음(패딩만). **dev client 리빌드 불필요.** |
+| 다음 | 실기기에서 통계 화면 하단 버튼·그래프 가시 영역. |
 
 ### 2026-08-18 15:36 — 각 탭 헤더에 통계 버튼
 

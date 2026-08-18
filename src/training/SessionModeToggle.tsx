@@ -11,12 +11,12 @@ import { Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import {
   MEASURE_TARGET_REVERSALS,
-  PRACTICE_TARGET_REVERSALS,
+  sessionModeLabel,
   type SessionMode,
 } from "@/training/sessionMode";
 
 /**
- * 연습/측정 세그먼트 토글. idle 단계에서만 노출한다(진행 중엔 숨김).
+ * 귀풀기/연습 세그먼트 토글. idle 단계에서만 노출한다(진행 중엔 숨김).
  *
  * 색·게이지로 난이도를 암시하지 않는다는 화면 방침을 지키기 위해,
  * 선택 강조는 accent 틴트 한 겹만 쓴다.
@@ -64,12 +64,12 @@ export function SessionModeToggle({
   }> = [
     {
       key: "practice",
-      label: "연습",
-      hint: `전환 ${PRACTICE_TARGET_REVERSALS}번`,
+      label: sessionModeLabel("practice"),
+      hint: "직접 종료",
     },
     {
       key: "measure",
-      label: "측정",
+      label: sessionModeLabel("measure"),
       hint: `전환 ${MEASURE_TARGET_REVERSALS}번`,
     },
   ];

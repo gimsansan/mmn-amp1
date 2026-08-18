@@ -36,8 +36,8 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { AmSessionSummary } from '@/training/amSession';
-import type { FreqSessionSummary } from '@/training/freqSession';
+import type { AmSessionSummary } from '@/training/am/amSession';
+import type { FreqSessionSummary } from '@/training/freq/freqSession';
 import type { PitchCompareSummary } from '@/training/pitch2afc/pitchSummary';
 import {
   MAX_MEASURE_SESSIONS,

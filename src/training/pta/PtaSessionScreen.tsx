@@ -22,7 +22,7 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { FreqSessionScreen } from "@/training/FreqSessionScreen";
+import { FreqSessionScreen } from "@/training/freq/FreqSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { PitchCompareScreen } from "@/training/pitch2afc/PitchCompareScreen";
 import { SessionHistoryScreen } from "@/training/SessionHistoryScreen";

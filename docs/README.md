@@ -23,7 +23,7 @@
 | **① 설계·기준** | 무엇을 왜 만드는가 | `amp-mdt-training-design.md` |
 | **② 환경·실행** | 어떻게 빌드·실행하는가 | `dev-client-setup-context.md`, `dev-client-connection-guide.md`, `cursor-rules-2-vs-3.md` |
 | **③ 할 일·상태** | 무엇이 문제이고 지금 어디까지 왔나 | `improvement-backlog.md` (+ `-easy`) |
-| **④ 기록** | 무엇을 했나 / 어떻게 고쳤나 | `impl-log.md`, `fix-reviews.md` |
+| **④ 기록** | 무엇을 했나 / 어떻게 고쳤나 | `impl-log_1.md`(이어서), `impl-log.md`(과거), `fix-reviews.md` |
 | **⑤ 인계** | 새로 오는 사람에게 넘길 맥락 | `handoff.md` |
 
 ---
@@ -41,12 +41,13 @@
 | `dev-client-connection-guide.md` | 갱신 | USB/WiFi/ADB·Metro URL·실기기 연결 | **실기기에 어떻게 붙는가** |
 | `improvement-backlog.md` | 갱신 | 개선 후보 P0~P3 + 맨 위 **진행 현황 표** | **무엇이 문제인가 · 지금 상태가 어떤가** |
 | `improvement-backlog-easy.md` | 갱신 | 위 문서를 비유로 푼 것 | 없음(설명 전용 — **상태·근거를 여기서 관리하지 않음**) |
-| `impl-log.md` | 누적 | 날짜별 작업 1건 = 표 1개(근거·결정·결과·확인·단정 금지) | **무엇을 언제 했나** |
+| `impl-log_1.md` | 누적 | 날짜별 작업 1건 = 표 1개(근거·결정·결과·확인·단정 금지). **이후 정본** | **무엇을 언제 했나** |
+| `impl-log.md` | 누적 | 위와 같음. **과거**(2026-08-19 01:04까지). 새 항목 금지 | 과거 작업 기록 |
 | `fix-reviews.md` | 누적 | 수정 전후 코드·대안 검토·평가·검증 | **어떻게 고쳤나 · 왜 그 방법인가** |
 | `handoff.md` | 누적 | 새 채팅 AI용 인계 블록(시각 포함) | **지금 넘길 맥락** |
 
-> `impl-log.md`와 `fix-reviews.md`의 관계: **impl-log가 정본(짧게), fix-reviews가 부록(상세).**
-> 코드를 바꿨으면 **impl-log는 반드시** 쓰고, 설명할 게 많을 때만 fix-reviews에 상세를 더한다.
+> `impl-log_1.md`와 `fix-reviews.md`의 관계: **impl-log가 정본(짧게), fix-reviews가 부록(상세).**
+> 코드를 바꿨으면 **impl-log_1은 반드시** 쓰고, 설명할 게 많을 때만 fix-reviews에 상세를 더한다. **`impl-log.md`에는 넣지 않음.**
 
 ---
 
@@ -89,14 +90,14 @@
 
 ### 「이건 왜 이렇게 고쳐졌지?」
 
-1. [`impl-log.md`](./impl-log.md)에서 **날짜로** 해당 작업 찾기 → 근거·결정·단정 금지
+1. [`impl-log_1.md`](./impl-log_1.md)(이후) 또는 [`impl-log.md`](./impl-log.md)(과거)에서 **날짜로** 해당 작업 찾기 → 근거·결정·단정 금지
 2. 더 알고 싶으면 [`fix-reviews.md`](./fix-reviews.md)에서 **같은 항목 ID**(P0-1 등) 블록
 
 ### 「이 코드 왜 이래?」
 
 1. 코드 주석(자극 스펙 상수에는 근거가 주석으로 붙어 있음)
 2. [`amp-mdt-training-design.md`](./amp-mdt-training-design.md) 해당 절
-3. [`impl-log.md`](./impl-log.md) 날짜 역순으로 훑기
+3. [`impl-log_1.md`](./impl-log_1.md) → 없으면 [`impl-log.md`](./impl-log.md) 날짜 역순으로 훑기
 
 ### 새 채팅 AI에게 넘길 때
 
@@ -137,7 +138,8 @@ docs/
 ├─ cursor-rules-2-vs-3.md          ② 환경(규칙 비교)  [갱신형]
 ├─ improvement-backlog.md          ③ 할 일 + 진행 현황 [갱신형] ★상태 정본
 ├─ improvement-backlog-easy.md     ③ 위의 쉬운 말 버전 [갱신형]
-├─ impl-log.md                     ④ 무엇을 했나       [누적형] ★작업 정본
+├─ impl-log_1.md                   ④ 무엇을 했나       [누적형] ★작업 정본(이어서)
+├─ impl-log.md                     ④ 무엇을 했나       [누적형] 과거(01:04까지)
 ├─ fix-reviews.md                  ④ 어떻게 고쳤나     [누적형]
 └─ handoff.md                      ⑤ 인계(최신이 위)   [누적형]
 ```

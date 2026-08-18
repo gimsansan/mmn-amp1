@@ -23,7 +23,7 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { AmSessionScreen } from "@/training/AmSessionScreen";
+import { AmSessionScreen } from "@/training/am/AmSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import {
   SessionHistoryScreen,

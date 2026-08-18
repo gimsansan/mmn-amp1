@@ -2,13 +2,18 @@ import {
   applyStaircaseResult,
   createFreqStaircase,
   type FreqStaircaseState,
-} from '@/training/freqStaircase';
+} from '@/training/freq/freqStaircase';
 
-/** 파일럿: 반전 4회 후 종료(사용자 합의 2026-08-06 — 세션이 길다는 청취 피드백). 설계 §6 관례 6~8보다 짧게. 제품 확정 아님. */
-export const DEFAULT_TARGET_REVERSALS = 4;
+import {
+  MEASURE_MAX_TRIALS,
+  MEASURE_TARGET_REVERSALS,
+} from "@/training/sessionMode";
 
-/** 휴식·상한용 최대 시행. 설계: 시행 수 기준 휴식. 파일럿 추정. */
-export const DEFAULT_MAX_TRIALS = 40;
+/** 연습 모드 기본 반전 목표. 귀풀기는 `null`을 넘긴다. */
+export const DEFAULT_TARGET_REVERSALS = MEASURE_TARGET_REVERSALS;
+
+/** 연습 모드 시행 안전 상한. 귀풀기는 `null`을 넘긴다. */
+export const DEFAULT_MAX_TRIALS = MEASURE_MAX_TRIALS;
 
 /** 요약 시 최근 반전 몇 개의 Δ를 평균할지. 관례 제안, 임상 역치 아님. */
 export const DEFAULT_AVERAGE_LAST_REVERSALS = 4;
@@ -17,8 +22,10 @@ export type SessionEndReason = 'reversals' | 'max_trials' | 'manual';
 
 export type FreqSessionState = {
   stair: FreqStaircaseState;
-  targetReversals: number;
-  maxTrials: number;
+  /** `null`이면 반전 종료 없음(귀풀기). */
+  targetReversals: number | null;
+  /** `null`이면 시행 한도 없음(귀풀기). */
+  maxTrials: number | null;
   averageLastReversals: number;
   status: 'active' | 'completed';
   endReason: SessionEndReason | null;
@@ -26,10 +33,19 @@ export type FreqSessionState = {
 
 export type CreateFreqSessionOptions = {
   startDeltaCents?: number;
-  targetReversals?: number;
-  maxTrials?: number;
+  targetReversals?: number | null;
+  maxTrials?: number | null;
   averageLastReversals?: number;
 };
+
+function assertOptionalPositiveInt(name: string, value: number | null): void {
+  if (value == null) {
+    return;
+  }
+  if (!Number.isInteger(value) || value < 1) {
+    throw new RangeError(`${name} must be integer >= 1 or null: ${value}`);
+  }
+}
 
 export type FreqSessionSummary = {
   trialCount: number;
@@ -47,17 +63,17 @@ export type FreqSessionSummary = {
 export function createFreqSession(
   options: CreateFreqSessionOptions = {}
 ): FreqSessionState {
-  const targetReversals = options.targetReversals ?? DEFAULT_TARGET_REVERSALS;
-  const maxTrials = options.maxTrials ?? DEFAULT_MAX_TRIALS;
+  const targetReversals =
+    options.targetReversals === undefined
+      ? DEFAULT_TARGET_REVERSALS
+      : options.targetReversals;
+  const maxTrials =
+    options.maxTrials === undefined ? DEFAULT_MAX_TRIALS : options.maxTrials;
   const averageLastReversals =
     options.averageLastReversals ?? DEFAULT_AVERAGE_LAST_REVERSALS;
 
-  if (!Number.isInteger(targetReversals) || targetReversals < 1) {
-    throw new RangeError(`targetReversals must be integer >= 1: ${targetReversals}`);
-  }
-  if (!Number.isInteger(maxTrials) || maxTrials < 1) {
-    throw new RangeError(`maxTrials must be integer >= 1: ${maxTrials}`);
-  }
+  assertOptionalPositiveInt('targetReversals', targetReversals);
+  assertOptionalPositiveInt('maxTrials', maxTrials);
   if (!Number.isInteger(averageLastReversals) || averageLastReversals < 1) {
     throw new RangeError(
       `averageLastReversals must be integer >= 1: ${averageLastReversals}`
@@ -83,7 +99,7 @@ function withEndCheck(session: FreqSessionState): FreqSessionState {
 
   const { stair, targetReversals, maxTrials } = session;
 
-  if (stair.reversalCount >= targetReversals) {
+  if (targetReversals != null && stair.reversalCount >= targetReversals) {
     return {
       ...session,
       stair: { ...stair, done: true },
@@ -92,7 +108,7 @@ function withEndCheck(session: FreqSessionState): FreqSessionState {
     };
   }
 
-  if (stair.trialCount >= maxTrials) {
+  if (maxTrials != null && stair.trialCount >= maxTrials) {
     return {
       ...session,
       stair: { ...stair, done: true },

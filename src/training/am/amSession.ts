@@ -2,20 +2,22 @@ import {
   applyAmStaircaseResult,
   createAmStaircase,
   type AmStaircaseState,
-} from '@/training/amStaircase';
+} from '@/training/am/amStaircase';
 import {
   DEFAULT_AVERAGE_LAST_REVERSALS,
   DEFAULT_MAX_TRIALS,
   DEFAULT_TARGET_REVERSALS,
   type SessionEndReason,
-} from '@/training/freqSession';
+} from '@/training/freq/freqSession';
 
-export { endReasonLabel } from '@/training/freqSession';
+export { endReasonLabel } from '@/training/freq/freqSession';
 
 export type AmSessionState = {
   stair: AmStaircaseState;
-  targetReversals: number;
-  maxTrials: number;
+  /** `null`이면 반전 종료 없음(귀풀기). */
+  targetReversals: number | null;
+  /** `null`이면 시행 한도 없음(귀풀기). */
+  maxTrials: number | null;
   averageLastReversals: number;
   status: 'active' | 'completed';
   endReason: SessionEndReason | null;
@@ -23,8 +25,8 @@ export type AmSessionState = {
 
 export type CreateAmSessionOptions = {
   startDepthDb?: number;
-  targetReversals?: number;
-  maxTrials?: number;
+  targetReversals?: number | null;
+  maxTrials?: number | null;
   averageLastReversals?: number;
 };
 
@@ -43,20 +45,29 @@ export type AmSessionSummary = {
 
 export type { SessionEndReason };
 
+function assertOptionalPositiveInt(name: string, value: number | null): void {
+  if (value == null) {
+    return;
+  }
+  if (!Number.isInteger(value) || value < 1) {
+    throw new RangeError(`${name} must be integer >= 1 or null: ${value}`);
+  }
+}
+
 export function createAmSession(
   options: CreateAmSessionOptions = {}
 ): AmSessionState {
-  const targetReversals = options.targetReversals ?? DEFAULT_TARGET_REVERSALS;
-  const maxTrials = options.maxTrials ?? DEFAULT_MAX_TRIALS;
+  const targetReversals =
+    options.targetReversals === undefined
+      ? DEFAULT_TARGET_REVERSALS
+      : options.targetReversals;
+  const maxTrials =
+    options.maxTrials === undefined ? DEFAULT_MAX_TRIALS : options.maxTrials;
   const averageLastReversals =
     options.averageLastReversals ?? DEFAULT_AVERAGE_LAST_REVERSALS;
 
-  if (!Number.isInteger(targetReversals) || targetReversals < 1) {
-    throw new RangeError(`targetReversals must be integer >= 1: ${targetReversals}`);
-  }
-  if (!Number.isInteger(maxTrials) || maxTrials < 1) {
-    throw new RangeError(`maxTrials must be integer >= 1: ${maxTrials}`);
-  }
+  assertOptionalPositiveInt('targetReversals', targetReversals);
+  assertOptionalPositiveInt('maxTrials', maxTrials);
   if (!Number.isInteger(averageLastReversals) || averageLastReversals < 1) {
     throw new RangeError(
       `averageLastReversals must be integer >= 1: ${averageLastReversals}`
@@ -82,7 +93,7 @@ function withEndCheck(session: AmSessionState): AmSessionState {
 
   const { stair, targetReversals, maxTrials } = session;
 
-  if (stair.reversalCount >= targetReversals) {
+  if (targetReversals != null && stair.reversalCount >= targetReversals) {
     return {
       ...session,
       stair: { ...stair, done: true },
@@ -91,7 +102,7 @@ function withEndCheck(session: AmSessionState): AmSessionState {
     };
   }
 
-  if (stair.trialCount >= maxTrials) {
+  if (maxTrials != null && stair.trialCount >= maxTrials) {
     return {
       ...session,
       stair: { ...stair, done: true },

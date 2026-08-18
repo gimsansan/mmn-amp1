@@ -16,34 +16,35 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { confirmEndSession } from "@/training/confirmEndSession";
 import {
-  DEFAULT_AFC_N,
-  abortFreqAfcPlayback,
-  createFreqAfcTrial,
-  playFreqAfcTrial,
-  scoreFreqAfcChoice,
-  type FreqAfcChoiceResult,
-  type FreqAfcTrial,
-} from "@/training/freqAfcTrial";
+  abortAmAfcPlayback,
+  createAmAfcTrial,
+  playAmAfcTrial,
+  scoreAmAfcChoice,
+  type AmAfcChoiceResult,
+  type AmAfcTrial,
+} from "@/training/am/amAfcTrial";
 import {
-  DEFAULT_MAX_TRIALS,
-  applySessionResult,
-  createFreqSession,
+  applyAmSessionResult,
+  createAmSession,
+  endAmSessionManual,
   endReasonLabel,
-  endSessionManual,
-  summarizeSession,
-  type FreqSessionState,
-  type FreqSessionSummary,
-} from "@/training/freqSession";
+  summarizeAmSession,
+  type AmSessionState,
+  type AmSessionSummary,
+} from "@/training/am/amSession";
+import { confirmEndSession } from "@/training/confirmEndSession";
+import { DEFAULT_AFC_N } from "@/training/freq/freqAfcTrial";
 import {
   DEFAULT_SESSION_MODE,
+  maxTrialsFor,
+  modeProgressCaption,
   targetReversalsFor,
   type SessionMode,
 } from "@/training/sessionMode";
 import { SessionModeToggle } from "@/training/SessionModeToggle";
 import { SessionProgressBar } from "@/training/SessionProgressBar";
-import { appendFreqSessionSummary } from "@/training/sessionStore";
+import { appendAmSessionSummary } from "@/training/sessionStore";
 import { SummaryCard } from "@/training/SummaryCard";
 
 /** idle(연습 선택) 화면 텍스트만 균일하게 살짝 키우는 배율(사용자 요청). */
@@ -56,7 +57,7 @@ function phaseCaption(phase: Phase, correct: boolean | undefined): string {
     case "playing":
       return "듣는 중… 소리가 끝난 뒤 고르세요";
     case "choose":
-      return "다른 음을 고르세요";
+      return "떨리는 소리를 고르세요";
     case "feedback":
       return correct ? "맞았어요" : "아쉬워요";
     case "summary":
@@ -71,26 +72,26 @@ function progressCaption(
   phase: Phase,
   trialNumber: number,
   reversalCount: number,
-  targetReversals: number,
+  targetReversals: number | null,
 ): string {
-  if (phase === "idle") {
-    return `난이도 전환 ${targetReversals}번 또는 연습 ${DEFAULT_MAX_TRIALS}번까지`;
-  }
-  return `연습 ${trialNumber} · 전환 ${reversalCount}/${targetReversals}`;
+  return modeProgressCaption({
+    idle: phase === "idle",
+    trialNumber,
+    reversalCount,
+    targetReversals,
+  });
 }
 
-type FreqSessionScreenProps = {
+type AmSessionScreenProps = {
   /** 연습 목록으로 돌아가기(idle·요약에서만 노출). */
   onBack?: () => void;
 };
 
 /**
- * ② 주파수 변별 — 훈련용 정적 UI.
- * Δ(cent)를 색·크기·게이지에 연동하지 않음. 요약은 진단 역치가 아님.
+ * ① AM/포락선 — 훈련용 정적 UI.
+ * 변조 깊이(m/dB)를 색·크기·게이지에 연동하지 않음. 요약은 진단 역치가 아님.
  */
-export function FreqSessionScreen({
-  onBack,
-}: Readonly<FreqSessionScreenProps>) {
+export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
   /** 이번 세션 요약을 이미 저장했는지. 중복 저장 방지(세션 시작 시 리셋). */
@@ -100,27 +101,27 @@ export function FreqSessionScreen({
   const [phase, setPhase] = useState<Phase>("idle");
   /** idle에서 고른 모드. 진행 중엔 `runModeRef`가 실제 세션 값을 들고 있다. */
   const [mode, setMode] = useState<SessionMode>(DEFAULT_SESSION_MODE);
-  const [session, setSession] = useState<FreqSessionState | null>(null);
-  const [trial, setTrial] = useState<FreqAfcTrial | null>(null);
-  const [result, setResult] = useState<FreqAfcChoiceResult | null>(null);
-  const [summary, setSummary] = useState<FreqSessionSummary | null>(null);
+  const [session, setSession] = useState<AmSessionState | null>(null);
+  const [trial, setTrial] = useState<AmAfcTrial | null>(null);
+  const [result, setResult] = useState<AmAfcChoiceResult | null>(null);
+  const [summary, setSummary] = useState<AmSessionSummary | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [saveNote, setSaveNote] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
       abortRef.current = true;
-      abortFreqAfcPlayback();
+      abortAmAfcPlayback();
     };
   }, []);
 
-  const goSummary = useCallback((next: FreqSessionState) => {
+  const goSummary = useCallback((next: AmSessionState) => {
     // 진행 중인 시행이 있으면 재생 루프까지 멈춘다.
-    // stopPureTone()은 대기 promise를 resolve만 하므로, 이 플래그가 없으면
+    // stopAmTone()은 대기 promise를 resolve만 하므로, 이 플래그가 없으면
     // 남은 구간이 계속 재생되고 runTrial이 phase를 'choose'로 되돌린다.
     abortRef.current = true;
-    abortFreqAfcPlayback();
-    const nextSummary = summarizeSession(next);
+    abortAmAfcPlayback();
+    const nextSummary = summarizeAmSession(next);
     setSession(next);
     setSummary(nextSummary);
     setPhase("summary");
@@ -131,7 +132,7 @@ export function FreqSessionScreen({
     }
     savedRef.current = true;
     setSaveNote(null);
-    void appendFreqSessionSummary(nextSummary, runModeRef.current)
+    void appendAmSessionSummary(nextSummary, runModeRef.current)
       .then(() => {
         setSaveNote("기기에 기록했어요");
       })
@@ -143,7 +144,7 @@ export function FreqSessionScreen({
   const resetToIdle = useCallback(() => {
     abortRef.current = true;
     savedRef.current = false;
-    abortFreqAfcPlayback();
+    abortAmAfcPlayback();
     setPhase("idle");
     setSession(null);
     setTrial(null);
@@ -152,7 +153,7 @@ export function FreqSessionScreen({
     setSaveNote(null);
   }, []);
 
-  const runTrial = useCallback(async (state: FreqSessionState) => {
+  const runTrial = useCallback(async (state: AmSessionState) => {
     if (state.status === "completed") {
       return;
     }
@@ -161,15 +162,15 @@ export function FreqSessionScreen({
     setResult(null);
     abortRef.current = false;
 
-    const next = createFreqAfcTrial({
+    const next = createAmAfcTrial({
       n: DEFAULT_AFC_N,
-      deltaCents: state.stair.deltaCents,
+      depthDb: state.stair.depthDb,
     });
     setTrial(next);
     setPhase("playing");
 
     try {
-      await playFreqAfcTrial(next, {
+      await playAmAfcTrial(next, {
         shouldAbort: () => abortRef.current,
       });
       if (abortRef.current) {
@@ -189,8 +190,9 @@ export function FreqSessionScreen({
 
   const onStart = useCallback(() => {
     runModeRef.current = mode;
-    const next = createFreqSession({
+    const next = createAmSession({
       targetReversals: targetReversalsFor(mode),
+      maxTrials: maxTrialsFor(mode),
     });
     savedRef.current = false;
     setSession(next);
@@ -210,8 +212,8 @@ export function FreqSessionScreen({
       ) {
         return;
       }
-      const scored = scoreFreqAfcChoice(trial, index);
-      const next = applySessionResult(session, scored.correct);
+      const scored = scoreAmAfcChoice(trial, index);
+      const next = applyAmSessionResult(session, scored.correct);
       setResult(scored);
       setSession(next);
 
@@ -236,7 +238,7 @@ export function FreqSessionScreen({
       resetToIdle();
       return;
     }
-    goSummary(endSessionManual(session));
+    goSummary(endAmSessionManual(session));
   }, [goSummary, resetToIdle, session]);
 
   const choiceDisabled = phase !== "choose";
@@ -249,17 +251,17 @@ export function FreqSessionScreen({
   const targetReversals = session?.targetReversals ?? targetReversalsFor(mode);
 
   const meanText =
-    summary?.meanReversalDeltaCents == null
+    summary?.meanReversalDepthDb == null
       ? "—"
-      : `약 ${Math.round(summary.meanReversalDeltaCents)}`;
+      : `약 ${summary.meanReversalDepthDb.toFixed(1)}`;
   const easiestText =
-    summary?.easiestDeltaCents == null
+    summary?.easiestDepthDb == null
       ? "—"
-      : `약 ${Math.round(summary.easiestDeltaCents)}`;
+      : `약 ${summary.easiestDepthDb.toFixed(1)}`;
   const hardestText =
-    summary?.hardestDeltaCents == null
+    summary?.hardestDepthDb == null
       ? "—"
-      : `약 ${Math.round(summary.hardestDeltaCents)}`;
+      : `약 ${summary.hardestDepthDb.toFixed(1)}`;
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
@@ -278,10 +280,10 @@ export function FreqSessionScreen({
                 style={[styles.heroRing, { borderColor: theme.accentBorder }]}
               />
               {/* 연습 선택 카드와 같은 아이콘을 키운 것 — 제목 전에 그림으로 알아보게. */}
-              <Icon name="findTone" size={40} color={theme.accent} />
+              <Icon name="vibrate" size={42} color={theme.accent} />
             </View>
             <ThemedText type="heading" style={styles.heroHeading}>
-              다른 음 찾기
+              떨림 찾기
             </ThemedText>
             <ThemedText
               themeColor="textSecondary"
@@ -316,7 +318,7 @@ export function FreqSessionScreen({
         ) : (
           <View style={styles.header}>
             <ThemedText type="screenTitle" style={styles.runningTitle}>
-              다른 음 찾기
+              떨림 찾기
             </ThemedText>
             <ThemedText
               themeColor="textMuted"
@@ -348,7 +350,7 @@ export function FreqSessionScreen({
           </View>
         )}
 
-        {running ? (
+        {running && targetReversals != null ? (
           <SessionProgressBar
             current={stair?.reversalCount ?? 0}
             total={targetReversals}
@@ -383,11 +385,11 @@ export function FreqSessionScreen({
                 trialCount={summary.trialCount}
                 correctCount={summary.correctCount}
                 reversalCount={summary.reversalCount}
-                meanLabel="음높이 차이"
+                meanLabel="떨림 정도"
                 meanValue={meanText}
                 easiestValue={easiestText}
                 hardestValue={hardestText}
-                footnote="작을수록 더 세밀한 구분 · 점수·청력 검사·진단 결과 아님"
+                footnote="숫자가 작을수록 더 얕은 떨림 · 점수·청력 검사·진단 결과 아님"
               />
             ) : null}
 
@@ -464,7 +466,7 @@ export function FreqSessionScreen({
         {phase === "feedback" && result && stair ? (
           <ThemedText themeColor="textMuted" type="small" style={styles.detail}>
             {`선택 ${result.chosenIndex + 1} · 정답 ${result.oddIndex + 1}`}
-            {` · 방금 차이 ${result.deltaCents} · 다음 차이 ${stair.deltaCents}`}
+            {` · 방금 떨림 ${result.depthDb.toFixed(0)} · 다음 떨림 ${stair.depthDb.toFixed(0)}`}
           </ThemedText>
         ) : null}
 
@@ -494,11 +496,11 @@ export function FreqSessionScreen({
               />
               {onBack ? (
                 <ActionButton
-                  label="연습 목록"
+                  label="뒤로 가기"
                   textScale={idleTextScale}
                   onPress={() => {
                     abortRef.current = true;
-                    abortFreqAfcPlayback();
+                    abortAmAfcPlayback();
                     onBack();
                   }}
                 />

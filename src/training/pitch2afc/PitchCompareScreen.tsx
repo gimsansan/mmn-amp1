@@ -32,6 +32,8 @@ import {
 } from "@/training/pitch2afc/SessionManager";
 import {
   DEFAULT_SESSION_MODE,
+  maxTrialsFor,
+  modeProgressCaption,
   targetReversalsFor,
   type SessionMode,
 } from "@/training/sessionMode";
@@ -41,10 +43,9 @@ import { appendPitch2SessionSummary } from "@/training/sessionStore";
 import { SummaryCard } from "@/training/SummaryCard";
 
 /**
- * 세션 길이 — 연습(전환 4) / 측정(전환 8)을 토글로 고른다.
- * 반전 수만 모드로 달라지고 스텝·엔진은 동일. pitch2afc `ASSESSMENT`는 쓰지 않는다.
+ * 세션 길이 — 귀풀기(한도 없음) / 연습(전환 6)을 토글로 고른다.
+ * 종료 조건만 모드로 달라지고 스텝·엔진은 동일. pitch2afc `ASSESSMENT`는 쓰지 않는다.
  */
-const MAX_TRIALS = 40;
 
 /** idle(연습 선택) 화면 텍스트만 균일하게 살짝 키우는 배율(사용자 요청). */
 const TEXT_SCALE = 1.2;
@@ -110,12 +111,14 @@ function progressCaption(
   phase: Phase,
   trialNumber: number,
   reversalCount: number,
-  targetReversals: number,
+  targetReversals: number | null,
 ): string {
-  if (phase === "idle") {
-    return `난이도 전환 ${targetReversals}번 또는 연습 ${MAX_TRIALS}번까지`;
-  }
-  return `연습 ${trialNumber} · 전환 ${reversalCount}/${targetReversals}`;
+  return modeProgressCaption({
+    idle: phase === "idle",
+    trialNumber,
+    reversalCount,
+    targetReversals,
+  });
 }
 
 function centsText(value: number | null): string {
@@ -182,7 +185,7 @@ function SessionHeader({
   reversalCount: number;
   correct: boolean | undefined;
   endReason: EndReason | null;
-  targetReversals: number;
+  targetReversals: number | null;
   mode: SessionMode;
   onModeChange: (next: SessionMode) => void;
 }>) {
@@ -300,7 +303,7 @@ function SessionActions({
           />
           {canGoBack ? (
             <ActionButton
-              label="연습 목록"
+              label="뒤로 가기"
               textScale={idleTextScale}
               onPress={onBack}
             />
@@ -453,11 +456,13 @@ export function PitchCompareScreen({
       setCorrect(result.isCorrect);
       setReversalCount(state.reversalCount);
 
-      if (state.reversalCount >= targetReversalsFor(runModeRef.current)) {
+      const target = targetReversalsFor(runModeRef.current);
+      if (target != null && state.reversalCount >= target) {
         finish("reversals");
         return;
       }
-      if (state.totalTrials >= MAX_TRIALS) {
+      const maxTrials = maxTrialsFor(runModeRef.current);
+      if (maxTrials != null && state.totalTrials >= maxTrials) {
         finish("max_trials");
         return;
       }
@@ -504,7 +509,7 @@ export function PitchCompareScreen({
           mode={mode}
           onModeChange={setMode}
         />
-        {running ? (
+        {running && targetReversals != null ? (
           <SessionProgressBar current={reversalCount} total={targetReversals} />
         ) : null}
 

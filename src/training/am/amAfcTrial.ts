@@ -10,7 +10,7 @@ import {
   playAmTone,
   stopAmTone,
 } from '@/audio/amTone';
-import { DEFAULT_AFC_N, DEFAULT_ISI_SEC } from '@/training/freqAfcTrial';
+import { DEFAULT_AFC_N, DEFAULT_ISI_SEC } from '@/training/freq/freqAfcTrial';
 
 /** 확인용 고정 깊이(dB). m=1 → 0 dB. 적응은 ① 계단식. */
 export const DEFAULT_TRIAL_DEPTH_DB = 0;

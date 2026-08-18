@@ -7,7 +7,7 @@ React Native / Expo SDK 57 기반 **청능 웰니스·훈련** 앱. 안드로이
 상세 컨텍스트: [`docs/dev-client-setup-context.md`](./docs/dev-client-setup-context.md)  
 훈련·자극 설계(AMP/MDT·트랙): [`docs/amp-mdt-training-design.md`](./docs/amp-mdt-training-design.md)  
 개선 백로그 + **진행 현황**: [`docs/improvement-backlog.md`](./docs/improvement-backlog.md) · [쉬운 말 버전](./docs/improvement-backlog-easy.md)  
-구현·결과 로그: [`docs/impl-log.md`](./docs/impl-log.md) · 수정 리뷰: [`docs/fix-reviews.md`](./docs/fix-reviews.md)  
+구현·결과 로그: [`docs/impl-log_1.md`](./docs/impl-log_1.md)(이어서) · [과거](./docs/impl-log.md) · 수정 리뷰: [`docs/fix-reviews.md`](./docs/fix-reviews.md)  
 인계문(최신): [`docs/handoff.md`](./docs/handoff.md)  
 Cursor 규칙 2번 vs 3번: [`docs/cursor-rules-2-vs-3.md`](./docs/cursor-rules-2-vs-3.md)
 
@@ -47,7 +47,8 @@ npm run doctor
 | `patches/` | metro / metro-runtime Bundle Mode 패치 |
 | `docs/dev-client-setup-context.md` | 스택·설정·경량화 방침 |
 | `docs/amp-mdt-training-design.md` | 웰니스·훈련 / ①② 트랙·AM 스펙 |
-| `docs/impl-log.md` | 구현·결과 날짜별 로그 |
+| `docs/impl-log_1.md` | 구현·결과 날짜별 로그(**이후 정본**) |
+| `docs/impl-log.md` | 구현·결과 로그 과거(2026-08-19 01:04까지) |
 | `docs/handoff.md` | 새 채팅 AI용 인계문(최신) |
 | `docs/README.md` | **문서 지도** — 분류 규칙·어디에 적을지·읽는 순서 |
 | `docs/improvement-backlog.md` | 개선 백로그 + **진행 현황**(무엇이 고쳐졌고 무엇이 남았는지) |
@@ -66,4 +67,4 @@ npm run doctor
 
 ## 경량화 방침
 
-중간 사용 안드로이드 우선. 측정·훈련 입력 화면은 정적 위주, Rive/Skia는 결과·연출 화면에만. 자세한 내용은 docs §5·훈련 설계 문서 참고.
+중사양 안드로이드 기준. 저사양 전용은 하지 않음. 측정·훈련 화면은 듣는 중 애니메이션을 얹지 않고 정적으로. 결과·연출은 중사양에 맞춰 Rive/Skia 사용 가능. 자세한 내용은 `docs/dev-client-setup-context.md` §5.

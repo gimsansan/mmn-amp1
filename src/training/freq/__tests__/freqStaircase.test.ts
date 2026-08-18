@@ -11,7 +11,7 @@ import {
   applyStaircaseResult,
   createFreqStaircase,
   stepForReversals,
-} from '@/training/freqStaircase';
+} from '@/training/freq/freqStaircase';
 
 /** 연속 정답 2회를 넣어 한 번 하강시킨다. */
 function down(state: ReturnType<typeof createFreqStaircase>) {

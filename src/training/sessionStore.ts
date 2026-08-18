@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { AmSessionSummary } from '@/training/amSession';
-import type { FreqSessionSummary, SessionEndReason } from '@/training/freqSession';
+import type { AmSessionSummary } from '@/training/am/amSession';
+import type { FreqSessionSummary, SessionEndReason } from '@/training/freq/freqSession';
 import type { PitchCompareSummary } from '@/training/pitch2afc/pitchSummary';
 
 /** 로컬 연습 기록 키. 스키마 바꾸면 버전 bump. */
@@ -17,8 +17,8 @@ export const SESSION_RECORD_VERSION = 1;
 /**
  * 기기 보관 상한 — **모드별 독립**. 초과분은 그 모드 안에서 오래된 것부터 버림.
  *
- * 측정은 통계·추세 그래프의 근거이므로 넉넉히(50) 지킨다. 연습은 목록·배지용이라 30이면 충분.
- * 두 상한이 독립이라 **연습을 아무리 많이 해도 측정 이력이 밀려나지 않는다**
+ * 측정은 통계·추세 그래프의 근거이므로 넉넉히(50) 지킨다. 귀풀기는 목록·배지용이라 30이면 충분.
+ * 두 상한이 독립이라 **귀풀기를 아무리 많이 해도 연습(통계) 이력이 밀려나지 않는다**
  * (그래프 형상이 연습량에 흔들리지 않음). 합계 상한은 두지 않는다(최대 80, 로컬 요약이라 가벼움).
  */
 export const MAX_MEASURE_SESSIONS = 50;
@@ -28,8 +28,8 @@ export type SessionTrack = 'freq' | 'am' | 'pitch2';
 
 /**
  * 세션 성격.
- * - `practice`: 연습(반전 4). 기록은 남기되 통계·추세에서 제외.
- * - `measure`: 측정(반전 8). 기록 + 통계 포함.
+ * - `practice`: 귀풀기(한도 없음). 기록은 남기되 통계·추세에서 제외.
+ * - `measure`: 연습(반전 6). 기록 + 통계 포함.
  *
  * `주의`: 구버전 레코드에는 이 필드가 없다(`undefined`). 없으면 **측정으로 간주**해
  * 통계에 포함한다(기존 데이터를 통계에서 빠뜨리지 않기 위해).
