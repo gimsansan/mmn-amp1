@@ -172,7 +172,7 @@ function AggregateCard({ data }: Readonly<{ data: Aggregate }>) {
             type="small"
             style={styles.metricLabel}
           >
-            측정 횟수
+            연습 횟수
           </ThemedText>
         </View>
         <View style={styles.metric}>
@@ -606,7 +606,7 @@ export function SessionHistoryScreen({
         caption="들을 수 있는 가장 작은 음높이 차이예요. 낮을수록 더 작은 차이까지 들려요."
       />
       <TrendGraphCard
-        title="떨림 추이"
+        title="떨림 변화"
         points={amPoints}
         formatPlain={dbPlain}
         unitLabel="dB · 최근"
@@ -619,7 +619,7 @@ export function SessionHistoryScreen({
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <View style={styles.screenHeader}>
-          <ThemedText type="screenTitle">훈련 기록</ThemedText>
+          <ThemedText type="screenTitle">연습 기록</ThemedText>
           <ThemedText
             themeColor="textSecondary"
             type="small"
@@ -664,12 +664,16 @@ export function SessionHistoryScreen({
           )}
         />
 
-        <View style={styles.actions}>
-          <ActionButton outlineMatchLabel label="새로고침" onPress={reload} />
-          {onBack ? (
-            <ActionButton variant="primary" label="돌아가기" onPress={onBack} />
-          ) : null}
-        </View>
+        {onBack ? (
+          <View style={styles.actions}>
+            <ActionButton
+              fill={false}
+              variant="primary"
+              label="돌아가기"
+              onPress={onBack}
+            />
+          </View>
+        ) : null}
 
         {clearTracks.length > 0 ? (
           <View style={styles.dangerZone}>
@@ -849,7 +853,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: "row",
-    gap: Spacing.three - 4,
+    justifyContent: "center",
   },
   dangerZone: {
     gap: Spacing.one,
