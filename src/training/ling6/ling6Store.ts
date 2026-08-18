@@ -183,3 +183,10 @@ export async function peekHighFreqBaseline(
   const previous = rows.find((row) => row.dateKey <= cutoff);
   return previous ? previous.summary.byPhoneme : null;
 }
+
+/** 링 6 일자 기록만 지운다. 측정 통계(`sessionStore`)는 건드리지 않는다. */
+export function clearLing6DailyRecords(): Promise<void> {
+  return enqueue(async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+  });
+}

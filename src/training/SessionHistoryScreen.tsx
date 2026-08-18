@@ -14,8 +14,8 @@ import { TrendChart, type TrendPoint } from "@/training/TrendChart";
 import { endReasonLabel } from "@/training/freq/freqSession";
 import { sessionModeLabel } from "@/training/sessionMode";
 import {
-  clearSavedSessions,
   deleteSavedSession,
+  deleteSavedSessionsByTrack,
   isCountedInStats,
   listSavedSessions,
   type SavedSessionRecord,
@@ -24,6 +24,8 @@ import {
 
 type SessionHistoryScreenProps = {
   onBack?: () => void;
+  /** 하단에서 지울 트랙. 목록·그래프는 전부 보여 준다. 없으면 지우기 영역 숨김. */
+  clearTracks?: readonly SessionTrack[];
 };
 
 type HistoryCardContent = {
@@ -99,34 +101,6 @@ function trackView(record: SavedSessionRecord): TrackView {
     meanValue: centsText(summary.meanReversalCents),
     easiestValue: centsText(summary.easiestCents),
     hardestValue: centsText(summary.hardestCents),
-  };
-}
-
-/** 홈 peek 카드용 최근 세션 1줄 요약(대표값). 기록 없으면 null. */
-export type LatestSessionPeek = {
-  trackTitle: string;
-  meanLabel: string;
-  meanValue: string;
-  savedAt: string;
-};
-
-/**
- * 최신이 앞인 목록에서 가장 최근 **측정** 세션의 peek 요약을 뽑는다. 진단·점수 아님.
- * 연습(practice)은 통계 방침과 일관되게 대표값에서 제외한다(구버전 mode 없음은 포함).
- */
-export function peekLatestSession(
-  rows: readonly SavedSessionRecord[],
-): LatestSessionPeek | null {
-  const latest = rows.find(isCountedInStats);
-  if (!latest) {
-    return null;
-  }
-  const view = trackView(latest);
-  return {
-    trackTitle: view.trackTitle,
-    meanLabel: view.meanLabel,
-    meanValue: view.meanValue,
-    savedAt: formatSavedAt(latest.savedAt),
   };
 }
 
@@ -504,12 +478,13 @@ function HistoryCard({
  */
 export function SessionHistoryScreen({
   onBack,
+  clearTracks = [],
 }: Readonly<SessionHistoryScreenProps>) {
   const [rows, setRows] = useState<SavedSessionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [graphTrackA, setGraphTrackA] = useState<GraphATrack>("pitch2");
-  const [clearing, setClearing] = useState(false);
+  const [clearingTrack, setClearingTrack] = useState<SessionTrack | null>(null);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -538,32 +513,44 @@ export function SessionHistoryScreen({
     }, [reload]),
   );
 
-  // 설정 탭 제거 → 「연습 기록 전체 삭제」를 통계 화면 하단으로 이동(데이터 성격 일치).
-  const doClear = useCallback(() => {
-    setClearing(true);
-    void clearSavedSessions()
-      .then(() => {
-        Alert.alert("완료", "이 기기의 기록을 지웠어요.");
-        reload();
-      })
-      .catch(() => {
-        Alert.alert("오류", "기록을 지우지 못했어요.");
-      })
-      .finally(() => {
-        setClearing(false);
-      });
-  }, [reload]);
+  const doClearTrack = useCallback(
+    (track: SessionTrack) => {
+      setClearingTrack(track);
+      void deleteSavedSessionsByTrack(track)
+        .then(() => {
+          Alert.alert("완료", `${TRACK_LABEL[track]} 기록을 지웠어요.`);
+          reload();
+        })
+        .catch(() => {
+          Alert.alert("오류", "기록을 지우지 못했어요.");
+        })
+        .finally(() => {
+          setClearingTrack(null);
+        });
+    },
+    [reload],
+  );
 
-  const confirmClear = useCallback(() => {
-    Alert.alert(
-      "기록 삭제",
-      "이 기기에 저장된 기록을 모두 지울까요? 되돌릴 수 없어요.",
-      [
-        { text: "취소", style: "cancel" },
-        { text: "삭제", style: "destructive", onPress: doClear },
-      ],
-    );
-  }, [doClear]);
+  const confirmClearTrack = useCallback(
+    (track: SessionTrack) => {
+      const title = TRACK_LABEL[track];
+      Alert.alert(
+        "기록 삭제",
+        `${title} 기록을 모두 지울까요? 다른 연습 기록은 그대로예요. 되돌릴 수 없어요.`,
+        [
+          { text: "취소", style: "cancel" },
+          {
+            text: "삭제",
+            style: "destructive",
+            onPress: () => {
+              doClearTrack(track);
+            },
+          },
+        ],
+      );
+    },
+    [doClearTrack],
+  );
 
   const doDeleteOne = useCallback(
     (id: string) => {
@@ -684,30 +671,50 @@ export function SessionHistoryScreen({
           ) : null}
         </View>
 
-        {/* 데이터 관리: 되돌릴 수 없으므로 하단 분리 + 확인 Alert로 오탭 방지. */}
-        <View style={styles.dangerZone}>
-          <CardDivider />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="기록 전체 삭제"
-            accessibilityState={{ disabled: clearing || !hasRows }}
-            disabled={clearing || !hasRows}
-            onPress={confirmClear}
-            style={({ pressed }) => [
-              styles.clearAll,
-              (clearing || !hasRows) && styles.clearAllDisabled,
-              pressed && !(clearing || !hasRows) && styles.clearAllPressed,
-            ]}
-          >
-            <ThemedText
-              themeColor="danger"
-              type="small"
-              style={styles.clearAllLabel}
-            >
-              {clearing ? "지우는 중…" : "기록 전체 삭제"}
-            </ThemedText>
-          </Pressable>
-        </View>
+        {clearTracks.length > 0 ? (
+          <View style={styles.dangerZone}>
+            <CardDivider />
+            {clearTracks.length > 1 ? (
+              <ThemedText
+                themeColor="textMuted"
+                type="small"
+                style={styles.clearHint}
+              >
+                연습별로 기록을 지워요
+              </ThemedText>
+            ) : null}
+            {clearTracks.map((track) => {
+              const hasTrack = rows.some((row) => row.track === track);
+              const busy = clearingTrack != null;
+              const disabled = busy || !hasTrack;
+              return (
+                <Pressable
+                  key={track}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${TRACK_LABEL[track]} 기록 지우기`}
+                  accessibilityState={{ disabled }}
+                  disabled={disabled}
+                  onPress={() => confirmClearTrack(track)}
+                  style={({ pressed }) => [
+                    styles.clearTrack,
+                    disabled && styles.clearTrackDisabled,
+                    pressed && !disabled && styles.clearTrackPressed,
+                  ]}
+                >
+                  <ThemedText
+                    themeColor="danger"
+                    type="small"
+                    style={styles.clearTrackLabel}
+                  >
+                    {clearingTrack === track
+                      ? "지우는 중…"
+                      : `${TRACK_LABEL[track]} 지우기`}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
       </SafeAreaView>
     </ThemedView>
   );
@@ -845,23 +852,28 @@ const styles = StyleSheet.create({
     gap: Spacing.three - 4,
   },
   dangerZone: {
-    gap: Spacing.three - 4,
+    gap: Spacing.one,
   },
-  clearAll: {
+  clearHint: {
+    fontSize: 12,
+    lineHeight: 16,
     alignSelf: "flex-end",
-    minHeight: 32,
+  },
+  clearTrack: {
+    alignSelf: "flex-end",
+    minHeight: 44,
     justifyContent: "center",
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
   },
-  clearAllLabel: {
+  clearTrackLabel: {
     fontSize: 12.5,
     lineHeight: 18,
   },
-  clearAllPressed: {
+  clearTrackPressed: {
     opacity: 0.7,
   },
-  clearAllDisabled: {
+  clearTrackDisabled: {
     opacity: 0.4,
   },
 });

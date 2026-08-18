@@ -8,6 +8,7 @@ import { ActionButton } from "@/components/ui/action-button";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   BottomTabInset,
   MaxContentWidth,
@@ -83,15 +84,31 @@ function progressCaption(
 }
 
 type AmSessionScreenProps = {
-  /** 연습 목록으로 돌아가기(idle·요약에서만 노출). */
+  /** 이전 화면으로 돌아가기(idle·요약에서만 노출). 전용 탭에서는 안 넘김. */
   onBack?: () => void;
+  /** idle·요약 헤더에서 통계 화면. 진행 중에는 숨김. */
+  onOpenStats?: () => void;
+  /**
+   * 연습 시작 직전 게이트. false면 세션을 만들지 않음
+   * (부모가 듣기 준비를 띄울 때).
+   */
+  onBeforeStart?: () => boolean;
+  /** 듣기 준비를 막 통과했을 때 세션을 바로 시작. */
+  autoStart?: boolean;
+  onAutoStartConsumed?: () => void;
 };
 
 /**
  * ① AM/포락선 — 훈련용 정적 UI.
  * 변조 깊이(m/dB)를 색·크기·게이지에 연동하지 않음. 요약은 진단 역치가 아님.
  */
-export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
+export function AmSessionScreen({
+  onBack,
+  onOpenStats,
+  onBeforeStart,
+  autoStart = false,
+  onAutoStartConsumed,
+}: Readonly<AmSessionScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
   /** 이번 세션 요약을 이미 저장했는지. 중복 저장 방지(세션 시작 시 리셋). */
@@ -188,7 +205,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     }
   }, []);
 
-  const onStart = useCallback(() => {
+  const startSession = useCallback(() => {
     runModeRef.current = mode;
     const next = createAmSession({
       targetReversals: targetReversalsFor(mode),
@@ -200,6 +217,23 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
     setSaveNote(null);
     void runTrial(next);
   }, [mode, runTrial]);
+
+  const onStart = useCallback(() => {
+    if (onBeforeStart?.() === false) {
+      return;
+    }
+    startSession();
+  }, [onBeforeStart, startSession]);
+
+  const autoStartOnceRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || autoStartOnceRef.current) {
+      return;
+    }
+    autoStartOnceRef.current = true;
+    startSession();
+    onAutoStartConsumed?.();
+  }, [autoStart, onAutoStartConsumed, startSession]);
 
   const onChoose = useCallback(
     (index: number) => {
@@ -271,6 +305,11 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
+        {onOpenStats && (phase === "idle" || phase === "summary") ? (
+          <View style={styles.statsRow}>
+            <StatsEntryButton onPress={onOpenStats} />
+          </View>
+        ) : null}
         {phase === "idle" ? (
           <View style={styles.hero}>
             <View
@@ -279,7 +318,7 @@ export function AmSessionScreen({ onBack }: Readonly<AmSessionScreenProps>) {
               <View
                 style={[styles.heroRing, { borderColor: theme.accentBorder }]}
               />
-              {/* 연습 선택 카드와 같은 아이콘을 키운 것 — 제목 전에 그림으로 알아보게. */}
+              {/* 하단 탭·듣기 준비와 같은 아이콘 — 제목 전에 그림으로 알아보게. */}
               <Icon name="vibrate" size={42} color={theme.accent} />
             </View>
             <ThemedText type="heading" style={styles.heroHeading}>
@@ -545,6 +584,10 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + 26,
     alignItems: "stretch",
     gap: Spacing.two + 2,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   hero: {
     flex: 1,

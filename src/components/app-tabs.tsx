@@ -3,7 +3,7 @@ import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { Colors } from "@/constants/theme";
 
 /**
- * 하단 4탭 — 링 6 · PTA(음고) · 단어인지도 · 연습(떨림·통계).
+ * 하단 4탭 — 링 6 · PTA(음고) · 단어인지도 · 떨림.
  * NativeTabs(unstable). 아이콘은 시스템 심볼(전용 PNG 없음).
  */
 export default function AppTabs() {
@@ -36,8 +36,11 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>연습</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="slider.horizontal.3" md="tune" />
+        <NativeTabs.Trigger.Label>떨림</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf="iphone.radiowaves.left.and.right"
+          md="vibration"
+        />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

@@ -37,6 +37,7 @@ import {
   peekPreviousDayPassCount,
   shiftDateKey,
   upsertLing6DailyRecord,
+  clearLing6DailyRecords,
 } from "@/training/ling6/ling6Store";
 
 const storageMock = AsyncStorage as unknown as { __reset: () => void };
@@ -122,5 +123,14 @@ describe("ling6Store", () => {
   it("날짜 키를 짧게 표기한다", () => {
     expect(formatDateKeyShort("2026-08-18")).toBe("8/18");
     expect(shiftDateKey("2026-08-18", -6)).toBe("2026-08-12");
+  });
+
+  it("초기화하면 링 6 일자 기록만 빈다", async () => {
+    await upsertLing6DailyRecord(phonemes(4), day(0));
+    await upsertLing6DailyRecord(phonemes(2), day(-1));
+    expect(await listLing6DailyRecords()).toHaveLength(2);
+
+    await clearLing6DailyRecords();
+    expect(await listLing6DailyRecords()).toHaveLength(0);
   });
 });

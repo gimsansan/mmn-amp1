@@ -100,7 +100,12 @@ export function PtaSessionScreen() {
   );
 
   if (showStats) {
-    return <SessionHistoryScreen onBack={closeStats} />;
+    return (
+      <SessionHistoryScreen
+        onBack={closeStats}
+        clearTracks={["pitch2", "freq"]}
+      />
+    );
   }
 
   if ((track === "pitch2" || track === "freq") && !checked) {

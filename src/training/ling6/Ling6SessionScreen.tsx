@@ -1,6 +1,7 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Alert,
   BackHandler,
   Image,
   Pressable,
@@ -42,20 +43,24 @@ import {
   type Ling6TrialOutcome,
 } from "@/training/ling6/ling6Session";
 import {
+  clearLing6DailyRecords,
   listLing6DailyRecords,
   peekHighFreqBaseline,
   peekPreviousDayPassCount,
   upsertLing6DailyRecord,
   type SavedLing6Record,
 } from "@/training/ling6/ling6Store";
-import { playLing6Target, stopLing6Playback } from "@/training/ling6/ling6Synth";
+import {
+  playLing6Target,
+  stopLing6Playback,
+} from "@/training/ling6/ling6Synth";
 import {
   LING6_SOUNDS,
   type Ling6Choice,
   type Ling6Sound,
 } from "@/training/ling6/sounds";
-import { SessionProgressBar } from "@/training/SessionProgressBar";
 import { SessionHistoryScreen } from "@/training/SessionHistoryScreen";
+import { SessionProgressBar } from "@/training/SessionProgressBar";
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
@@ -86,8 +91,10 @@ export function Ling6SessionScreen() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedLing6Record[]>([]);
   const [showStats, setShowStats] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
-  const running = phase === "playing" || phase === "choose" || phase === "feedback";
+  const running =
+    phase === "playing" || phase === "choose" || phase === "feedback";
   const choiceDisabled = phase !== "choose";
 
   const resetRun = useCallback(() => {
@@ -114,6 +121,32 @@ export function Ling6SessionScreen() {
       setHistory([]);
     }
   }, []);
+
+  const doClearHistory = useCallback(() => {
+    setClearing(true);
+    void clearLing6DailyRecords()
+      .then(() => {
+        Alert.alert("완료", "링 6 연습 기록을 지웠어요.");
+        return refreshHistory();
+      })
+      .catch(() => {
+        Alert.alert("오류", "기록을 지우지 못했어요.");
+      })
+      .finally(() => {
+        setClearing(false);
+      });
+  }, [refreshHistory]);
+
+  const confirmClearHistory = useCallback(() => {
+    Alert.alert(
+      "기록 삭제",
+      "링 6 연습 기록을 모두 지울까요? 되돌릴 수 없어요. 다른 연습 기록은 그대로예요.",
+      [
+        { text: "취소", style: "cancel" },
+        { text: "삭제", style: "destructive", onPress: doClearHistory },
+      ],
+    );
+  }, [doClearHistory]);
 
   useFocusEffect(
     useCallback(() => {
@@ -308,9 +341,9 @@ export function Ling6SessionScreen() {
                 type="small"
                 style={styles.idleBody}
               >
-                말소리 6개(음·우·아·이·쉬·스) 중 하나를 들려 줘요. 어떤
-                소리인지 그림에서 고르면 됩니다. 가끔 아무 소리도 없을 수
-                있어요. 그때는 「못 들었어요」를 누르세요.
+                말소리 6개(음·우·아·이·쉬·스) 중 하나를 들려 줘요. 어떤 소리인지
+                그림에서 고르면 됩니다. 가끔 아무 소리도 없을 수 있어요. 그때는
+                「못 들었어요」를 누르세요.
               </ThemedText>
             </Card>
             {history.length === 0 ? (
@@ -321,6 +354,12 @@ export function Ling6SessionScreen() {
               </View>
             ) : null}
             <Ling6ProgressPanel records={history} />
+            {history.length > 0 ? (
+              <Ling6ClearHistoryButton
+                clearing={clearing}
+                onPress={confirmClearHistory}
+              />
+            ) : null}
           </ScrollView>
         ) : null}
 
@@ -347,15 +386,15 @@ export function Ling6SessionScreen() {
                   {ling6ResultCopy(passCount)}
                 </ThemedText>
                 {progressLine ? (
-                  <ThemedText
-                    type="smallBold"
-                    style={{ color: theme.accent }}
-                  >
+                  <ThemedText type="smallBold" style={{ color: theme.accent }}>
                     {progressLine}
                   </ThemedText>
                 ) : null}
                 {highFreqLine ? (
-                  <ThemedText type="smallBold" style={{ color: theme.positive }}>
+                  <ThemedText
+                    type="smallBold"
+                    style={{ color: theme.positive }}
+                  >
                     {highFreqLine}
                   </ThemedText>
                 ) : null}
@@ -370,6 +409,12 @@ export function Ling6SessionScreen() {
             ) : null}
             {saveNote ? <Pill stretch icon="check" label={saveNote} /> : null}
             <Ling6ProgressPanel records={history} />
+            {history.length > 0 ? (
+              <Ling6ClearHistoryButton
+                clearing={clearing}
+                onPress={confirmClearHistory}
+              />
+            ) : null}
           </ScrollView>
         ) : null}
 
@@ -387,9 +432,7 @@ export function Ling6SessionScreen() {
               themeColor="textSecondary"
               style={styles.statusText}
             >
-              {phase === "playing"
-                ? "듣는 중… 소리가 끝난 뒤 고르세요"
-                : null}
+              {phase === "playing" ? "듣는 중… 소리가 끝난 뒤 고르세요" : null}
               {phase === "choose" ? "들은 소리를 고르세요" : null}
               {phase === "feedback"
                 ? lastCorrect
@@ -456,19 +499,26 @@ export function Ling6SessionScreen() {
           {phase === "idle" || phase === "summary" ? (
             <ActionButton
               variant="primary"
+              fill={false}
               label={phase === "summary" ? "다시 연습" : "연습 시작"}
               onPress={onStart}
             />
           ) : null}
 
           {phase === "summary" ? (
-            <ActionButton label="처음으로" onPress={resetRun} />
+            <ActionButton fill={false} label="처음으로" onPress={resetRun} />
           ) : null}
 
           {phase === "feedback" ? (
             <>
-              <ActionButton variant="primary" label="다음" onPress={onNext} />
               <ActionButton
+                variant="primary"
+                fill={false}
+                label="다음"
+                onPress={onNext}
+              />
+              <ActionButton
+                fill={false}
                 label="끝내기"
                 onPress={() => confirmEndSession(onEndManual)}
               />
@@ -477,6 +527,7 @@ export function Ling6SessionScreen() {
 
           {phase === "playing" || phase === "choose" ? (
             <ActionButton
+              fill={false}
               label="중지"
               onPress={() => confirmEndSession(onEndManual)}
             />
@@ -484,6 +535,34 @@ export function Ling6SessionScreen() {
         </View>
       </SafeAreaView>
     </ThemedView>
+  );
+}
+
+function Ling6ClearHistoryButton({
+  clearing,
+  onPress,
+}: Readonly<{ clearing: boolean; onPress: () => void }>) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="링 6 연습 기록 지우기"
+      accessibilityState={{ disabled: clearing }}
+      disabled={clearing}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.clearHistory,
+        clearing && styles.clearHistoryDisabled,
+        pressed && !clearing && styles.clearHistoryPressed,
+      ]}
+    >
+      <ThemedText
+        themeColor="danger"
+        type="small"
+        style={styles.clearHistoryLabel}
+      >
+        {clearing ? "지우는 중…" : "링 6 기록 지우기"}
+      </ThemedText>
+    </Pressable>
   );
 }
 
@@ -496,7 +575,11 @@ function PreviewCell({ sound }: Readonly<{ sound: Ling6Sound }>) {
         { backgroundColor: theme.surface, borderColor: theme.border },
       ]}
     >
-      <Image source={sound.image} style={styles.previewImage} resizeMode="contain" />
+      <Image
+        source={sound.image}
+        style={styles.previewImage}
+        resizeMode="contain"
+      />
       <ThemedText type="smallBold" style={styles.previewLabel}>
         {sound.label}
       </ThemedText>
@@ -540,7 +623,11 @@ function ChoiceCell({
         disabled && styles.disabled,
       ]}
     >
-      <Image source={sound.image} style={styles.choiceImage} resizeMode="contain" />
+      <Image
+        source={sound.image}
+        style={styles.choiceImage}
+        resizeMode="contain"
+      />
       <ThemedText type="smallBold">{sound.label}</ThemedText>
     </Pressable>
   );
@@ -557,7 +644,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.three,
   },
   header: {
@@ -663,6 +750,24 @@ const styles = StyleSheet.create({
   actions: {
     marginTop: "auto",
     gap: Spacing.two,
+    flexGrow: 0,
+  },
+  clearHistory: {
+    alignSelf: "flex-end",
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+  },
+  clearHistoryLabel: {
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  clearHistoryPressed: {
+    opacity: 0.7,
+  },
+  clearHistoryDisabled: {
+    opacity: 0.4,
   },
   pressed: {
     opacity: 0.85,

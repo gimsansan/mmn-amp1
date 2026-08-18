@@ -47,6 +47,90 @@
 
 ## 로그
 
+### 2026-08-19 02:42 — 링 6 「처음으로」 라벨 잘림
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 링 6 |
+| 근거·결정 | 사용자: 요약 「처음으로」 글자가 조금 가려져 전부 안 보임. 세로 `actions`인데 `ActionButton` 기본 `fill`(flex 1)이라 높이 48에 패딩+줄간격이 잘릴 수 있음. 탭바에도 가장 가까움. |
+| 변경 요약 | 링 6 하단 버튼 `fill={false}`. `paddingBottom`을 `BottomTabInset + Spacing.four`로. |
+| 주요 경로 | `src/training/ling6/Ling6SessionScreen.tsx` |
+| 결과 | 린트 없음. 실기기 확인은 안 함. |
+| 확인 | 린트. |
+| 단정 금지 | `미검증`: 실기기에서 「처음으로」·탭바 겹침. |
+| 성능·주의 | 레이아웃만. **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
+### 2026-08-19 02:26 — 통계 지우기를 탭에 맞게
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 기록 목록·그래프는 이전처럼 전부 보여도 됨. 지우기 버튼만 그 탭에 해당하는 것. 소리 높낮이는 `pitch2`/`freq` 둘. 하단 3버튼을 줄여 스크롤 공간 확보. |
+| 변경 요약 | `SessionHistoryScreen`에 `clearTracks`. 떨림=`am`, 소리 높낮이=`pitch2`+`freq`. 링 6·단어인지도는 버튼 없음(링 6 일자 지우기는 idle·요약 유지). |
+| 주요 경로 | `src/training/SessionHistoryScreen.tsx`, `src/training/am/AmTabScreen.tsx`, `src/training/pta/PtaSessionScreen.tsx` |
+| 결과 | 린트 없음. 실기기 확인은 안 함. |
+| 확인 | 린트. 스토어 API는 그대로라 테스트 추가 없음. |
+| 단정 금지 | `미검증`: 실기기에서 탭별 버튼 개수·확인·그래프 갱신. |
+| 성능·주의 | UI 분기만. **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
+### 2026-08-19 02:19 — 훈련 기록 트랙별 지우기
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 한 화면에서 3트랙을 보는 건 유지. 전체 삭제는 UX가 거칠어서 **트랙별 지우기**. 건별 삭제는 그대로. 링 6는 별도 저장소라 이 화면에 안 넣음. |
+| 변경 요약 | `deleteSavedSessionsByTrack` 추가. 「기록 전체 삭제」를 「높낮이 비교 / 다른 음 찾기 / 떨림 찾기 지우기」3개로 교체. 해당 트랙 없으면 비활성. `clearSavedSessions`는 테스트·개발용으로 남김. |
+| 주요 경로 | `src/training/sessionStore.ts`, `src/training/SessionHistoryScreen.tsx`, `src/training/__tests__/sessionStore.test.ts` |
+| 결과 | 테스트 41/41. 실기기 확인은 안 함. |
+| 확인 | `npx jest src/training/__tests__/sessionStore.test.ts` 41/41. 린트 없음. |
+| 단정 금지 | `미검증`: 실기기에서 3버튼·확인 문구·그래프 갱신. |
+| 성능·주의 | 트랙 필터 후 쓰기 1회. **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
+### 2026-08-19 02:13 — 링 6 기록 지우기
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 링 6 |
+| 근거·결정 | 사용자: 링 6 탭에서 초기화할 버튼이 필요. 기록은 `ling6Store`만이고 헤더 통계는 `sessionStore`라 그쪽 삭제로 안 지워짐. 측정 통계 「기록 전체 삭제」와 같이 확인 Alert. |
+| 변경 요약 | `clearLing6DailyRecords` 추가. idle·요약에서 기록이 있을 때만 「링 6 기록 지우기」. 진행 중 숨김. 다른 탭 측정 기록은 안 건드림. |
+| 주요 경로 | `src/training/ling6/ling6Store.ts`, `src/training/ling6/Ling6SessionScreen.tsx`, `src/training/ling6/__tests__/ling6Store.test.ts` |
+| 결과 | 테스트 6/6. 실기기 확인은 안 함. |
+| 확인 | `npx jest src/training/ling6/__tests__/ling6Store.test.ts` 6/6. 린트 없음. |
+| 단정 금지 | `미검증`: 실기기 Alert·그리드 갱신. `주의`: 요약 문구(오늘 맞힌 개수)는 화면 상태라 지우기 직후에도 남고, 「처음으로」가면 빈 그리드. |
+| 성능·주의 | 키 1개 `removeItem`. **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
+### 2026-08-19 02:04 — 연습 탭 → 떨림 전용 탭
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | ① AM / 공통·인프라 |
+| 근거·결정 | 사용자: 연습 탭에 떨림만 남았으니 링 6·단어인지도처럼 탭이 곧 그 연습. 하단 라벨·아이콘도 떨림에 맞출 것. 소리 높낮이는 2종이라 선택 화면 유지. |
+| 변경 요약 | 「연습 선택」카드 제거. `index.tsx`는 `AmTabScreen`만. 탭 라벨 「떨림」, 아이콘 `vibration`. 랜딩은 떨림 시작 화면. 첫 「연습 시작」만 듣기 준비 후 바로 세션. 통계는 idle·요약 헤더. |
+| 주요 경로 | `src/app/index.tsx`, `src/training/am/AmTabScreen.tsx`, `src/training/am/AmSessionScreen.tsx`, `src/components/app-tabs.tsx` |
+| 결과 | 코드 반영. 실기기 탭 아이콘·라벨은 미확인. |
+| 확인 | 린트 없음. |
+| 단정 금지 | `미검증`: Android `md="vibration"` / iOS SF 심볼이 NativeTabs에서 보이는지. `추정`: **리빌드 불필요**(JS·시스템 심볼). `주의`: 진행 중 하드웨어 뒤로가기는 예전처럼 목록으로 안 돌아감(전용 탭). |
+| 성능·주의 | 듣기 준비는 오버레이라 시작 화면을 안 버림(모드 유지). **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
+### 2026-08-19 01:46 — 연습 탭 최근 peek 카드 제거
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 연습 탭에만 있던 최근 연습 1줄(peek)을 뺀다. 4탭 모두 헤더 `StatsEntryButton`으로 같은 통계 화면에 들어가고, peek는 전역 측정 최신을 연습 탭에 붙여 다른 탭(높낮이 등) 결과가 뜰 수 있음. |
+| 변경 요약 | `index.tsx`에서 peek UI·상태·`listSavedSessions` 로드 제거. 통계 진입은 헤더 버튼만. `SessionHistoryScreen`의 `peekLatestSession`/`LatestSessionPeek`도 호출처가 없어 삭제. |
+| 주요 경로 | `src/app/index.tsx`, `src/training/SessionHistoryScreen.tsx` |
+| 결과 | 연습 선택 화면이 소리 높낮이 탭과 같이 제목·안내·트랙 카드만. |
+| 확인 | 린트 없음. 실기기 화면 확인은 안 함. |
+| 단정 금지 | `미검증`: 실기기에서 헤더 통계만으로 발견성이 충분한지는 확인 안 함. |
+| 성능·주의 | 연습 목록 복귀 시 `listSavedSessions` 1회가 빠짐. **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
 ### 2026-08-19 01:17 — 경량화 = 중사양 기준 · 측정만 가볍게
 
 | 항목 | 내용 |

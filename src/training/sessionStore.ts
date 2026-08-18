@@ -358,3 +358,22 @@ export function deleteSavedSession(id: string): Promise<void> {
     await writeAllRaw(next);
   });
 }
+
+/**
+ * 한 트랙의 기록만 삭제(연습·측정 모두). 다른 트랙은 그대로.
+ * 해당 트랙이 없으면 아무 것도 하지 않는다. 남는 기록이 없으면 키를 제거한다.
+ */
+export function deleteSavedSessionsByTrack(track: SessionTrack): Promise<void> {
+  return enqueue(async () => {
+    const prev = await readAllRaw();
+    const next = prev.filter((r) => r.track !== track);
+    if (next.length === prev.length) {
+      return;
+    }
+    if (next.length === 0) {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    await writeAllRaw(next);
+  });
+}

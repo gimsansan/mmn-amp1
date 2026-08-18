@@ -48,6 +48,7 @@ import {
   appendPitch2SessionSummary,
   clearSavedSessions,
   deleteSavedSession,
+  deleteSavedSessionsByTrack,
   isCountedInStats,
   listSavedSessions,
 } from '@/training/sessionStore';
@@ -275,6 +276,40 @@ describe('sessionStore — 건별 삭제', () => {
     const only = await appendAmSessionSummary(amSummary(1), 'practice');
 
     await deleteSavedSession(only.id);
+
+    expect(await listSavedSessions()).toEqual([]);
+  });
+});
+
+describe('sessionStore — 트랙별 삭제', () => {
+  it('지정한 트랙만 지우고 다른 트랙은 남긴다', async () => {
+    const pitch = await appendPitch2SessionSummary(pitch2Summary(1), 'measure');
+    const freqPractice = await appendFreqSessionSummary(freqSummary(2), 'practice');
+    const freqMeasure = await appendFreqSessionSummary(freqSummary(3), 'measure');
+    const am = await appendAmSessionSummary(amSummary(4), 'measure');
+
+    await deleteSavedSessionsByTrack('freq');
+
+    const rows = await listSavedSessions();
+    expect(rows.map((r) => r.id).sort()).toEqual([am.id, pitch.id].sort());
+    expect(rows.some((r) => r.id === freqPractice.id)).toBe(false);
+    expect(rows.some((r) => r.id === freqMeasure.id)).toBe(false);
+  });
+
+  it('해당 트랙이 없으면 목록을 그대로 둔다', async () => {
+    const kept = await appendAmSessionSummary(amSummary(1));
+
+    await deleteSavedSessionsByTrack('pitch2');
+
+    const rows = await listSavedSessions();
+    expect(rows.map((r) => r.id)).toEqual([kept.id]);
+  });
+
+  it('마지막 트랙을 지우면 목록이 빈다', async () => {
+    await appendPitch2SessionSummary(pitch2Summary(1), 'practice');
+    await appendPitch2SessionSummary(pitch2Summary(2), 'measure');
+
+    await deleteSavedSessionsByTrack('pitch2');
 
     expect(await listSavedSessions()).toEqual([]);
   });

@@ -4,6 +4,140 @@
 > 사용자(2026-08-18 14:09): 「인계문 작성해」를 **안 해도** 코드·설계가 바뀐 세션이면 여기에 저장.  
 > 사용자(2026-08-19 01:09): 이후 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.** 과거 블록은 그대로.
 
+## 인계 — 2026-08-19 02:42
+
+새 채팅 AI용. **이번 세션 = 링 6 「처음으로」 라벨 잘림.**
+
+### 한 일
+
+- 링 6 하단 버튼 `fill={false}`. 하단 패딩 `BottomTabInset + Spacing.four`.
+- impl-log_1 `2026-08-19 02:42`.
+
+### 핵심 경로
+
+- `src/training/ling6/Ling6SessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 「처음으로」·탭바.
+- `추정`: **리빌드 불필요**.
+
+---
+
+## 인계 — 2026-08-19 02:26
+
+새 채팅 AI용. **이번 세션 = 통계 지우기를 탭에 맞게.**
+
+### 한 일
+
+- 목록·그래프는 전부. 지우기만 탭별: 떨림 `am`, 소리 높낮이 `pitch2`+`freq`.
+- 링 6·단어인지도 통계 화면에는 sessionStore 지우기 없음.
+- impl-log_1 `2026-08-19 02:26`.
+
+### 핵심 경로
+
+- `src/training/SessionHistoryScreen.tsx` (`clearTracks`)
+- `src/training/am/AmTabScreen.tsx`
+- `src/training/pta/PtaSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 탭별 버튼.
+- `추정`: **리빌드 불필요**.
+
+---
+
+## 인계 — 2026-08-19 02:19
+
+새 채팅 AI용. **이번 세션 = 훈련 기록 트랙별 지우기.**
+
+### 한 일
+
+- `deleteSavedSessionsByTrack` + 테스트.
+- 통계 화면 「기록 전체 삭제」→ 트랙 3개 지우기. 한 화면 조회는 유지.
+- impl-log_1 `2026-08-19 02:19`.
+
+### 핵심 경로
+
+- `src/training/sessionStore.ts`
+- `src/training/SessionHistoryScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 3버튼·확인·그래프 갱신.
+- `추정`: **리빌드 불필요**.
+
+---
+
+## 인계 — 2026-08-19 02:13
+
+새 채팅 AI용. **이번 세션 = 링 6 기록 지우기 버튼.**
+
+### 한 일
+
+- `clearLing6DailyRecords` + 테스트.
+- idle·요약에 「링 6 기록 지우기」(확인 Alert). `sessionStore`는 안 지움.
+- impl-log_1 `2026-08-19 02:13`.
+
+### 핵심 경로
+
+- `src/training/ling6/ling6Store.ts`
+- `src/training/ling6/Ling6SessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 Alert·그리드 갱신.
+- `추정`: **리빌드 불필요**.
+
+---
+
+## 인계 — 2026-08-19 02:04
+
+새 채팅 AI용. **이번 세션 = 연습 탭을 떨림 전용 탭으로.**
+
+### 한 일
+
+- 「연습 선택」제거. `index.tsx` → `AmTabScreen`(링 6처럼 탭=그 연습).
+- 하단 라벨 「떨림」, 아이콘 `md="vibration"`.
+- 첫 시작만 듣기 준비 오버레이 후 바로 세션. 통계는 idle·요약 헤더.
+- impl-log_1 `2026-08-19 02:04`.
+
+### 핵심 경로
+
+- `src/app/index.tsx`
+- `src/training/am/AmTabScreen.tsx`
+- `src/training/am/AmSessionScreen.tsx`
+- `src/components/app-tabs.tsx`
+
+### 단정 금지
+
+- `미검증`: NativeTabs `vibration` 아이콘 실기기.
+- `추정`: **리빌드 불필요**.
+
+---
+
+## 인계 — 2026-08-19 01:46
+
+새 채팅 AI용. **이번 세션 = 연습 탭 최근 peek 카드 제거.**
+
+### 한 일
+
+- 연습 선택(`index.tsx`)에서 최근 연습 1줄 카드·로드 제거. 통계는 헤더 `StatsEntryButton`만.
+- `peekLatestSession` / `LatestSessionPeek` 삭제(호출처 없음).
+- impl-log_1 `2026-08-19 01:46`.
+
+### 핵심 경로
+
+- `src/app/index.tsx`
+- `src/training/SessionHistoryScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 헤더 통계만으로 발견성 충분한지 실기기 미확인.
+- `추정`: **리빌드 불필요**.
+
+---
+
 ## 인계 — 2026-08-19 01:17
 
 새 채팅 AI용. **이번 세션 = 경량화 방침을 중사양 기준·측정만 가볍게.**
