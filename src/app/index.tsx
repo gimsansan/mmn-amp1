@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   BackHandler,
@@ -10,7 +11,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DEFAULT_CARRIER_HZ } from "@/audio/amTone";
-import { DEFAULT_REFERENCE_HZ } from "@/audio/pureTone";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Card, CardDivider } from "@/components/ui/card";
@@ -23,9 +23,7 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { AmSessionScreen } from "@/training/AmSessionScreen";
-import { FreqSessionScreen } from "@/training/FreqSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
-import { PitchCompareScreen } from "@/training/pitch2afc/PitchCompareScreen";
 import {
   SessionHistoryScreen,
   peekLatestSession,
@@ -33,20 +31,17 @@ import {
 } from "@/training/SessionHistoryScreen";
 import { listSavedSessions } from "@/training/sessionStore";
 
-// 'stats' = 통계 화면(연습 탭 안에서 상태 스와프). 하단 왼쪽 탭은 링 6.
-type Track = "picker" | "pitch2" | "freq" | "am" | "stats";
+// 'stats' = 통계 화면(연습 탭 안에서 상태 스와프). 음고 2종은 소리 높낮이 탭.
+type Track = "picker" | "am" | "stats";
 
 const APP_DISPLAY_NAME = "청능 연습";
 
-type TrainingTrack = "pitch2" | "freq" | "am";
+type TrainingTrack = "am";
 
 /**
  * 트랙의 얼굴 — 아이콘과 제목. 연습 선택 카드·듣기 준비·시작 화면이 모두 이걸 쓴다.
- * 세 아이콘은 서로 달라야 한다(제목을 읽기 전에 그림으로 구분되게). `icon.tsx` 참고.
  */
 const TRACK_FACE: Record<TrainingTrack, { icon: IconName; title: string }> = {
-  pitch2: { icon: "bars", title: "높낮이 비교" },
-  freq: { icon: "findTone", title: "다른 음 찾기" },
   am: { icon: "vibrate", title: "떨림 찾기" },
 };
 
@@ -60,21 +55,8 @@ type TrackSection = {
   options: readonly TrackOption[];
 };
 
-// §4-6: 훈련 3종을 계열별 섹션으로 묶는다. 음고 2(높낮이·다른 음) / 떨림 1(포락).
+// 연습 탭에는 떨림만. 음고 2종은 소리 높낮이 탭.
 const TRAINING_SECTIONS: readonly TrackSection[] = [
-  {
-    label: "음고",
-    options: [
-      {
-        track: "pitch2",
-        description: "두 소리 중 어느 쪽이 높은지 맞히는 연습",
-      },
-      {
-        track: "freq",
-        description: "조금 다른 음높이를 찾는 연습",
-      },
-    ],
-  },
   {
     label: "떨림",
     options: [
@@ -139,17 +121,19 @@ export default function ExploreScreen() {
     };
   }, [track]);
 
-  // 안드로이드 하드웨어 뒤로가기: 훈련·통계에서는 앱을 종료하지 않고 연습 목록으로.
-  useEffect(() => {
-    if (track === "picker") {
-      return;
-    }
-    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      backToPicker();
-      return true;
-    });
-    return () => sub.remove();
-  }, [track, backToPicker]);
+  // 이 탭이 보일 때만. 소리 높낮이 탭의 뒤로가기와 겹치지 않게.
+  useFocusEffect(
+    useCallback(() => {
+      if (track === "picker") {
+        return;
+      }
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        backToPicker();
+        return true;
+      });
+      return () => sub.remove();
+    }, [track, backToPicker]),
+  );
 
   const renderCard = useCallback(
     (option: TrackOption) => {
@@ -187,28 +171,17 @@ export default function ExploreScreen() {
     [openTrack, theme.accent, theme.accentTint],
   );
 
-  // 훈련 트랙은 듣기 준비를 한 번 지난 뒤에 들어간다(음고·떨림 공통 — 화면 중복 없음).
-  if ((track === "pitch2" || track === "freq" || track === "am") && !checked) {
-    const face = TRACK_FACE[track];
-    // ① 떨림 찾기만 반송파, 음고 트랙(높낮이·다른 음)은 기준음을 미리 들려준다.
-    const sampleHz = track === "am" ? DEFAULT_CARRIER_HZ : DEFAULT_REFERENCE_HZ;
+  if (track === "am" && !checked) {
+    const face = TRACK_FACE.am;
     return (
       <ListeningCheckScreen
         trackTitle={face.title}
         trackIcon={face.icon}
-        sampleHz={sampleHz}
+        sampleHz={DEFAULT_CARRIER_HZ}
         onStart={passCheck}
         onBack={backToPicker}
       />
     );
-  }
-
-  if (track === "pitch2") {
-    return <PitchCompareScreen onBack={backToPicker} />;
-  }
-
-  if (track === "freq") {
-    return <FreqSessionScreen onBack={backToPicker} />;
   }
 
   if (track === "am") {
@@ -232,7 +205,7 @@ export default function ExploreScreen() {
           <View style={styles.top}>
             <View style={styles.headerRow}>
               <ThemedText type="screenTitle">연습 선택</ThemedText>
-              {/* 통계 진입점(헤더 우측). 하단 탭은 링 6 · 연습. */}
+              {/* 통계 진입점(헤더 우측). 하단 탭은 링 6 · PTA · 단어인지도 · 연습. */}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="연습 통계 보기"

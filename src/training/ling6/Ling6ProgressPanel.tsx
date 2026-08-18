@@ -11,12 +11,19 @@ import { ThemedText } from "@/components/themed-text";
 import { Card } from "@/components/ui/card";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { SOUND_TRIAL_COUNT } from "@/training/ling6/ling6Session";
+import {
+  passCountOf,
+  SOUND_TRIAL_COUNT,
+  type Ling6PhonemeMap,
+} from "@/training/ling6/ling6Session";
 import {
   formatDateKeyShort,
+  LING6_RECORD_VERSION,
+  localDateKey,
+  shiftDateKey,
   type SavedLing6Record,
 } from "@/training/ling6/ling6Store";
-import { LING6_SOUNDS } from "@/training/ling6/sounds";
+import { LING6_SOUND_IDS, LING6_SOUNDS } from "@/training/ling6/sounds";
 
 const CELL = 22;
 const COL_W = 28;
@@ -29,7 +36,9 @@ const PAD_LEFT = 18;
 const PAD_RIGHT = 10;
 const DOT_R = 3.5;
 
-function chronological(records: readonly SavedLing6Record[]): SavedLing6Record[] {
+function chronological(
+  records: readonly SavedLing6Record[],
+): SavedLing6Record[] {
   return [...records].sort((a, b) => a.dateKey.localeCompare(b.dateKey));
 }
 
@@ -38,13 +47,68 @@ function dateOrdinal(dateKey: string): number {
   return Date.UTC(year ?? 0, (month ?? 1) - 1, day ?? 1) / 86_400_000;
 }
 
+/** 같은 날짜는 칸 색이 안 바뀌게 시드만 씀. 저장하지 않음. */
+function seededUnit(seed: string): () => number {
+  let x = 1;
+  for (const ch of seed) {
+    x = Math.imul(x, 31) + (ch.codePointAt(0) ?? 0);
+  }
+  x = (x >>> 0) + 1;
+  return () => {
+    x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
+    return x / 4294967296;
+  };
+}
+
+function randomPhonemeMap(dateKey: string): Ling6PhonemeMap {
+  const next = seededUnit(`ling6-preview-${dateKey}`);
+  const map = {} as Ling6PhonemeMap;
+  for (const id of LING6_SOUND_IDS) {
+    map[id] = next() < 0.5;
+  }
+  return map;
+}
+
+function previewRecord(dateKey: string): SavedLing6Record {
+  const byPhoneme = randomPhonemeMap(dateKey);
+  return {
+    id: `preview-${dateKey}`,
+    dateKey,
+    savedAt: `${dateKey}T00:00:00.000Z`,
+    schemaVersion: LING6_RECORD_VERSION,
+    summary: {
+      passCount: passCountOf(byPhoneme),
+      byPhoneme,
+    },
+  };
+}
+
+/** 추이선은 점이 2개 필요해서, 모자란 날만 미리보기로 채운다. */
+function ensureTwoDays(
+  records: readonly SavedLing6Record[],
+): SavedLing6Record[] {
+  const rows = chronological(records);
+  if (rows.length >= 2) {
+    return rows;
+  }
+  if (rows.length === 1) {
+    const only = rows[0];
+    if (!only) {
+      return rows;
+    }
+    return chronological([previewRecord(shiftDateKey(only.dateKey, -1)), only]);
+  }
+  const today = localDateKey();
+  return chronological([
+    previewRecord(shiftDateKey(today, -1)),
+    previewRecord(today),
+  ]);
+}
+
 export function Ling6ProgressPanel({
   records,
 }: Readonly<{ records: readonly SavedLing6Record[] }>) {
-  const rows = chronological(records);
-  if (rows.length === 0) {
-    return null;
-  }
+  const rows = ensureTwoDays(records);
 
   return (
     <View style={styles.stack}>
@@ -62,13 +126,7 @@ export function Ling6ProgressPanel({
 
       <Card style={styles.card}>
         <ThemedText type="smallBold">맞힌 개수 변화</ThemedText>
-        {rows.length >= 2 ? (
-          <Ling6PassTrend records={rows} />
-        ) : (
-          <ThemedText type="small" themeColor="textMuted" style={styles.note}>
-            날짜 기록이 2일 이상이면 변화를 그려 드려요
-          </ThemedText>
-        )}
+        <Ling6PassTrend records={rows} />
       </Card>
     </View>
   );
@@ -89,7 +147,11 @@ function LegendSwatch({
           },
         ]}
       />
-      <ThemedText type="small" themeColor="textMuted" style={styles.legendLabel}>
+      <ThemedText
+        type="small"
+        themeColor="textMuted"
+        style={styles.legendLabel}
+      >
         {label}
       </ThemedText>
     </View>
@@ -110,7 +172,11 @@ function Ling6PhonemeGrid({
             <ThemedText type="smallBold" style={styles.phonemeKo}>
               {sound.label}
             </ThemedText>
-            <ThemedText type="small" themeColor="textMuted" style={styles.phonemeIpa}>
+            <ThemedText
+              type="small"
+              themeColor="textMuted"
+              style={styles.phonemeIpa}
+            >
               /{sound.ipa}/
             </ThemedText>
           </View>
@@ -183,12 +249,18 @@ function Ling6PassTrend({
       records.length === 1
         ? PAD_LEFT + plotW / 2
         : PAD_LEFT + ((ordinals[index] - minOrd) / spanOrd) * plotW;
-    const y = PAD_TOP + ((SOUND_TRIAL_COUNT - record.summary.passCount) / SOUND_TRIAL_COUNT) * plotH;
+    const y =
+      PAD_TOP +
+      ((SOUND_TRIAL_COUNT - record.summary.passCount) / SOUND_TRIAL_COUNT) *
+        plotH;
     return { x, y };
   });
 
   const linePath = xy
-    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
+    .map(
+      (point, index) =>
+        `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`,
+    )
     .join(" ");
 
   const ticks = [0, 3, 6];
@@ -202,7 +274,8 @@ function Ling6PassTrend({
           <Svg width={width} height={CHART_HEIGHT}>
             {ticks.map((tick) => {
               const y =
-                PAD_TOP + ((SOUND_TRIAL_COUNT - tick) / SOUND_TRIAL_COUNT) * plotH;
+                PAD_TOP +
+                ((SOUND_TRIAL_COUNT - tick) / SOUND_TRIAL_COUNT) * plotH;
               return (
                 <Line
                   key={`tick-${tick}`}
@@ -217,7 +290,8 @@ function Ling6PassTrend({
             })}
             {ticks.map((tick) => {
               const y =
-                PAD_TOP + ((SOUND_TRIAL_COUNT - tick) / SOUND_TRIAL_COUNT) * plotH;
+                PAD_TOP +
+                ((SOUND_TRIAL_COUNT - tick) / SOUND_TRIAL_COUNT) * plotH;
               return (
                 <SvgText
                   key={`label-${tick}`}

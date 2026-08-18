@@ -288,15 +288,14 @@ export function Ling6SessionScreen() {
                 있어요. 그때는 「못 들었어요」를 누르세요.
               </ThemedText>
             </Card>
-            {history.length > 0 ? (
-              <Ling6ProgressPanel records={history} />
-            ) : (
+            {history.length === 0 ? (
               <View style={styles.previewGrid}>
                 {LING6_SOUNDS.map((sound) => (
                   <PreviewCell key={sound.id} sound={sound} />
                 ))}
               </View>
-            )}
+            ) : null}
+            <Ling6ProgressPanel records={history} />
           </ScrollView>
         ) : null}
 
@@ -345,9 +344,7 @@ export function Ling6SessionScreen() {
               </Card>
             ) : null}
             {saveNote ? <Pill stretch icon="check" label={saveNote} /> : null}
-            {history.length > 0 ? (
-              <Ling6ProgressPanel records={history} />
-            ) : null}
+            <Ling6ProgressPanel records={history} />
           </ScrollView>
         ) : null}
 

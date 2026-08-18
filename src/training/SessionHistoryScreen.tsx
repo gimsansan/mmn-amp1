@@ -629,7 +629,7 @@ export function SessionHistoryScreen({
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.screenHeader}>
-          <ThemedText type="screenTitle">측정 통계</ThemedText>
+          <ThemedText type="screenTitle">훈련 기록</ThemedText>
           <ThemedText
             themeColor="textSecondary"
             type="small"
@@ -675,11 +675,7 @@ export function SessionHistoryScreen({
         />
 
         <View style={styles.actions}>
-          <ActionButton
-            outlineMatchLabel
-            label="새로고침"
-            onPress={reload}
-          />
+          <ActionButton outlineMatchLabel label="새로고침" onPress={reload} />
           {onBack ? (
             <ActionButton
               outlineMatchLabel
