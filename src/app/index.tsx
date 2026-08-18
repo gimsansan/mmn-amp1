@@ -15,6 +15,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Card, CardDivider } from "@/components/ui/card";
 import { Icon, type IconName } from "@/components/ui/icon";
+import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   BottomTabInset,
   MaxContentWidth,
@@ -70,7 +71,7 @@ const TRAINING_SECTIONS: readonly TrackSection[] = [
 
 /**
  * 연습 탭 — 트랙 선택 → 듣기 준비 → 정적 훈련 UI.
- * 통계는 이 탭 안에서 스와프. 앱 정보(고지·버전)는 이 화면 하단.
+ * 통계는 각 탭 헤더에서 같은 화면으로 스와프. 앱 정보(고지·버전)는 이 화면 하단.
  */
 export default function ExploreScreen() {
   const theme = useTheme();
@@ -205,23 +206,7 @@ export default function ExploreScreen() {
           <View style={styles.top}>
             <View style={styles.headerRow}>
               <ThemedText type="screenTitle">연습 선택</ThemedText>
-              {/* 통계 진입점(헤더 우측). 하단 탭은 링 6 · PTA · 단어인지도 · 연습. */}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="연습 통계 보기"
-                onPress={() => openTrack("stats")}
-                hitSlop={8}
-                style={({ pressed }) => [
-                  styles.statsButton,
-                  {
-                    backgroundColor: theme.accentTint,
-                    borderColor: theme.accentBorder,
-                  },
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Icon name="chart" size={28} color={theme.accent} />
-              </Pressable>
+              <StatsEntryButton onPress={() => openTrack("stats")} />
             </View>
             <ThemedText
               themeColor="textSecondary"
@@ -333,14 +318,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  statsButton: {
-    width: 60,
-    height: 40,
-    borderRadius: Radius.small + 1,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
   },
   caption: {
     fontSize: 12,

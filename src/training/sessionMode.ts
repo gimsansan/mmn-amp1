@@ -7,7 +7,7 @@
  * 스텝은 가변 하나(트랙별 스케줄)로 두고 **반전 횟수로만** 두 모드를 구분한다.
  * 엔진은 2-down-1-up 그대로.
  */
-import type { SessionMode } from '@/training/sessionStore';
+import type { SessionMode } from "@/training/sessionStore";
 
 export type { SessionMode };
 
@@ -18,16 +18,16 @@ export const PRACTICE_TARGET_REVERSALS = 4;
 export const MEASURE_TARGET_REVERSALS = 8;
 
 /** idle 기본 모드 — 연습(가볍게 시작). */
-export const DEFAULT_SESSION_MODE: SessionMode = 'practice';
+export const DEFAULT_SESSION_MODE: SessionMode = "practice";
 
 /** 모드별 종료 반전 수. */
 export function targetReversalsFor(mode: SessionMode): number {
-  return mode === 'measure'
+  return mode === "measure"
     ? MEASURE_TARGET_REVERSALS
     : PRACTICE_TARGET_REVERSALS;
 }
 
 /** 토글·배지용 짧은 라벨. */
 export function sessionModeLabel(mode: SessionMode): string {
-  return mode === 'measure' ? '측정' : '연습';
+  return mode === "measure" ? "연습" : "귀풀기";
 }

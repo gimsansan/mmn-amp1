@@ -14,6 +14,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Card } from "@/components/ui/card";
 import { Icon, type IconName } from "@/components/ui/icon";
+import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   BottomTabInset,
   MaxContentWidth,
@@ -24,6 +25,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { FreqSessionScreen } from "@/training/FreqSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { PitchCompareScreen } from "@/training/pitch2afc/PitchCompareScreen";
+import { SessionHistoryScreen } from "@/training/SessionHistoryScreen";
 
 type Track = "picker" | "pitch2" | "freq";
 
@@ -50,16 +52,18 @@ const TRACK_OPTIONS: readonly {
 
 /**
  * 소리 높낮이 탭 — 음고 2종 선택 → 듣기 준비 → 훈련.
- * 통계는 연습 탭에 둔다.
+ * 통계는 헤더 버튼으로 이 탭 안에서 스와프.
  */
 export function PtaSessionScreen() {
   const theme = useTheme();
   const [track, setTrack] = useState<Track>("picker");
   const [checked, setChecked] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const backToPicker = useCallback(() => {
     setTrack("picker");
     setChecked(false);
+    setShowStats(false);
   }, []);
 
   const openTrack = useCallback((next: TrainingTrack) => {
@@ -71,8 +75,19 @@ export function PtaSessionScreen() {
     setChecked(true);
   }, []);
 
+  const closeStats = useCallback(() => {
+    setShowStats(false);
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
+      if (showStats) {
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+          closeStats();
+          return true;
+        });
+        return () => sub.remove();
+      }
       if (track === "picker") {
         return;
       }
@@ -81,8 +96,12 @@ export function PtaSessionScreen() {
         return true;
       });
       return () => sub.remove();
-    }, [track, backToPicker]),
+    }, [track, showStats, backToPicker, closeStats]),
   );
+
+  if (showStats) {
+    return <SessionHistoryScreen onBack={closeStats} />;
+  }
 
   if ((track === "pitch2" || track === "freq") && !checked) {
     const face = TRACK_FACE[track];
@@ -114,7 +133,10 @@ export function PtaSessionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.top}>
-            <ThemedText type="screenTitle">소리 높낮이</ThemedText>
+            <View style={styles.headerRow}>
+              <ThemedText type="screenTitle">소리 높낮이</ThemedText>
+              <StatsEntryButton onPress={() => setShowStats(true)} />
+            </View>
             <ThemedText
               themeColor="textSecondary"
               type="small"
@@ -192,6 +214,11 @@ const styles = StyleSheet.create({
   },
   top: {
     gap: Spacing.two,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   caption: {
     fontSize: 12,

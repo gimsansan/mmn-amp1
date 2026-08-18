@@ -505,10 +505,7 @@ export function PitchCompareScreen({
           onModeChange={setMode}
         />
         {running ? (
-          <SessionProgressBar
-            current={reversalCount}
-            total={targetReversals}
-          />
+          <SessionProgressBar current={reversalCount} total={targetReversals} />
         ) : null}
 
         {phase === "summary" ? (

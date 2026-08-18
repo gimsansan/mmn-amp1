@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   BottomTabInset,
   MaxContentWidth,
@@ -54,6 +55,7 @@ import {
   type Ling6Sound,
 } from "@/training/ling6/sounds";
 import { SessionProgressBar } from "@/training/SessionProgressBar";
+import { SessionHistoryScreen } from "@/training/SessionHistoryScreen";
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
@@ -83,6 +85,7 @@ export function Ling6SessionScreen() {
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedLing6Record[]>([]);
+  const [showStats, setShowStats] = useState(false);
 
   const running = phase === "playing" || phase === "choose" || phase === "feedback";
   const choiceDisabled = phase !== "choose";
@@ -131,7 +134,7 @@ export function Ling6SessionScreen() {
   }, []);
 
   useEffect(() => {
-    if (phase === "idle" || phase === "summary") {
+    if (showStats || phase === "idle" || phase === "summary") {
       return;
     }
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -139,7 +142,20 @@ export function Ling6SessionScreen() {
       return true;
     });
     return () => sub.remove();
-  }, [phase, resetRun]);
+  }, [phase, resetRun, showStats]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!showStats) {
+        return;
+      }
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        setShowStats(false);
+        return true;
+      });
+      return () => sub.remove();
+    }, [showStats]),
+  );
 
   const playCurrent = useCallback(async (index: number) => {
     const trial = trialsRef.current[index];
@@ -249,11 +265,20 @@ export function Ling6SessionScreen() {
     void finishSession();
   }, [finishSession]);
 
+  if (showStats) {
+    return <SessionHistoryScreen onBack={() => setShowStats(false)} />;
+  }
+
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
         <View style={styles.header}>
-          <ThemedText type="screenTitle">링 6</ThemedText>
+          <View style={styles.headerRow}>
+            <ThemedText type="screenTitle">링 6</ThemedText>
+            {running ? null : (
+              <StatsEntryButton onPress={() => setShowStats(true)} />
+            )}
+          </View>
           <ThemedText
             themeColor="textSecondary"
             type="small"
@@ -537,6 +562,11 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: Spacing.one,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   caption: {
     fontSize: 12,

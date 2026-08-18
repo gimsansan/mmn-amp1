@@ -16,7 +16,6 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { confirmEndSession } from "@/training/confirmEndSession";
 import {
   abortAmAfcPlayback,
   createAmAfcTrial,
@@ -34,6 +33,7 @@ import {
   type AmSessionState,
   type AmSessionSummary,
 } from "@/training/amSession";
+import { confirmEndSession } from "@/training/confirmEndSession";
 import { DEFAULT_AFC_N } from "@/training/freqAfcTrial";
 import { DEFAULT_MAX_TRIALS } from "@/training/freqSession";
 import {

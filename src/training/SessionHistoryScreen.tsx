@@ -1,3 +1,4 @@
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -535,6 +536,13 @@ export function SessionHistoryScreen({
     reload();
   }, [reload]);
 
+  // 탭이 살아있는 채로 포커스가 돌아올 때도 갱신한다(탭 전환 후 복귀 등).
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload]),
+  );
+
   // 설정 탭 제거 → 「연습 기록 전체 삭제」를 통계 화면 하단으로 이동(데이터 성격 일치).
   const doClear = useCallback(() => {
     setClearing(true);
@@ -677,11 +685,7 @@ export function SessionHistoryScreen({
         <View style={styles.actions}>
           <ActionButton outlineMatchLabel label="새로고침" onPress={reload} />
           {onBack ? (
-            <ActionButton
-              outlineMatchLabel
-              label="연습 목록"
-              onPress={onBack}
-            />
+            <ActionButton outlineMatchLabel label="돌아가기" onPress={onBack} />
           ) : null}
         </View>
 

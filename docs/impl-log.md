@@ -45,6 +45,20 @@
 
 ## 로그
 
+### 2026-08-18 15:36 — 각 탭 헤더에 통계 버튼
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 연습 탭 통계 버튼을 각 탭에. 같은 `SessionHistoryScreen`을 탭 안에서 스와프. 버튼은 `StatsEntryButton`으로 공유. 링 6는 진행 중(`running`)엔 숨김. 인계문은 사용자 지시로 안 씀. |
+| 변경 요약 | 링 6·소리 높낮이·단어인지도·연습 헤더에 같은 통계 아이콘. |
+| 주요 경로 | `src/components/ui/stats-entry-button.tsx`, `src/app/index.tsx`, `src/training/pta/PtaSessionScreen.tsx`, `src/training/wrs/WrsSessionScreen.tsx`, `src/training/ling6/Ling6SessionScreen.tsx` |
+| 결과 | 코드 연결 완료. 실기기 확인은 이 세션에서 안 봄. |
+| 확인 | 린트. |
+| 단정 금지 | `추정`: JS만이라 **리빌드 불필요**. `미검증`: 실기기에서 4탭 모두 통계 진입·뒤로. `주의`: 통계는 음고·떨림 `sessionStore`만. 링 6 일별 기록은 이 화면에 없음. |
+| 성능·주의 | 없음(정적 버튼 + 기존 통계 화면 재사용). **dev client 리빌드 불필요.** |
+| 다음 | 실기기에서 각 탭 헤더·뒤로가기. |
+
 ### 2026-08-18 15:11 — 음고 2종을 소리 높낮이 탭으로 이동
 
 | 항목 | 내용 |
