@@ -1,8 +1,131 @@
 # 인계2 — 링 6 (feat/ling6-tab)
 
-> **정본**: 이 파일. 최신 블록을 **맨 위**에 추가. `docs/handoff.md`에는 넣지 않음.  
-> 사용자(2026-08-18 14:09): 「인계문 작성해」를 **안 해도** 코드·설계가 바뀐 세션이면 여기에 저장.  
+> **과거**. **2026-08-19부터 새 인계는 `docs/handoff3.md`.** 이 파일에는 새 블록을 넣지 않는다.  
+> 사용자(2026-08-18 14:09): 「인계문 작성해」를 **안 해도** 코드·설계가 바뀐 세션이면 여기에 저장. (이후 `handoff3`로 이전)  
 > 사용자(2026-08-19 01:09): 이후 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.** 과거 블록은 그대로.
+
+## 인계 — 2026-08-19 12:57
+
+새 채팅 AI용. **이번 세션 = 링 6·단어인지도 헤더에서 세 연습 통계 버튼 제거.**
+
+### 한 일
+
+- `StatsEntryButton` → `SessionHistoryScreen`(`sessionStore` 세 연습)은 이 두 탭과 무관해 뺌.
+- 탭 안 추이 패널·PTA/AM 헤더 통계는 그대로.
+- impl-log_1 `12:57`.
+
+### 핵심 경로
+
+- `src/training/ling6/Ling6SessionScreen.tsx`
+- `src/training/wrs/WrsSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 헤더·뒤로가기.
+- `추정`: **리빌드 불필요.**
+
+---
+
+## 인계 — 2026-08-19 12:49
+
+새 채팅 AI용. **이번 세션 = `feat_wrs`에 단어인지도 A(4지선다·TTS) + 시간×% 추이(가짜 점 없음).**
+
+### 한 일
+
+- `modi_tabs` → `feat_wrs`. 단음절 200풀, 혼동 규칙 오답 3개, 25시행 듣고 고르기. TTS `expo-speech` `ko-KR`. 25개 완료만 `training.wrsSessions.v1`.
+- 그래프는 PI-PB(dB HL×%)·세 연습 계단식 아님. 링 6 **선**과 같게 가로=연습 시각, 세로=맞힌 %. 가짜 미리보기 점은 뺌(2회+만 선, 1회는 목록만).
+- 링 6 **음소 그리드**는 안 넣음. 저장이 %만이라 칸을 못 채움. 축별 그리드는 미구현.
+- impl-log_1 `11:36`·`12:36`·`12:42`.
+
+### 핵심 경로
+
+- `src/training/wrs/WrsSessionScreen.tsx`
+- `src/training/wrs/wrsDistractors.ts`
+- `src/training/wrs/wrsTts.ts`
+- `src/training/wrs/wrsStore.ts`
+- `src/training/wrs/WrsProgressPanel.tsx`
+- `src/training/wrs/wrsTrend.ts`
+
+### 단정 금지
+
+- `주의`: **`expo-speech` → dev client 리빌드 필요.** 그래프 JS만은 리빌드 불필요.
+- `미검증`: 실기기 한국어 TTS·단음절 받침·그래프.
+- `추정`: 오답은 규칙 기반. 개인 혼동 행렬 없음.
+- `주의`: % 추이는 검사 곡선이 아님.
+
+---
+
+## 인계 — 2026-08-19 12:42
+
+새 채팅 AI용. **이번 세션 = 단어인지도 그래프에서 가짜 점 제거.**
+
+### 한 일
+
+- 실제 기록 2회 이상일 때만 선 그래프. 1회는 최근 목록만, 0회는 패널 없음.
+- 링 6 `ensureTwoDays` 미리보기는 이 탭에 복사하지 않음.
+- impl-log_1 `2026-08-19 12:42`.
+
+### 핵심 경로
+
+- `src/training/wrs/wrsTrend.ts`
+- `src/training/wrs/WrsProgressPanel.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 1회/2회 표시.
+- `추정`: **리빌드 불필요.**
+
+---
+
+## 인계 — 2026-08-19 12:36
+
+새 채팅 AI용. **이번 세션 = 단어인지도 추이를 링 6처럼 시간×맞힌 비율로.**
+
+### 한 일
+
+- PI-PB(dB×%) 아님. 가로=연습 시각, 세로=맞힌 %.
+- 링 6 `맞힌 개수 변화`와 같은 선 그래프. 점 2개 미만은 미리보기(저장 없음).
+- idle·요약에 표시. impl-log_1 `2026-08-19 12:36`.
+
+### 핵심 경로
+
+- `src/training/wrs/WrsProgressPanel.tsx`
+- `src/training/wrs/wrsTrend.ts`
+- `src/training/wrs/WrsSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 그래프.
+- `주의`: % 추이는 검사 곡선이 아님.
+- `추정`: **리빌드 불필요.**
+
+---
+
+## 인계 — 2026-08-19 11:36
+
+새 채팅 AI용. **이번 세션 = 단어인지도 A(4지선다·TTS)를 `feat_wrs`에 구현.**
+
+### 한 일
+
+- `modi_tabs`에서 `feat_wrs` 분기.
+- 단음절 200풀, 혼동 규칙 오답 3개, 25시행 듣고 고르기.
+- TTS는 `expo-speech` `ko-KR`. 25개 완료만 `training.wrsSessions.v1`에 저장.
+- 단위 테스트 15/15. impl-log_1 `2026-08-19 11:36`.
+
+### 핵심 경로
+
+- `src/training/wrs/WrsSessionScreen.tsx`
+- `src/training/wrs/wrsDistractors.ts`
+- `src/training/wrs/wrsTts.ts`
+- `src/training/wrs/wrsStore.ts`
+
+### 단정 금지
+
+- `주의`: **`expo-speech` 추가 → dev client 리빌드 필요.**
+- `미검증`: 실기기 한국어 TTS·단음절 받침.
+- `추정`: 오답은 규칙 기반. 개인 혼동 행렬 없음.
+
+---
 
 ## 인계 — 2026-08-19 03:07
 

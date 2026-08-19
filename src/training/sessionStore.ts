@@ -15,16 +15,19 @@ const STORAGE_KEY = 'training.sessionHistory.v1';
 export const SESSION_RECORD_VERSION = 1;
 
 /**
- * 기기 보관 상한 — **모드별 독립**. 초과분은 그 모드 안에서 오래된 것부터 버림.
+ * 기기 보관 상한.
  *
- * 측정은 통계·추세 그래프의 근거이므로 넉넉히(50) 지킨다. 귀풀기는 목록·배지용이라 30이면 충분.
- * 두 상한이 독립이라 **귀풀기를 아무리 많이 해도 연습(통계) 이력이 밀려나지 않는다**
- * (그래프 형상이 연습량에 흔들리지 않음). 합계 상한은 두지 않는다(최대 80, 로컬 요약이라 가벼움).
+ * - 측정: **트랙별** 50. 한 트랙을 많이 해도 다른 트랙 그래프가 밀리지 않는다.
+ * - 귀풀기: 세 트랙 **합쳐** 30. 목록·배지용이라 트랙을 가르지 않는다.
+ * 모드도 독립이라 귀풀기가 측정 이력을 밀지 않는다.
+ * 합계 상한은 두지 않는다(최대 180, 로컬 요약이라 가벼움).
  */
 export const MAX_MEASURE_SESSIONS = 50;
 export const MAX_PRACTICE_SESSIONS = 30;
 
 export type SessionTrack = 'freq' | 'am' | 'pitch2';
+
+const SESSION_TRACKS: readonly SessionTrack[] = ['freq', 'am', 'pitch2'];
 
 /**
  * 세션 성격.
@@ -235,30 +238,32 @@ async function writeAllRaw(records: SavedSessionRecord[]): Promise<void> {
 }
 
 /**
- * 모드별 독립 상한을 적용해 초과분을 그 모드 안에서만 버린다.
+ * 상한을 적용해 초과분을 버린다.
  *
- * `merged`(최신이 앞)를 측정/연습으로 갈라 각자 `slice`한 뒤, **원래 순서를 유지**하며 합친다.
- * 한 모드가 넘쳐도 잘려나가는 건 그 모드의 오래된 레코드뿐이라 다른 모드는 그대로 남는다.
+ * `merged`(최신이 앞). 측정은 트랙마다 `slice(MAX_MEASURE_SESSIONS)`,
+ * 귀풀기는 트랙 합쳐 `slice(MAX_PRACTICE_SESSIONS)`. 원래 순서는 유지.
  */
 function capByMode(
   merged: readonly SavedSessionRecord[]
 ): SavedSessionRecord[] {
-  const measure = merged
-    .filter(isCountedInStats)
-    .slice(0, MAX_MEASURE_SESSIONS);
-  const practice = merged
+  const keep = new Set<string>();
+  for (const track of SESSION_TRACKS) {
+    for (const row of merged
+      .filter((r) => isCountedInStats(r) && r.track === track)
+      .slice(0, MAX_MEASURE_SESSIONS)) {
+      keep.add(row.id);
+    }
+  }
+  for (const row of merged
     .filter((r) => !isCountedInStats(r))
-    .slice(0, MAX_PRACTICE_SESSIONS);
-
-  const keep = new Set<string>([
-    ...measure.map((r) => r.id),
-    ...practice.map((r) => r.id),
-  ]);
+    .slice(0, MAX_PRACTICE_SESSIONS)) {
+    keep.add(row.id);
+  }
   return merged.filter((r) => keep.has(r.id));
 }
 
 /**
- * 레코드 1건 추가(최신이 앞). 상한 초과분은 **모드별로** 오래된 것부터 버림.
+ * 레코드 1건 추가(최신이 앞). 측정은 트랙별, 귀풀기는 합쳐 오래된 것부터 버림.
  * `build`는 큐 안에서 실행되므로 `savedAt`·`id`가 **실제 기록 순서와 일치**한다.
  */
 function appendRecord<R extends SavedSessionRecord>(build: () => R): Promise<R> {

@@ -187,7 +187,7 @@ describe('sessionStore — 기존 동작 유지', () => {
     expect(rows.map((r) => r.id)).toEqual([second.id, first.id]);
   });
 
-  it(`측정이 ${MAX_MEASURE_SESSIONS}건을 넘으면 오래된 측정부터 버린다`, async () => {
+  it(`한 트랙 측정이 ${MAX_MEASURE_SESSIONS}건을 넘으면 그 트랙 오래된 측정만 버린다`, async () => {
     for (let i = 0; i < MAX_MEASURE_SESSIONS + 3; i++) {
       await appendFreqSessionSummary(freqSummary(i), 'measure');
     }
@@ -227,6 +227,43 @@ describe('sessionStore — 기존 동작 유지', () => {
     expect(measureCount).toBe(MAX_MEASURE_SESSIONS);
     expect(practiceCount).toBe(MAX_PRACTICE_SESSIONS);
     expect(rows).toHaveLength(MAX_MEASURE_SESSIONS + MAX_PRACTICE_SESSIONS);
+  });
+
+  it('측정 상한은 트랙별 — 한 트랙을 넘쳐도 다른 트랙 측정은 남는다', async () => {
+    for (let i = 0; i < 5; i++) {
+      await appendAmSessionSummary(amSummary(i), 'measure');
+    }
+    for (let i = 0; i < 4; i++) {
+      await appendPitch2SessionSummary(pitch2Summary(i), 'measure');
+    }
+    for (let i = 0; i < MAX_MEASURE_SESSIONS + 3; i++) {
+      await appendFreqSessionSummary(freqSummary(i), 'measure');
+    }
+
+    const rows = await listSavedSessions();
+    const freqMeasure = rows.filter((r) => r.track === 'freq' && r.mode === 'measure');
+    const amMeasure = rows.filter((r) => r.track === 'am' && r.mode === 'measure');
+    const pitchMeasure = rows.filter(
+      (r) => r.track === 'pitch2' && r.mode === 'measure'
+    );
+
+    expect(freqMeasure).toHaveLength(MAX_MEASURE_SESSIONS);
+    expect(amMeasure).toHaveLength(5);
+    expect(pitchMeasure).toHaveLength(4);
+  });
+
+  it('귀풀기 상한은 세 트랙 합쳐 적용한다', async () => {
+    for (let i = 0; i < 20; i++) {
+      await appendFreqSessionSummary(freqSummary(i), 'practice');
+    }
+    for (let i = 0; i < 20; i++) {
+      await appendAmSessionSummary(amSummary(i), 'practice');
+    }
+
+    const rows = await listSavedSessions();
+    const practice = rows.filter((r) => r.mode === 'practice');
+
+    expect(practice).toHaveLength(MAX_PRACTICE_SESSIONS);
   });
 
   it('저장된 값이 깨져 있으면 빈 목록으로 시작한다', async () => {

@@ -44,7 +44,7 @@
 | 스택 | Expo SDK 57 / RN 0.86 / React 19 / expo-router / `react-native-audio-api` · Android dev-client 전용 |
 | 화면 | 단일 홈 `src/app/index.tsx`(연습 3종 선택 → 듣기 준비 → 훈련. 통계는 같은 화면 스와프). `explore.tsx` 없음 |
 | 트랙 | 「높낮이 비교」(pitch2) · 「다른 음 찾기」(freq) · 「떨림 찾기」(am). 자극·계단식 숫자의 **정본은 코드** |
-| 기록 | 종료 요약만 AsyncStorage(`training.sessionHistory.v1`). 상한 측정 50·연습 30(독립) |
+| 기록 | 종료 요약만 AsyncStorage(`training.sessionHistory.v1`). 상한 측정 **트랙별** 50·귀풀기 합쳐 30(모드 독립) |
 | 종료 | 연습/측정 전환 목표 + 최대 시행 + 수동 종료. 숫자의 **정본은 코드** |
 | 코드 품질 | 테스트 파일 있음(`sessionStore`·freq/am 계단식·pitch2afc). ESLint 설정 파일 **없음** · CI **없음** |
 

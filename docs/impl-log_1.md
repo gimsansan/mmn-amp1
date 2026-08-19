@@ -47,6 +47,90 @@
 
 ## 로그
 
+### 2026-08-19 13:14 — 세 연습 측정 상한을 트랙별 50으로
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 사용자: 제안대로. 링 6 50일·WRS 50세션·귀풀기 공유 30은 유지. 세 연습 측정만 트랙별 50이라 그래프가 서로 안 밀림. |
+| 변경 요약 | `capByMode`에서 측정은 `freq`/`am`/`pitch2` 각 50. 귀풀기는 합쳐 30. 합계 상한 없음(최대 180). |
+| 주요 경로 | `src/training/sessionStore.ts`, `src/training/__tests__/sessionStore.test.ts`, `docs/improvement-backlog.md` §0 |
+| 결과 | `jest sessionStore` 43/43. |
+| 확인 | `npx jest src/training/__tests__/sessionStore.test.ts --no-coverage` |
+| 단정 금지 | `미검증`: 실기기에서 트랙별 그래프 길이. 기존 기기는 다음 append 때 새 상한 적용(읽기만으로는 안 자름). |
+| 성능·주의 | 목록 최대 180건. JS만. **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
+### 2026-08-19 12:59 — 인계 정본을 handoff3.md로
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 문서 |
+| 근거·결정 | 사용자: 앞으로는 `handoff3`에서 기록을 이어 가라. `handoff` → `handoff2`와 같은 방식. |
+| 변경 요약 | 규칙 저장 경로를 `handoff3.md`로. `handoff.md`·`handoff2.md`는 과거 안내만. 기존 `handoff2` 블록은 옮기지 않음. |
+| 주요 경로 | `docs/handoff3.md`, `.cursor/rules/android-dev-client.mdc`, `docs/handoff2.md`, `docs/handoff.md` |
+| 결과 | 새 파일 생성. 규칙 반영. |
+| 확인 | 규칙에 `handoff3.md`만 저장 위치로. |
+| 단정 금지 | 없음 |
+| 성능·주의 | 문서만. **dev client 리빌드 불필요.** |
+| 다음 | 이후 인계는 `handoff3.md`만. |
+
+### 2026-08-19 12:57 — 링 6·단어인지도에서 세 연습 통계 버튼 제거
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 링 6 / 단어인지도 |
+| 근거·결정 | 사용자: 헤더 `StatsEntryButton`이 여는 `SessionHistoryScreen`은 `sessionStore`(다른 음·음높이·포락선)만 보여 이 두 탭과 무관. 탭 안 추이(`Ling6ProgressPanel` / `WrsProgressPanel`)는 그대로. PTA·AM은 유지. |
+| 변경 요약 | 두 화면에서 차트 버튼·`showStats` 오버레이·통계 뒤로가기를 뺌. 연습 중 종료 확인 뒤로가기는 유지. |
+| 주요 경로 | `src/training/ling6/Ling6SessionScreen.tsx`, `src/training/wrs/WrsSessionScreen.tsx` |
+| 결과 | 코드 반영. 실기기는 안 봄. |
+| 확인 | 린트(기존 복잡도 경고만). 두 파일에 `showStats`/`StatsEntryButton`/`SessionHistoryScreen` 없음. |
+| 단정 금지 | `미검증`: 실기기에서 헤더·뒤로가기. |
+| 성능·주의 | JS만. **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
+### 2026-08-19 12:42 — 단어인지도 추이 미리보기 제거
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 단어인지도 |
+| 근거·결정 | 사용자: 가짜 점 없이 실제 기록 2회 이상일 때만 그래프. 링 6 미리보기를 따라 넣은 것은 이 탭에서 원치 않음. |
+| 변경 요약 | `ensureTwoWrsSessions`·미리보기 삭제. 0회는 패널 없음, 1회는 목록만, 2회+만 선 그래프. |
+| 주요 경로 | `src/training/wrs/wrsTrend.ts`, `src/training/wrs/WrsProgressPanel.tsx` |
+| 결과 | 단위 테스트 17/17. |
+| 확인 | `npx jest src/training/wrs --no-coverage` |
+| 단정 금지 | `미검증`: 실기기에서 1회 목록만·2회 그래프. |
+| 성능·주의 | 가짜 점 계산 없음. **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
+### 2026-08-19 12:36 — 단어인지도 맞힌 비율 추이(링 6형)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 단어인지도 |
+| 근거·결정 | 사용자: PI-PB(dB HL×%)는 기기 보정 불가라 가로를 시간으로. 세 연습(계단식 최소 차이) 그래프는 부적합, 링 6처럼 시간×맞힌 정도. |
+| 변경 요약 | idle·요약에 링 6형 선 그래프(0~100%). 점 부족 시 미리보기만 채움(저장 안 함). 최근 목록은 실제 기록만. |
+| 주요 경로 | `src/training/wrs/WrsProgressPanel.tsx`, `src/training/wrs/wrsTrend.ts`, `src/training/wrs/WrsSessionScreen.tsx` |
+| 결과 | 단위 테스트 19/19. 실기기 그래프는 안 봄. |
+| 확인 | `npx jest src/training/wrs --no-coverage` |
+| 단정 금지 | `미검증`: 실기기에서 미리보기·2회 이후 선. `주의`: 세로 %는 연습 기록이지 PI-PB·진단이 아님. `추정`: TTS·목록 셔플로 선이 흔들릴 수 있음. |
+| 성능·주의 | SVG 한 장. **dev client 리빌드 불필요.** |
+| 다음 | 없음 |
+
+### 2026-08-19 11:36 — 단어인지도 4지선다(TTS)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / 단어인지도 |
+| 근거·결정 | 사용자: A(4지선다) + TTS, 브랜치 `feat_wrs`. 병원식 WRS(dB·개방형)가 아니라 폐쇄형 단음절·정답률. 오답은 초성·중성·종성 혼동 규칙. 25단어 목록. 링 6처럼 탭이 곧 그 연습. 기록은 `sessionStore`와 분리. |
+| 변경 요약 | 단음절 200풀 + 혼동 오답 + TTS 재생 + 25시행 화면. 25개를 다 고른 세션만 저장. `expo-speech` 추가. |
+| 주요 경로 | `src/training/wrs/*`, `package.json` (`expo-speech` `~57.0.1`) |
+| 결과 | 단위 테스트 15/15. 실기기·TTS는 안 함. |
+| 확인 | `npx jest src/training/wrs --no-coverage` |
+| 단정 금지 | `미검증`: 실기기 한국어 TTS·단음절 받침 명료도. `주의`: TTS는 사람 말과 다름. `추정`: 혼동 규칙은 구조만(수치 행렬 없음). `주의`: **dev client 리빌드 필요**(`expo-speech` 네이티브). |
+| 성능·주의 | 듣기 중 화면은 정적(보기 그리드). TTS는 시스템 엔진이라 오디오 API 합성 경로와 다름. |
+| 다음 | 리빌드 후 실기기에서 연습 시작. 빙고·축 선택·소음은 안 넣음. |
+
 ### 2026-08-19 03:07 — 떨림 듣기 준비를 화면 전환으로
 
 | 항목 | 내용 |
