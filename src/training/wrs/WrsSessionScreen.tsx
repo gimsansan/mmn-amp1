@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ActionButton } from "@/components/ui/action-button";
+import { BingoEntryButton } from "@/components/ui/bingo-entry-button";
 import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
@@ -27,6 +28,8 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
 import { SessionProgressBar } from "@/training/SessionProgressBar";
+import { WrsBingoScreen } from "@/training/wrs/WrsBingoScreen";
+import { WrsProgressPanel } from "@/training/wrs/WrsProgressPanel";
 import {
   createWrsTrials,
   scoreWrsChoice,
@@ -38,7 +41,6 @@ import {
   type WrsTrial,
   type WrsTrialOutcome,
 } from "@/training/wrs/wrsSession";
-import { WrsProgressPanel } from "@/training/wrs/WrsProgressPanel";
 import {
   appendWrsSummary,
   clearWrsRecords,
@@ -67,6 +69,7 @@ export function WrsSessionScreen() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedWrsRecord[]>([]);
   const [clearing, setClearing] = useState(false);
+  const [showBingo, setShowBingo] = useState(false);
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
@@ -254,12 +257,27 @@ export function WrsSessionScreen() {
     void finishSession();
   }, [finishSession]);
 
+  const openBingo = useCallback(() => {
+    abortRef.current = true;
+    void stopWrsSpeech();
+    setShowBingo(true);
+  }, []);
+
+  const closeBingo = useCallback(() => {
+    setShowBingo(false);
+  }, []);
+
+  if (showBingo) {
+    return <WrsBingoScreen onBack={closeBingo} />;
+  }
+
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <ThemedText type="screenTitle">단어인지도</ThemedText>
+            {!running ? <BingoEntryButton onPress={openBingo} /> : null}
           </View>
           <ThemedText
             themeColor="textSecondary"

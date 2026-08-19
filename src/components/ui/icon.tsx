@@ -21,7 +21,9 @@ export type IconName =
   | 'stop'
   /** 높낮이 비교 — 더 높아요 / 더 낮아요. */
   | 'arrowUp'
-  | 'arrowDown';
+  | 'arrowDown'
+  /** 단어 빙고 — 3×3 중 한 줄이 이어짐. */
+  | 'bingoLine';
 
 type IconProps = {
   name: IconName;
@@ -125,6 +127,20 @@ export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: Readonly<Ico
 
       {name === 'arrowDown' ? (
         <Path d="M12 19V5M12 19l-6-6M12 19l6-6" {...stroke} />
+      ) : null}
+
+      {name === 'bingoLine' ? (
+        <>
+          <Rect x="3" y="3" width="5" height="5" rx="1" {...stroke} opacity={0.45} />
+          <Rect x="9.5" y="3" width="5" height="5" rx="1" {...stroke} opacity={0.45} />
+          <Rect x="16" y="3" width="5" height="5" rx="1" {...stroke} opacity={0.45} />
+          <Rect x="3" y="9.5" width="5" height="5" rx="1" fill={color} />
+          <Rect x="9.5" y="9.5" width="5" height="5" rx="1" fill={color} />
+          <Rect x="16" y="9.5" width="5" height="5" rx="1" fill={color} />
+          <Rect x="3" y="16" width="5" height="5" rx="1" {...stroke} opacity={0.45} />
+          <Rect x="9.5" y="16" width="5" height="5" rx="1" {...stroke} opacity={0.45} />
+          <Rect x="16" y="16" width="5" height="5" rx="1" {...stroke} opacity={0.45} />
+        </>
       ) : null}
     </Svg>
   );
