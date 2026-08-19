@@ -6,16 +6,14 @@ import { ThemedText } from "@/components/themed-text";
 import { Card } from "@/components/ui/card";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { formatWrsSavedAt } from "@/training/wrs/wrsStore";
 import {
   canShowWrsTrend,
   chronologicalWrs,
   formatWrsDateShort,
   wrsTimeOrdinal,
+  type PercentSessionRecord,
 } from "@/training/wrs/wrsTrend";
-import {
-  formatWrsSavedAt,
-  type SavedWrsRecord,
-} from "@/training/wrs/wrsStore";
 
 const CHART_HEIGHT = 132;
 const PAD_TOP = 10;
@@ -28,7 +26,7 @@ const TICKS = [0, 50, 100] as const;
 
 export function WrsProgressPanel({
   records,
-}: Readonly<{ records: readonly SavedWrsRecord[] }>) {
+}: Readonly<{ records: readonly PercentSessionRecord[] }>) {
   if (records.length === 0) {
     return null;
   }
@@ -41,7 +39,7 @@ export function WrsProgressPanel({
         <Card style={styles.card}>
           <ThemedText type="smallBold">맞힌 비율 변화</ThemedText>
           <ThemedText type="small" themeColor="textMuted" style={styles.note}>
-            연습 회차의 맞힌 비율이에요. 청력 검사가 아니에요.
+            청력 검사가 아니에요.
           </ThemedText>
           <WrsPercentTrend records={chronologicalWrs(records)} />
         </Card>
@@ -53,7 +51,7 @@ export function WrsProgressPanel({
 
 function WrsRecentList({
   records,
-}: Readonly<{ records: readonly SavedWrsRecord[] }>) {
+}: Readonly<{ records: readonly PercentSessionRecord[] }>) {
   const recent = records.slice(0, 8);
   return (
     <Card style={styles.card}>
@@ -75,7 +73,7 @@ function WrsRecentList({
 
 function WrsPercentTrend({
   records,
-}: Readonly<{ records: readonly SavedWrsRecord[] }>) {
+}: Readonly<{ records: readonly PercentSessionRecord[] }>) {
   const theme = useTheme();
   const [width, setWidth] = useState(0);
 
@@ -91,8 +89,7 @@ function WrsPercentTrend({
   const spanOrd = maxOrd - minOrd || 1;
 
   const xy = records.map((record, index) => {
-    const x =
-      PAD_LEFT + ((ordinals[index] - minOrd) / spanOrd) * plotW;
+    const x = PAD_LEFT + ((ordinals[index] - minOrd) / spanOrd) * plotW;
     const y =
       PAD_TOP + ((PERCENT_MAX - record.summary.percent) / PERCENT_MAX) * plotH;
     return { x, y };
@@ -114,8 +111,7 @@ function WrsPercentTrend({
         {width > 0 ? (
           <Svg width={width} height={CHART_HEIGHT}>
             {TICKS.map((tick) => {
-              const y =
-                PAD_TOP + ((PERCENT_MAX - tick) / PERCENT_MAX) * plotH;
+              const y = PAD_TOP + ((PERCENT_MAX - tick) / PERCENT_MAX) * plotH;
               return (
                 <Line
                   key={`tick-${tick}`}
@@ -129,8 +125,7 @@ function WrsPercentTrend({
               );
             })}
             {TICKS.map((tick) => {
-              const y =
-                PAD_TOP + ((PERCENT_MAX - tick) / PERCENT_MAX) * plotH;
+              const y = PAD_TOP + ((PERCENT_MAX - tick) / PERCENT_MAX) * plotH;
               return (
                 <SvgText
                   key={`label-${tick}`}

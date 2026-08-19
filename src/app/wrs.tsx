@@ -1,6 +1,6 @@
-import { WrsSessionScreen } from "@/training/wrs/WrsSessionScreen";
+import { WrsTabScreen } from "@/training/wrs/WrsTabScreen";
 
-/** 하단 탭 — 단어인지도. */
+/** 하단 탭 — 단어 듣기(한 글자 · 두 글자). */
 export default function WrsRoute() {
-  return <WrsSessionScreen />;
+  return <WrsTabScreen />;
 }

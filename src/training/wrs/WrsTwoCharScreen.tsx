@@ -13,7 +13,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ActionButton } from "@/components/ui/action-button";
-import { BingoEntryButton } from "@/components/ui/bingo-entry-button";
 import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
@@ -28,42 +27,52 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
 import { SessionProgressBar } from "@/training/SessionProgressBar";
-import { WrsBingoScreen } from "@/training/wrs/WrsBingoScreen";
+import {
+  createTwoCharTrials,
+  nextTwoCharListIndex,
+  scoreTwoCharChoice,
+  summarizeTwoChar,
+  TWO_CHAR_TRIAL_COUNT,
+  type TwoCharTrial,
+} from "@/training/wrs/twoCharSession";
+import {
+  appendTwoCharSummary,
+  clearTwoCharRecords,
+  listTwoCharRecords,
+  type SavedTwoCharRecord,
+} from "@/training/wrs/twoCharStore";
 import { WrsProgressPanel } from "@/training/wrs/WrsProgressPanel";
 import {
-  createWrsTrials,
-  scoreWrsChoice,
-  summarizeWrs,
   wrsPercentCopy,
   wrsResultCopy,
-  WRS_TRIAL_COUNT,
   type WrsSessionSummary,
-  type WrsTrial,
-  type WrsTrialOutcome,
 } from "@/training/wrs/wrsSession";
-import {
-  appendWrsSummary,
-  clearWrsRecords,
-  listWrsRecords,
-  type SavedWrsRecord,
-} from "@/training/wrs/wrsStore";
 import { speakWrsWord, stopWrsSpeech } from "@/training/wrs/wrsTts";
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
-type WrsSessionScreenProps = {
-  /** 단어 듣기 목록으로 돌아가기(idle·요약에서만 노출). */
-  onBack?: () => void;
+type TwoCharOutcome = {
+  target: string;
+  choice: string;
+  correct: boolean;
 };
 
-export function WrsSessionScreen({
+type WrsTwoCharScreenProps = {
+  onBack: () => void;
+};
+
+/**
+ * 두 글자 — 한 장 12개, 4지(정답+어려운 오답+안 비슷한 2).
+ * 역치형 측정이 아님.
+ */
+export function WrsTwoCharScreen({
   onBack,
-}: Readonly<WrsSessionScreenProps>) {
+}: Readonly<WrsTwoCharScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
   const savedRef = useRef(false);
-  const trialsRef = useRef<WrsTrial[]>([]);
-  const outcomesRef = useRef<WrsTrialOutcome[]>([]);
+  const trialsRef = useRef<TwoCharTrial[]>([]);
+  const outcomesRef = useRef<TwoCharOutcome[]>([]);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [trialIndex, setTrialIndex] = useState(0);
@@ -74,9 +83,8 @@ export function WrsSessionScreen({
   const [summary, setSummary] = useState<WrsSessionSummary | null>(null);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
-  const [history, setHistory] = useState<SavedWrsRecord[]>([]);
+  const [history, setHistory] = useState<SavedTwoCharRecord[]>([]);
   const [clearing, setClearing] = useState(false);
-  const [showBingo, setShowBingo] = useState(false);
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
@@ -100,7 +108,7 @@ export function WrsSessionScreen({
 
   const refreshHistory = useCallback(async () => {
     try {
-      setHistory(await listWrsRecords());
+      setHistory(await listTwoCharRecords());
     } catch {
       setHistory([]);
     }
@@ -108,9 +116,9 @@ export function WrsSessionScreen({
 
   const doClearHistory = useCallback(() => {
     setClearing(true);
-    void clearWrsRecords()
+    void clearTwoCharRecords()
       .then(() => {
-        Alert.alert("완료", "한 글자 연습 기록을 지웠어요.");
+        Alert.alert("완료", "두 글자 연습 기록을 지웠어요.");
         return refreshHistory();
       })
       .catch(() => {
@@ -124,7 +132,7 @@ export function WrsSessionScreen({
   const confirmClearHistory = useCallback(() => {
     Alert.alert(
       "기록 삭제",
-      "한 글자 연습 기록을 모두 지울까요? 되돌릴 수 없어요. 다른 연습 기록은 그대로예요.",
+      "두 글자 연습 기록을 모두 지울까요? 되돌릴 수 없어요. 다른 연습 기록은 그대로예요.",
       [
         { text: "취소", style: "cancel" },
         { text: "삭제", style: "destructive", onPress: doClearHistory },
@@ -152,9 +160,6 @@ export function WrsSessionScreen({
 
   useEffect(() => {
     if (phase === "idle" || phase === "summary") {
-      if (!onBack) {
-        return;
-      }
       const sub = BackHandler.addEventListener("hardwareBackPress", () => {
         onBack();
         return true;
@@ -194,25 +199,31 @@ export function WrsSessionScreen({
   const onStart = useCallback(() => {
     abortRef.current = false;
     savedRef.current = false;
-    trialsRef.current = createWrsTrials();
-    outcomesRef.current = [];
-    setTrialIndex(0);
-    setLastCorrect(undefined);
-    setLastTarget(null);
-    setSummary(null);
-    setSaveNote(null);
-    void playCurrent(0);
+    void listTwoCharRecords()
+      .then((rows) => {
+        trialsRef.current = createTwoCharTrials(nextTwoCharListIndex(rows.length));
+        outcomesRef.current = [];
+        setTrialIndex(0);
+        setLastCorrect(undefined);
+        setLastTarget(null);
+        setSummary(null);
+        setSaveNote(null);
+        void playCurrent(0);
+      })
+      .catch(() => {
+        setLastError("연습을 시작하지 못했어요.");
+      });
   }, [playCurrent]);
 
   const finishSession = useCallback(async () => {
     abortRef.current = true;
     await stopWrsSpeech();
-    const nextSummary = summarizeWrs(outcomesRef.current);
+    const nextSummary = summarizeTwoChar(outcomesRef.current);
     setSummary(nextSummary);
     setPhase("summary");
 
-    if (nextSummary.trialCount !== WRS_TRIAL_COUNT) {
-      setSaveNote("25개를 다 고르지 않아 기록에는 안 남겼어요");
+    if (nextSummary.trialCount !== TWO_CHAR_TRIAL_COUNT) {
+      setSaveNote("12개를 다 고르지 않아 기록에는 안 남겼어요");
       return;
     }
 
@@ -221,7 +232,7 @@ export function WrsSessionScreen({
     }
     savedRef.current = true;
     try {
-      await appendWrsSummary(nextSummary);
+      await appendTwoCharSummary(nextSummary);
       setSaveNote("기기에 기록했어요");
       await refreshHistory();
     } catch {
@@ -238,14 +249,13 @@ export function WrsSessionScreen({
       if (!trial) {
         return;
       }
-      const correct = scoreWrsChoice(trial.target, choice);
+      const correct = scoreTwoCharChoice(trial.target, choice);
       outcomesRef.current = [
         ...outcomesRef.current,
         {
           target: trial.target,
           choice,
           correct,
-          axis: trial.axis,
         },
       ];
       setLastCorrect(correct);
@@ -271,27 +281,12 @@ export function WrsSessionScreen({
     void finishSession();
   }, [finishSession]);
 
-  const openBingo = useCallback(() => {
-    abortRef.current = true;
-    void stopWrsSpeech();
-    setShowBingo(true);
-  }, []);
-
-  const closeBingo = useCallback(() => {
-    setShowBingo(false);
-  }, []);
-
-  if (showBingo) {
-    return <WrsBingoScreen onBack={closeBingo} />;
-  }
-
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
-            <ThemedText type="screenTitle">한 글자</ThemedText>
-            {!running ? <BingoEntryButton onPress={openBingo} /> : null}
+            <ThemedText type="screenTitle">두 글자</ThemedText>
           </View>
           <ThemedText
             themeColor="textSecondary"
@@ -305,7 +300,7 @@ export function WrsSessionScreen({
         {running ? (
           <SessionProgressBar
             current={outcomesRef.current.length}
-            total={WRS_TRIAL_COUNT}
+            total={TWO_CHAR_TRIAL_COUNT}
           />
         ) : null}
 
@@ -322,14 +317,14 @@ export function WrsSessionScreen({
                 type="small"
                 style={styles.idleBody}
               >
-                한 글자 단어 하나를 읽어 줘요. 비슷한 소리 보기 네 개 중에서
-                들은 단어를 고르면 됩니다. 한 번은 25개예요. 목소리는 기계음이라
+                두 글자 단어 하나를 읽어 줘요. 비슷한 소리 보기 네 개 중에서
+                들은 단어를 고르면 됩니다. 한 번은 12개예요. 목소리는 기계음이라
                 사람 말과 다를 수 있어요.
               </ThemedText>
             </Card>
             <WrsProgressPanel records={history} />
             {history.length > 0 ? (
-              <WrsClearHistoryButton
+              <ClearHistoryButton
                 clearing={clearing}
                 onPress={confirmClearHistory}
               />
@@ -376,7 +371,7 @@ export function WrsSessionScreen({
             {saveNote ? <Pill stretch icon="check" label={saveNote} /> : null}
             <WrsProgressPanel records={history} />
             {history.length > 0 ? (
-              <WrsClearHistoryButton
+              <ClearHistoryButton
                 clearing={clearing}
                 onPress={confirmClearHistory}
               />
@@ -443,7 +438,7 @@ export function WrsSessionScreen({
             <ActionButton fill={false} label="처음으로" onPress={resetRun} />
           ) : null}
 
-          {(phase === "idle" || phase === "summary") && onBack ? (
+          {phase === "idle" || phase === "summary" ? (
             <ActionButton fill={false} label="뒤로 가기" onPress={onBack} />
           ) : null}
 
@@ -510,14 +505,14 @@ function promptCopy(
   return `아쉬워요 · 정답은 ${lastTarget ?? ""}`;
 }
 
-function WrsClearHistoryButton({
+function ClearHistoryButton({
   clearing,
   onPress,
 }: Readonly<{ clearing: boolean; onPress: () => void }>) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="한 글자 연습 기록 지우기"
+      accessibilityLabel="두 글자 연습 기록 지우기"
       accessibilityState={{ disabled: clearing }}
       disabled={clearing}
       onPress={onPress}
@@ -532,7 +527,7 @@ function WrsClearHistoryButton({
         type="small"
         style={styles.clearHistoryLabel}
       >
-        {clearing ? "지우는 중…" : "한 글자 기록 지우기"}
+        {clearing ? "지우는 중…" : "두 글자 기록 지우기"}
       </ThemedText>
     </Pressable>
   );
@@ -662,8 +657,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   choiceWord: {
-    fontSize: 28,
-    lineHeight: 36,
+    fontSize: 26,
+    lineHeight: 34,
   },
   actions: {
     marginTop: "auto",

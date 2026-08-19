@@ -23,7 +23,11 @@ export type IconName =
   | 'arrowUp'
   | 'arrowDown'
   /** 단어 빙고 — 3×3 중 한 줄이 이어짐. */
-  | 'bingoLine';
+  | 'bingoLine'
+  /** 단어 듣기 — 한 글자. */
+  | 'oneChar'
+  /** 단어 듣기 — 두 글자. */
+  | 'twoChar';
 
 type IconProps = {
   name: IconName;
@@ -140,6 +144,17 @@ export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: Readonly<Ico
           <Rect x="3" y="16" width="5" height="5" rx="1" {...stroke} opacity={0.45} />
           <Rect x="9.5" y="16" width="5" height="5" rx="1" {...stroke} opacity={0.45} />
           <Rect x="16" y="16" width="5" height="5" rx="1" {...stroke} opacity={0.45} />
+        </>
+      ) : null}
+
+      {name === 'oneChar' ? (
+        <Rect x="7" y="5" width="10" height="14" rx="2" {...stroke} />
+      ) : null}
+
+      {name === 'twoChar' ? (
+        <>
+          <Rect x="3" y="5" width="8" height="14" rx="2" {...stroke} />
+          <Rect x="13" y="5" width="8" height="14" rx="2" {...stroke} />
         </>
       ) : null}
     </Svg>

@@ -8,7 +8,7 @@ type BingoEntryButtonProps = {
   onPress: () => void;
 };
 
-/** 단어인지도 헤더 우측 — 같은 탭에서 빙고로 스와프. */
+/** 한 글자 헤더 우측 — 같은 연습에서 빙고로 스와프. */
 export function BingoEntryButton({ onPress }: Readonly<BingoEntryButtonProps>) {
   const theme = useTheme();
   return (

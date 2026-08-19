@@ -1,12 +1,23 @@
-import type { SavedWrsRecord } from "@/training/wrs/wrsStore";
+/** 맞힌 % 추이. 한 글자·두 글자 기록이 같은 모양. */
+export type PercentSessionRecord = {
+  id: string;
+  savedAt: string;
+  summary: {
+    trialCount: number;
+    correctCount: number;
+    percent: number;
+  };
+};
 
 export function chronologicalWrs(
-  records: readonly SavedWrsRecord[],
-): SavedWrsRecord[] {
+  records: readonly PercentSessionRecord[],
+): PercentSessionRecord[] {
   return [...records].sort((a, b) => a.savedAt.localeCompare(b.savedAt));
 }
 
-export function canShowWrsTrend(records: readonly SavedWrsRecord[]): boolean {
+export function canShowWrsTrend(
+  records: readonly PercentSessionRecord[],
+): boolean {
   return records.length >= 2;
 }
 

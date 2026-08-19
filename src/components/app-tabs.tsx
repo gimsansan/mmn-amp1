@@ -3,7 +3,7 @@ import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { Colors } from "@/constants/theme";
 
 /**
- * 하단 4탭 — 링 6 · PTA(음고) · 단어인지도 · 떨림.
+ * 하단 4탭 — 링 6 · PTA(음고) · 단어 듣기 · 떨림.
  * NativeTabs(unstable). 아이콘은 시스템 심볼(전용 PNG 없음).
  */
 export default function AppTabs() {
@@ -31,7 +31,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="wrs">
-        <NativeTabs.Trigger.Label>단어인지도</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>단어 듣기</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="text.bubble" md="chat" />
       </NativeTabs.Trigger>
 
