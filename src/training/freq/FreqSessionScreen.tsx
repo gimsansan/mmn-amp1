@@ -133,8 +133,11 @@ export function FreqSessionScreen({
       return;
     }
     savedRef.current = true;
+    if (runModeRef.current === "practice") {
+      return;
+    }
     setSaveNote(null);
-    void appendFreqSessionSummary(nextSummary, runModeRef.current)
+    void appendFreqSessionSummary(nextSummary, "measure")
       .then(() => {
         setSaveNote("기기에 기록했어요");
       })

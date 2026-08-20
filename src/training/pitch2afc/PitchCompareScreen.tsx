@@ -17,6 +17,7 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
+import { endReasonLabel } from "@/training/freq/freqSession";
 import { AUDIO } from "@/training/pitch2afc/constants";
 import {
   abortPitchPlayback,
@@ -53,17 +54,6 @@ const TEXT_SCALE = 1.2;
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
 type EndReason = PitchCompareEndReason;
-
-function endReasonLabel(reason: EndReason): string {
-  switch (reason) {
-    case "reversals":
-      return "오늘 연습량에 도달했어요";
-    case "max_trials":
-      return "연습 횟수 한도에 도달했어요";
-    case "manual":
-      return "직접 종료했어요";
-  }
-}
 
 /** 요약 지표 계산 — 세션 결과에서 웰니스용 참고값만 뽑는다(역치·점수 아님). */
 function summarize(
@@ -422,8 +412,11 @@ export function PitchCompareScreen({
       return;
     }
     savedRef.current = true;
+    if (runModeRef.current === "practice") {
+      return;
+    }
     setSaveNote(null);
-    void appendPitch2SessionSummary(nextSummary, runModeRef.current)
+    void appendPitch2SessionSummary(nextSummary, "measure")
       .then(() => setSaveNote("기기에 기록했어요"))
       .catch(() => setSaveNote("기록 저장에 실패했어요"));
   }, []);

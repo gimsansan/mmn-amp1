@@ -1,4 +1,5 @@
 import {
+  LING6_SOUNDS,
   LING6_SOUND_IDS,
   type Ling6Choice,
   type Ling6SoundId,
@@ -148,4 +149,90 @@ export function ling6HighFreqCopy(
     return "고음(/s/·/ʃ/)이 지난주보다 좋아지고 있어요";
   }
   return null;
+}
+
+/** 약점 창. 달력이 아니라 실기록 최근 N건. */
+export const LING6_WEAKNESS_WINDOW = 7;
+/** 창 안에서 이 횟수 이상 아쉬울 때만 강조. 격차·2위 비교 없음. */
+export const LING6_WEAKNESS_MISS_THRESHOLD = 4;
+
+export type Ling6WeaknessDay = {
+  dateKey: string;
+  byPhoneme: Ling6PhonemeMap;
+};
+
+export type Ling6WeaknessSnapshot = {
+  /** 7건 미만이면 false. 카드 자체를 숨김. */
+  ready: boolean;
+  missCounts: Record<Ling6SoundId, number>;
+  highlighted: Ling6SoundId[];
+  copy: string | null;
+};
+
+function emptyMissCounts(): Record<Ling6SoundId, number> {
+  return {
+    m: 0,
+    u: 0,
+    a: 0,
+    i: 0,
+    sh: 0,
+    s: 0,
+  };
+}
+
+function ipaOf(id: Ling6SoundId): string {
+  const sound = LING6_SOUNDS.find((item) => item.id === id);
+  return sound?.ipa ?? id;
+}
+
+/** 강조된 음소만. 없으면 null(가짜 약점 문구 금지). */
+export function ling6WeaknessCopy(
+  ids: readonly Ling6SoundId[],
+): string | null {
+  if (ids.length === 0) {
+    return null;
+  }
+  const labels = ids.map((id) => `/${ipaOf(id)}/`).join("·");
+  return `요즘 ${labels}가 아쉬운 날이 많아요`;
+}
+
+/**
+ * 최근 7건에서 음소별 아쉬움 횟수. 4회 이상만 강조.
+ * 표본이 부족하면 ready=false.
+ */
+export function ling6WeaknessSnapshot(
+  records: readonly Ling6WeaknessDay[],
+): Ling6WeaknessSnapshot {
+  if (records.length < LING6_WEAKNESS_WINDOW) {
+    return {
+      ready: false,
+      missCounts: emptyMissCounts(),
+      highlighted: [],
+      copy: null,
+    };
+  }
+
+  const window = [...records]
+    .sort((a, b) => b.dateKey.localeCompare(a.dateKey))
+    .slice(0, LING6_WEAKNESS_WINDOW);
+
+  const missCounts = emptyMissCounts();
+  for (const record of window) {
+    for (const id of LING6_SOUND_IDS) {
+      if (!record.byPhoneme[id]) {
+        missCounts[id] += 1;
+      }
+    }
+  }
+
+  const highlighted = LING6_SOUND_IDS.filter(
+    (id) => missCounts[id] >= LING6_WEAKNESS_MISS_THRESHOLD,
+  );
+
+  return {
+    ready: true,
+    missCounts,
+    highlighted,
+    copy: ling6WeaknessCopy(highlighted),
+  };
 }

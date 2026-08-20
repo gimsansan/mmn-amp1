@@ -1,3 +1,5 @@
+import type { SessionEndReason } from '@/training/freq/freqSession';
+
 /**
  * 「높낮이 비교」 세션 요약 — 저장 스키마의 단일 출처.
  *
@@ -5,7 +7,7 @@
  * cent 값은 **진단 역치·점수가 아니라** 최근 난이도 참고값이다(웰니스 방침).
  */
 
-export type PitchCompareEndReason = 'reversals' | 'max_trials' | 'manual';
+export type PitchCompareEndReason = SessionEndReason;
 
 export type PitchCompareSummary = {
   trialCount: number;

@@ -41,7 +41,6 @@ import type { FreqSessionSummary } from '@/training/freq/freqSession';
 import type { PitchCompareSummary } from '@/training/pitch2afc/pitchSummary';
 import {
   MAX_MEASURE_SESSIONS,
-  MAX_PRACTICE_SESSIONS,
   SESSION_RECORD_VERSION,
   appendAmSessionSummary,
   appendFreqSessionSummary,
@@ -199,24 +198,17 @@ describe('sessionStore — 기존 동작 유지', () => {
     expect(rows[0].summary.trialCount).toBe(MAX_MEASURE_SESSIONS + 2);
   });
 
-  it(`연습이 ${MAX_PRACTICE_SESSIONS}건을 넘으면 오래된 연습부터 버린다`, async () => {
-    for (let i = 0; i < MAX_PRACTICE_SESSIONS + 3; i++) {
-      await appendFreqSessionSummary(freqSummary(i), 'practice');
-    }
+  it('귀풀기(practice)는 저장하지 않는다', async () => {
+    await appendFreqSessionSummary(freqSummary(3), 'practice');
 
-    const rows = await listSavedSessions();
-
-    expect(rows).toHaveLength(MAX_PRACTICE_SESSIONS);
-    expect(rows[0].summary.trialCount).toBe(MAX_PRACTICE_SESSIONS + 2);
+    expect(await listSavedSessions()).toEqual([]);
   });
 
-  it('상한은 모드별 독립 — 연습을 많이 해도 측정 이력은 밀려나지 않는다', async () => {
-    // 측정 상한을 꽉 채운다.
+  it('귀풀기를 넣어도 측정 이력은 그대로다', async () => {
     for (let i = 0; i < MAX_MEASURE_SESSIONS; i++) {
       await appendFreqSessionSummary(freqSummary(i), 'measure');
     }
-    // 연습을 상한을 넘겨 쏟아붓는다.
-    for (let i = 0; i < MAX_PRACTICE_SESSIONS + 10; i++) {
+    for (let i = 0; i < 10; i++) {
       await appendAmSessionSummary(amSummary(i), 'practice');
     }
 
@@ -225,8 +217,8 @@ describe('sessionStore — 기존 동작 유지', () => {
     const practiceCount = rows.filter((r) => r.mode === 'practice').length;
 
     expect(measureCount).toBe(MAX_MEASURE_SESSIONS);
-    expect(practiceCount).toBe(MAX_PRACTICE_SESSIONS);
-    expect(rows).toHaveLength(MAX_MEASURE_SESSIONS + MAX_PRACTICE_SESSIONS);
+    expect(practiceCount).toBe(0);
+    expect(rows).toHaveLength(MAX_MEASURE_SESSIONS);
   });
 
   it('측정 상한은 트랙별 — 한 트랙을 넘쳐도 다른 트랙 측정은 남는다', async () => {
@@ -252,18 +244,27 @@ describe('sessionStore — 기존 동작 유지', () => {
     expect(pitchMeasure).toHaveLength(4);
   });
 
-  it('귀풀기 상한은 세 트랙 합쳐 적용한다', async () => {
-    for (let i = 0; i < 20; i++) {
-      await appendFreqSessionSummary(freqSummary(i), 'practice');
-    }
-    for (let i = 0; i < 20; i++) {
-      await appendAmSessionSummary(amSummary(i), 'practice');
-    }
+  it('다음 연습 저장 때 남아 있던 귀풀기 기록은 버린다', async () => {
+    storageMock.__setRaw(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: 'old-practice',
+          track: 'freq',
+          savedAt: '2026-08-07T00:00:00.000Z',
+          schemaVersion: 1,
+          mode: 'practice',
+          summary: freqSummary(3),
+        },
+      ])
+    );
 
+    await appendAmSessionSummary(amSummary(1), 'measure');
     const rows = await listSavedSessions();
-    const practice = rows.filter((r) => r.mode === 'practice');
 
-    expect(practice).toHaveLength(MAX_PRACTICE_SESSIONS);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].track).toBe('am');
+    expect(rows.some((r) => r.id === 'old-practice')).toBe(false);
   });
 
   it('저장된 값이 깨져 있으면 빈 목록으로 시작한다', async () => {
@@ -291,7 +292,7 @@ describe('sessionStore — 기존 동작 유지', () => {
 describe('sessionStore — 건별 삭제', () => {
   it('지정한 1건만 지우고 나머지는 순서를 유지한다', async () => {
     const a = await appendFreqSessionSummary(freqSummary(1), 'measure');
-    const b = await appendAmSessionSummary(amSummary(2), 'practice');
+    const b = await appendAmSessionSummary(amSummary(2), 'measure');
     const c = await appendPitch2SessionSummary(pitch2Summary(3), 'measure');
 
     await deleteSavedSession(b.id);
@@ -310,7 +311,7 @@ describe('sessionStore — 건별 삭제', () => {
   });
 
   it('마지막 1건을 지우면 목록이 빈다', async () => {
-    const only = await appendAmSessionSummary(amSummary(1), 'practice');
+    const only = await appendAmSessionSummary(amSummary(1), 'measure');
 
     await deleteSavedSession(only.id);
 
@@ -321,16 +322,16 @@ describe('sessionStore — 건별 삭제', () => {
 describe('sessionStore — 트랙별 삭제', () => {
   it('지정한 트랙만 지우고 다른 트랙은 남긴다', async () => {
     const pitch = await appendPitch2SessionSummary(pitch2Summary(1), 'measure');
-    const freqPractice = await appendFreqSessionSummary(freqSummary(2), 'practice');
-    const freqMeasure = await appendFreqSessionSummary(freqSummary(3), 'measure');
+    const freqFirst = await appendFreqSessionSummary(freqSummary(2), 'measure');
+    const freqSecond = await appendFreqSessionSummary(freqSummary(3), 'measure');
     const am = await appendAmSessionSummary(amSummary(4), 'measure');
 
     await deleteSavedSessionsByTrack('freq');
 
     const rows = await listSavedSessions();
     expect(rows.map((r) => r.id).sort()).toEqual([am.id, pitch.id].sort());
-    expect(rows.some((r) => r.id === freqPractice.id)).toBe(false);
-    expect(rows.some((r) => r.id === freqMeasure.id)).toBe(false);
+    expect(rows.some((r) => r.id === freqFirst.id)).toBe(false);
+    expect(rows.some((r) => r.id === freqSecond.id)).toBe(false);
   });
 
   it('해당 트랙이 없으면 목록을 그대로 둔다', async () => {
@@ -343,7 +344,7 @@ describe('sessionStore — 트랙별 삭제', () => {
   });
 
   it('마지막 트랙을 지우면 목록이 빈다', async () => {
-    await appendPitch2SessionSummary(pitch2Summary(1), 'practice');
+    await appendPitch2SessionSummary(pitch2Summary(1), 'measure');
     await appendPitch2SessionSummary(pitch2Summary(2), 'measure');
 
     await deleteSavedSessionsByTrack('pitch2');
@@ -353,15 +354,15 @@ describe('sessionStore — 트랙별 삭제', () => {
 });
 
 describe('sessionStore — 연습/측정 모드', () => {
-  it('mode를 주면 그대로 저장한다', async () => {
+  it('귀풀기 mode는 저장하지 않고 연습만 남긴다', async () => {
     await appendFreqSessionSummary(freqSummary(4), 'practice');
     await appendAmSessionSummary(amSummary(4), 'measure');
 
     const rows = await listSavedSessions();
-    const byTrack = Object.fromEntries(rows.map((r) => [r.track, r.mode]));
 
-    expect(byTrack.freq).toBe('practice');
-    expect(byTrack.am).toBe('measure');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].track).toBe('am');
+    expect(rows[0].mode).toBe('measure');
   });
 
   it('mode를 생략하면 측정으로 저장한다(호환 기본값)', async () => {
@@ -372,15 +373,29 @@ describe('sessionStore — 연습/측정 모드', () => {
     expect(rows[0].mode).toBe('measure');
   });
 
-  it('isCountedInStats: 연습만 제외, 측정·구버전(mode 없음)은 포함', async () => {
-    const practice = await appendFreqSessionSummary(freqSummary(4), 'practice');
-    const measure = await appendAmSessionSummary(amSummary(4), 'measure');
+  it('isCountedInStats: 귀풀기만 제외, 연습·구버전(mode 없음)은 포함', async () => {
+    const practice = {
+      id: 'practice-row',
+      track: 'freq' as const,
+      savedAt: '2026-08-07T00:00:00.000Z',
+      schemaVersion: 1,
+      mode: 'practice' as const,
+      summary: freqSummary(4),
+    };
+    const measure = {
+      id: 'measure-row',
+      track: 'am' as const,
+      savedAt: '2026-08-07T00:00:01.000Z',
+      schemaVersion: 1,
+      mode: 'measure' as const,
+      summary: amSummary(4),
+    };
+    storageMock.__setRaw(STORAGE_KEY, JSON.stringify([practice, measure]));
 
     const rows = await listSavedSessions();
     const counted = rows.filter(isCountedInStats).map((r) => r.id);
 
-    expect(counted).toContain(measure.id);
-    expect(counted).not.toContain(practice.id);
+    expect(counted).toEqual(['measure-row']);
   });
 
   it('mode가 없는 구버전 레코드는 통계에 포함(측정 간주)', async () => {

@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   BottomTabInset,
   MaxContentWidth,
@@ -28,6 +29,7 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
 import { SessionProgressBar } from "@/training/SessionProgressBar";
+import { TabStatsScreen } from "@/training/TabStatsScreen";
 import { WrsBingoScreen } from "@/training/wrs/WrsBingoScreen";
 import { WrsProgressPanel } from "@/training/wrs/WrsProgressPanel";
 import {
@@ -77,6 +79,7 @@ export function WrsSessionScreen({
   const [history, setHistory] = useState<SavedWrsRecord[]>([]);
   const [clearing, setClearing] = useState(false);
   const [showBingo, setShowBingo] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
@@ -151,6 +154,13 @@ export function WrsSessionScreen({
   }, []);
 
   useEffect(() => {
+    if (showStats) {
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        setShowStats(false);
+        return true;
+      });
+      return () => sub.remove();
+    }
     if (phase === "idle" || phase === "summary") {
       if (!onBack) {
         return;
@@ -166,7 +176,7 @@ export function WrsSessionScreen({
       return true;
     });
     return () => sub.remove();
-  }, [onBack, phase, resetRun]);
+  }, [onBack, phase, resetRun, showStats]);
 
   const playCurrent = useCallback(async (index: number) => {
     const trial = trialsRef.current[index];
@@ -281,6 +291,31 @@ export function WrsSessionScreen({
     setShowBingo(false);
   }, []);
 
+  const openStats = useCallback(() => {
+    void refreshHistory();
+    setShowStats(true);
+  }, [refreshHistory]);
+
+  const closeStats = useCallback(() => {
+    setShowStats(false);
+  }, []);
+
+  if (showStats) {
+    return (
+      <TabStatsScreen
+        title="연습 기록"
+        onBack={closeStats}
+        empty={history.length === 0}
+      >
+        <WrsProgressPanel records={history} />
+        <WrsClearHistoryButton
+          clearing={clearing}
+          onPress={confirmClearHistory}
+        />
+      </TabStatsScreen>
+    );
+  }
+
   if (showBingo) {
     return <WrsBingoScreen onBack={closeBingo} />;
   }
@@ -291,7 +326,14 @@ export function WrsSessionScreen({
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <ThemedText type="screenTitle">한 글자</ThemedText>
-            {!running ? <BingoEntryButton onPress={openBingo} /> : null}
+            {!running ? (
+              <View style={styles.headerActions}>
+                <BingoEntryButton onPress={openBingo} />
+                {phase === "idle" || phase === "summary" ? (
+                  <StatsEntryButton onPress={openStats} />
+                ) : null}
+              </View>
+            ) : null}
           </View>
           <ThemedText
             themeColor="textSecondary"
@@ -327,13 +369,6 @@ export function WrsSessionScreen({
                 사람 말과 다를 수 있어요.
               </ThemedText>
             </Card>
-            <WrsProgressPanel records={history} />
-            {history.length > 0 ? (
-              <WrsClearHistoryButton
-                clearing={clearing}
-                onPress={confirmClearHistory}
-              />
-            ) : null}
           </ScrollView>
         ) : null}
 
@@ -374,13 +409,6 @@ export function WrsSessionScreen({
               </Card>
             ) : null}
             {saveNote ? <Pill stretch icon="check" label={saveNote} /> : null}
-            <WrsProgressPanel records={history} />
-            {history.length > 0 ? (
-              <WrsClearHistoryButton
-                clearing={clearing}
-                onPress={confirmClearHistory}
-              />
-            ) : null}
           </ScrollView>
         ) : null}
 
@@ -598,6 +626,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
   },
   caption: {
     fontSize: 12,

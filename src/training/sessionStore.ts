@@ -17,13 +17,10 @@ export const SESSION_RECORD_VERSION = 1;
 /**
  * 기기 보관 상한.
  *
- * - 측정: **트랙별** 50. 한 트랙을 많이 해도 다른 트랙 그래프가 밀리지 않는다.
- * - 귀풀기: 세 트랙 **합쳐** 30. 목록·배지용이라 트랙을 가르지 않는다.
- * 모드도 독립이라 귀풀기가 측정 이력을 밀지 않는다.
- * 합계 상한은 두지 않는다(최대 180, 로컬 요약이라 가벼움).
+ * 연습(측정)만 **트랙별** 50. 한 트랙을 많이 해도 다른 트랙 그래프가 밀리지 않는다.
+ * 귀풀기는 저장하지 않는다(이번 결과 카드만). 합계 상한은 두지 않는다(최대 150).
  */
 export const MAX_MEASURE_SESSIONS = 50;
-export const MAX_PRACTICE_SESSIONS = 30;
 
 export type SessionTrack = 'freq' | 'am' | 'pitch2';
 
@@ -31,7 +28,7 @@ const SESSION_TRACKS: readonly SessionTrack[] = ['freq', 'am', 'pitch2'];
 
 /**
  * 세션 성격.
- * - `practice`: 귀풀기(한도 없음). 기록은 남기되 통계·추세에서 제외.
+ * - `practice`: 귀풀기(한도 없음). **저장하지 않음.** 이번 결과 카드만.
  * - `measure`: 연습(반전 6). 기록 + 통계 포함.
  *
  * `주의`: 구버전 레코드에는 이 필드가 없다(`undefined`). 없으면 **측정으로 간주**해
@@ -240,8 +237,8 @@ async function writeAllRaw(records: SavedSessionRecord[]): Promise<void> {
 /**
  * 상한을 적용해 초과분을 버린다.
  *
- * `merged`(최신이 앞). 측정은 트랙마다 `slice(MAX_MEASURE_SESSIONS)`,
- * 귀풀기는 트랙 합쳐 `slice(MAX_PRACTICE_SESSIONS)`. 원래 순서는 유지.
+ * `merged`(최신이 앞). 연습(측정)만 트랙마다 `slice(MAX_MEASURE_SESSIONS)`.
+ * 귀풀기(`practice`)는 남기지 않는다. 원래 순서는 유지.
  */
 function capByMode(
   merged: readonly SavedSessionRecord[]
@@ -254,21 +251,19 @@ function capByMode(
       keep.add(row.id);
     }
   }
-  for (const row of merged
-    .filter((r) => !isCountedInStats(r))
-    .slice(0, MAX_PRACTICE_SESSIONS)) {
-    keep.add(row.id);
-  }
   return merged.filter((r) => keep.has(r.id));
 }
 
 /**
- * 레코드 1건 추가(최신이 앞). 측정은 트랙별, 귀풀기는 합쳐 오래된 것부터 버림.
+ * 레코드 1건 추가(최신이 앞). 연습(측정)만 트랙별 상한. 귀풀기는 쓰지 않음.
  * `build`는 큐 안에서 실행되므로 `savedAt`·`id`가 **실제 기록 순서와 일치**한다.
  */
 function appendRecord<R extends SavedSessionRecord>(build: () => R): Promise<R> {
   return enqueue(async () => {
     const record = build();
+    if (record.mode === 'practice') {
+      return record;
+    }
     const next = capByMode([
       record as SavedSessionRecord,
       ...(await readAllRaw()),
@@ -327,7 +322,7 @@ export function appendPitch2SessionSummary(
 
 /**
  * 이 레코드가 통계·추세 집계에 포함되는지.
- * 연습(`practice`)만 제외한다. `mode`가 없는 구버전 레코드는 포함(측정으로 간주).
+ * 귀풀기(`practice`)만 제외한다. `mode`가 없는 구버전 레코드는 포함(측정으로 간주).
  */
 export function isCountedInStats(record: SavedSessionRecord): boolean {
   return record.mode !== 'practice';

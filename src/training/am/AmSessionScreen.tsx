@@ -153,8 +153,11 @@ export function AmSessionScreen({
       return;
     }
     savedRef.current = true;
+    if (runModeRef.current === "practice") {
+      return;
+    }
     setSaveNote(null);
-    void appendAmSessionSummary(nextSummary, runModeRef.current)
+    void appendAmSessionSummary(nextSummary, "measure")
       .then(() => {
         setSaveNote("기기에 기록했어요");
       })

@@ -38,6 +38,9 @@ export function WrsProgressPanel({
       {showTrend ? (
         <Card style={styles.card}>
           <ThemedText type="smallBold">맞힌 비율 변화</ThemedText>
+          <ThemedText type="smallBold" style={styles.howToRead}>
+            높을수록 더 많이 맞춤
+          </ThemedText>
           <ThemedText type="small" themeColor="textMuted" style={styles.note}>
             청력 검사가 아니에요.
           </ThemedText>
@@ -103,7 +106,7 @@ function WrsPercentTrend({
     .join(" ");
 
   const first = records[0];
-  const last = records[records.length - 1];
+  const last = records.at(-1);
 
   return (
     <View style={styles.chartWrap}>
@@ -184,6 +187,10 @@ const styles = StyleSheet.create({
   },
   card: {
     gap: Spacing.two,
+  },
+  howToRead: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   note: {
     fontSize: 12,

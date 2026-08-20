@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  type LayoutChangeEvent,
-} from "react-native";
+import { StyleSheet, View, type LayoutChangeEvent } from "react-native";
 import Svg, { Circle, Line, Path, Text as SvgText } from "react-native-svg";
 
 import { ThemedText } from "@/components/themed-text";
@@ -12,29 +7,27 @@ import { Card } from "@/components/ui/card";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import {
-  passCountOf,
+  LING6_WEAKNESS_WINDOW,
+  ling6WeaknessSnapshot,
   SOUND_TRIAL_COUNT,
-  type Ling6PhonemeMap,
+  type Ling6WeaknessSnapshot,
 } from "@/training/ling6/ling6Session";
 import {
   formatDateKeyShort,
-  LING6_RECORD_VERSION,
-  localDateKey,
-  shiftDateKey,
   type SavedLing6Record,
 } from "@/training/ling6/ling6Store";
-import { LING6_SOUND_IDS, LING6_SOUNDS } from "@/training/ling6/sounds";
+import { LING6_SOUNDS } from "@/training/ling6/sounds";
 
-const CELL = 22;
-const COL_W = 28;
-const ROW_H = 26;
-const LABEL_W = 64;
 const CHART_HEIGHT = 132;
 const PAD_TOP = 10;
 const PAD_BOTTOM = 18;
 const PAD_LEFT = 18;
 const PAD_RIGHT = 10;
 const DOT_R = 3.5;
+const BAR_MAX_H = 56;
+const BAR_STUB_H = 3;
+const BAR_TRACK_BG = "#EEF3F8";
+const BAR_MUTED = "#D5DDE6";
 
 function chronological(
   records: readonly SavedLing6Record[],
@@ -47,182 +40,106 @@ function dateOrdinal(dateKey: string): number {
   return Date.UTC(year ?? 0, (month ?? 1) - 1, day ?? 1) / 86_400_000;
 }
 
-/** 같은 날짜는 칸 색이 안 바뀌게 시드만 씀. 저장하지 않음. */
-function seededUnit(seed: string): () => number {
-  let x = 1;
-  for (const ch of seed) {
-    x = Math.imul(x, 31) + (ch.codePointAt(0) ?? 0);
-  }
-  x = (x >>> 0) + 1;
-  return () => {
-    x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
-    return x / 4294967296;
-  };
-}
-
-function randomPhonemeMap(dateKey: string): Ling6PhonemeMap {
-  const next = seededUnit(`ling6-preview-${dateKey}`);
-  const map = {} as Ling6PhonemeMap;
-  for (const id of LING6_SOUND_IDS) {
-    map[id] = next() < 0.5;
-  }
-  return map;
-}
-
-function previewRecord(dateKey: string): SavedLing6Record {
-  const byPhoneme = randomPhonemeMap(dateKey);
-  return {
-    id: `preview-${dateKey}`,
-    dateKey,
-    savedAt: `${dateKey}T00:00:00.000Z`,
-    schemaVersion: LING6_RECORD_VERSION,
-    summary: {
-      passCount: passCountOf(byPhoneme),
-      byPhoneme,
-    },
-  };
-}
-
-/** 추이선은 점이 2개 필요해서, 모자란 날만 미리보기로 채운다. */
-function ensureTwoDays(
-  records: readonly SavedLing6Record[],
-): SavedLing6Record[] {
-  const rows = chronological(records);
-  if (rows.length >= 2) {
-    return rows;
-  }
-  if (rows.length === 1) {
-    const only = rows[0];
-    if (!only) {
-      return rows;
-    }
-    return chronological([previewRecord(shiftDateKey(only.dateKey, -1)), only]);
-  }
-  const today = localDateKey();
-  return chronological([
-    previewRecord(shiftDateKey(today, -1)),
-    previewRecord(today),
-  ]);
-}
+const EMPTY_TREND_COPY = "내일 또 하면 선이 생겨요";
 
 export function Ling6ProgressPanel({
   records,
 }: Readonly<{ records: readonly SavedLing6Record[] }>) {
-  const rows = ensureTwoDays(records);
+  if (records.length === 0) {
+    return null;
+  }
+
+  const rows = chronological(records);
+  const showTrend = rows.length >= 2;
+  const weakness = ling6WeaknessSnapshot(
+    records.map((record) => ({
+      dateKey: record.dateKey,
+      byPhoneme: record.summary.byPhoneme,
+    })),
+  );
 
   return (
     <View style={styles.stack}>
-      <Card style={styles.card}>
-        <ThemedText type="smallBold">음소별 진행 상황</ThemedText>
-        <ThemedText type="small" themeColor="textMuted" style={styles.note}>
-          맞힌 날·아쉬운 날이에요. 청력 검사가 아니에요.
-        </ThemedText>
-        <Ling6PhonemeGrid records={rows} />
-        <View style={styles.legendRow}>
-          <LegendSwatch kind="pass" label="맞춤" />
-          <LegendSwatch kind="fail" label="아쉬움" />
-        </View>
-      </Card>
+      {weakness.ready ? (
+        <Card style={styles.card}>
+          <ThemedText type="smallBold">최근 7번</ThemedText>
+          <Ling6WeaknessBars snapshot={weakness} />
+          {weakness.copy ? (
+            <ThemedText type="smallBold" style={styles.weaknessCopy}>
+              {weakness.copy}
+            </ThemedText>
+          ) : null}
+        </Card>
+      ) : null}
 
       <Card style={styles.card}>
         <ThemedText type="smallBold">맞힌 개수 변화</ThemedText>
-        <Ling6PassTrend records={rows} />
+        {showTrend ? (
+          <>
+            <ThemedText type="smallBold" style={styles.howToRead}>
+              높을수록 더 많이 맞춤
+            </ThemedText>
+            <Ling6PassTrend records={rows} />
+          </>
+        ) : (
+          <ThemedText
+            type="small"
+            themeColor="textMuted"
+            style={styles.emptyTrend}
+          >
+            {EMPTY_TREND_COPY}
+          </ThemedText>
+        )}
       </Card>
     </View>
   );
 }
 
-function LegendSwatch({
-  kind,
-  label,
-}: Readonly<{ kind: "pass" | "fail"; label: string }>) {
+function Ling6WeaknessBars({
+  snapshot,
+}: Readonly<{ snapshot: Ling6WeaknessSnapshot }>) {
   const theme = useTheme();
-  return (
-    <View style={styles.legendItem}>
-      <View
-        style={[
-          styles.swatch,
-          {
-            backgroundColor: kind === "pass" ? theme.positive : "#E8D0D0",
-          },
-        ]}
-      />
-      <ThemedText
-        type="small"
-        themeColor="textMuted"
-        style={styles.legendLabel}
-      >
-        {label}
-      </ThemedText>
-    </View>
-  );
-}
-
-function Ling6PhonemeGrid({
-  records,
-}: Readonly<{ records: readonly SavedLing6Record[] }>) {
-  const theme = useTheme();
+  const highlighted = new Set(snapshot.highlighted);
 
   return (
-    <View style={styles.gridRow}>
-      <View style={styles.labelCol}>
-        <View style={styles.dateRow} />
-        {LING6_SOUNDS.map((sound) => (
-          <View key={sound.id} style={styles.phonemeLabel}>
-            <ThemedText type="smallBold" style={styles.phonemeKo}>
-              {sound.label}
-            </ThemedText>
+    <View style={styles.barsRow}>
+      {LING6_SOUNDS.map((sound) => {
+        const missCount = snapshot.missCounts[sound.id];
+        const isHot = highlighted.has(sound.id);
+        const fillH =
+          missCount <= 0
+            ? BAR_STUB_H
+            : Math.max(
+                BAR_STUB_H,
+                (missCount / LING6_WEAKNESS_WINDOW) * BAR_MAX_H,
+              );
+
+        return (
+          <View key={sound.id} style={styles.barCol}>
+            <View
+              accessibilityLabel={`${sound.label} /${sound.ipa}/ 아쉬움 ${missCount}회`}
+              style={styles.barTrack}
+            >
+              <View
+                style={[
+                  styles.barFill,
+                  {
+                    height: fillH,
+                    backgroundColor: isHot ? theme.highlight : BAR_MUTED,
+                  },
+                ]}
+              />
+            </View>
             <ThemedText
               type="small"
-              themeColor="textMuted"
-              style={styles.phonemeIpa}
+              themeColor={isHot ? "text" : "textMuted"}
+              style={styles.barIpa}
             >
               /{sound.ipa}/
             </ThemedText>
           </View>
-        ))}
-      </View>
-
-      <ScrollView
-        horizontal
-        nestedScrollEnabled
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.gridScroll}
-      >
-        <View>
-          <View style={styles.dateRow}>
-            {records.map((record) => (
-              <ThemedText
-                key={`d-${record.dateKey}`}
-                type="small"
-                themeColor="textMuted"
-                style={styles.dateLabel}
-              >
-                {formatDateKeyShort(record.dateKey)}
-              </ThemedText>
-            ))}
-          </View>
-          {LING6_SOUNDS.map((sound) => (
-            <View key={sound.id} style={styles.cellRow}>
-              {records.map((record) => {
-                const passed = record.summary.byPhoneme[sound.id];
-                return (
-                  <View
-                    key={`${sound.id}-${record.dateKey}`}
-                    accessibilityLabel={`${sound.label} ${formatDateKeyShort(record.dateKey)} ${passed ? "맞춤" : "아쉬움"}`}
-                    style={[
-                      styles.cell,
-                      {
-                        backgroundColor: passed ? theme.positive : "#E8D0D0",
-                      },
-                    ]}
-                  />
-                );
-              })}
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+        );
+      })}
     </View>
   );
 }
@@ -264,8 +181,8 @@ function Ling6PassTrend({
     .join(" ");
 
   const ticks = [0, 3, 6];
-  const first = records[0];
-  const last = records[records.length - 1];
+  const first = records.at(0);
+  const last = records.at(-1);
 
   return (
     <View style={styles.chartWrap}>
@@ -351,72 +268,47 @@ const styles = StyleSheet.create({
   card: {
     gap: Spacing.two,
   },
-  note: {
-    fontSize: 12,
+  howToRead: {
+    fontSize: 13,
     lineHeight: 18,
   },
-  legendRow: {
-    flexDirection: "row",
-    gap: Spacing.three,
-    marginTop: Spacing.one,
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.one,
-  },
-  swatch: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
-  },
-  legendLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  gridRow: {
-    flexDirection: "row",
-    marginTop: Spacing.one,
-  },
-  labelCol: {
-    width: LABEL_W,
-  },
-  gridScroll: {
-    paddingRight: Spacing.two,
-  },
-  dateRow: {
-    flexDirection: "row",
-    height: ROW_H,
-    alignItems: "center",
-  },
-  dateLabel: {
-    width: COL_W,
-    fontSize: 10,
-    lineHeight: 14,
+  emptyTrend: {
+    fontSize: 12.5,
+    lineHeight: 18,
     textAlign: "center",
+    paddingVertical: Spacing.three,
   },
-  phonemeLabel: {
-    height: ROW_H,
-    justifyContent: "center",
+  barsRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: Spacing.one,
+    marginTop: Spacing.one,
   },
-  phonemeKo: {
-    fontSize: 12,
+  barCol: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
+  },
+  barTrack: {
+    width: "70%",
+    height: BAR_MAX_H,
+    justifyContent: "flex-end",
+    backgroundColor: BAR_TRACK_BG,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  barFill: {
+    width: "100%",
+    borderRadius: 4,
+  },
+  barIpa: {
+    fontSize: 11,
     lineHeight: 14,
   },
-  phonemeIpa: {
-    fontSize: 10,
-    lineHeight: 12,
-  },
-  cellRow: {
-    flexDirection: "row",
-    height: ROW_H,
-    alignItems: "center",
-  },
-  cell: {
-    width: CELL,
-    height: CELL,
-    marginHorizontal: (COL_W - CELL) / 2,
-    borderRadius: 4,
+  weaknessCopy: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   chartWrap: {
     gap: Spacing.one,

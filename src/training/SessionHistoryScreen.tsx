@@ -1,6 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -9,12 +9,18 @@ import { ActionButton } from "@/components/ui/action-button";
 import { Card, CardDivider } from "@/components/ui/card";
 import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { SummaryCard, SummaryCardHeader } from "@/training/SummaryCard";
 import { TrendChart, type TrendPoint } from "@/training/TrendChart";
-import { endReasonLabel } from "@/training/freq/freqSession";
-import { sessionModeLabel } from "@/training/sessionMode";
 import {
-  deleteSavedSession,
+  DEFAULT_START_DEPTH_DB,
+  MAX_DEPTH_DB,
+  MIN_DEPTH_DB,
+} from "@/training/am/amStaircase";
+import {
+  DEFAULT_START_DELTA_CENTS,
+  MAX_DELTA_CENTS,
+  MIN_DELTA_CENTS,
+} from "@/training/freq/freqStaircase";
+import {
   deleteSavedSessionsByTrack,
   isCountedInStats,
   listSavedSessions,
@@ -24,100 +30,11 @@ import {
 
 type SessionHistoryScreenProps = {
   onBack?: () => void;
-  /** 하단에서 지울 트랙. 목록·그래프는 전부 보여 준다. 없으면 지우기 영역 숨김. */
+  /** 이 탭에서 볼·지울 트랙. 그래프·평균도 이 kind만. 없으면 지우기 숨김·표시는 전체. */
   clearTracks?: readonly SessionTrack[];
 };
 
-type HistoryCardContent = {
-  trackTitle: string;
-  savedAt: string;
-  trialCount: number;
-  correctCount: number;
-  reversalCount: number;
-  meanLabel: string;
-  meanValue: string;
-  easiestValue: string;
-  hardestValue: string;
-  reason: string | null;
-};
-
-function formatSavedAt(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) {
-    return iso;
-  }
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${y}-${m}-${day} ${hh}:${mm}`;
-}
-
-/** cent 격차 표시(정수 반올림). 값 없음은 '—'. 점수·역치 아님. */
-function centsText(value: number | null): string {
-  return value == null ? "—" : `약 ${Math.round(value)}`;
-}
-
-/** 변조 깊이(dB) 표시(소수 1자리). 값 없음은 '—'. */
-function depthText(value: number | null): string {
-  return value == null ? "—" : `약 ${value.toFixed(1)}`;
-}
-
-/** 트랙별로 다른 부분만 담는다. 공통 필드는 `toCardContent`에서 채운다. */
-type TrackView = {
-  trackTitle: string;
-  meanLabel: string;
-  meanValue: string;
-  easiestValue: string;
-  hardestValue: string;
-};
-
-function trackView(record: SavedSessionRecord): TrackView {
-  if (record.track === "freq") {
-    const { summary } = record;
-    return {
-      trackTitle: "다른 음 찾기",
-      meanLabel: "음높이 차이",
-      meanValue: centsText(summary.meanReversalDeltaCents),
-      easiestValue: centsText(summary.easiestDeltaCents),
-      hardestValue: centsText(summary.hardestDeltaCents),
-    };
-  }
-  if (record.track === "am") {
-    const { summary } = record;
-    return {
-      trackTitle: "떨림 찾기",
-      meanLabel: "떨림 정도",
-      meanValue: depthText(summary.meanReversalDepthDb),
-      easiestValue: depthText(summary.easiestDepthDb),
-      hardestValue: depthText(summary.hardestDepthDb),
-    };
-  }
-  const { summary } = record;
-  return {
-    trackTitle: "높낮이 비교",
-    meanLabel: "음높이 차이",
-    meanValue: centsText(summary.meanReversalCents),
-    easiestValue: centsText(summary.easiestCents),
-    hardestValue: centsText(summary.hardestCents),
-  };
-}
-
-function toCardContent(record: SavedSessionRecord): HistoryCardContent {
-  const { summary } = record;
-  const view = trackView(record);
-  return {
-    ...view,
-    savedAt: formatSavedAt(record.savedAt),
-    trialCount: summary.trialCount,
-    correctCount: summary.correctCount,
-    reversalCount: summary.reversalCount,
-    reason: endReasonLabel(summary.endReason) || null,
-  };
-}
-
-/** 트랙 카드 제목(집계 줄에서 재사용). */
+/** 트랙 제목(집계 줄·지우기에서 재사용). */
 const TRACK_LABEL: Record<SessionTrack, string> = {
   pitch2: "높낮이 비교",
   freq: "다른 음 찾기",
@@ -199,7 +116,7 @@ function AggregateCard({ data }: Readonly<{ data: Aggregate }>) {
         </View>
       </View>
 
-      {trackLine ? (
+      {trackLine.includes(" · ") ? (
         <>
           <CardDivider />
           <ThemedText
@@ -224,12 +141,12 @@ function AggregateCard({ data }: Readonly<{ data: Aggregate }>) {
 }
 
 // ─── 추이 그래프 ────────────────────────────────────────────────────────
-// 데이터는 `sessionStore`에 이미 저장됨. y값 = 대표값(meanReversal…, =「들을 수
-// 있는 최소 차이」). 대표값이 없는(짧은) 세션은 제외하고, **2회 이상**일 때만 그린다.
+// 데이터는 `sessionStore`에 이미 저장됨. y값 = 대표값(meanReversal…).
+// 대표값이 없는(짧은) 세션은 제외하고, **2회 이상**일 때만 그린다.
+// 출발선(200 / 0)은 기준선만. 세션 점으로 넣지 않음.
 
-/** 짧은 세션 등으로 대표값이 부족할 때의 안내(용어 순화). */
-const EMPTY_TREND_COPY =
-  "들을 수 있는 최소 차이가 나온 세션이 2회 이상이면 변화를 그려 드립니다";
+/** 짧은 세션 등으로 대표값이 부족할 때의 안내. */
+const EMPTY_TREND_COPY = "숫자가 나온 연습이 2회 이상이면 선을 그려 드려요";
 
 /** cent(음 높이 차이) 큰 값 표기. 단위어는 카드가 따로 붙인다. 점수·역치 아님. */
 function centPlain(v: number): string {
@@ -268,6 +185,31 @@ function collectPoints(
   return points;
 }
 
+/** `clearTracks`가 있으면 그 kind만. 없으면 필터 없음(호환). */
+function visibleTrackSet(
+  clearTracks: readonly SessionTrack[],
+): ReadonlySet<SessionTrack> | null {
+  return clearTracks.length > 0 ? new Set(clearTracks) : null;
+}
+
+function filterRowsByTracks(
+  rows: readonly SavedSessionRecord[],
+  visible: ReadonlySet<SessionTrack> | null,
+): SavedSessionRecord[] {
+  if (visible == null) {
+    return [...rows];
+  }
+  return rows.filter((row) => visible.has(row.track));
+}
+
+function pitchGraphKeys(
+  visible: ReadonlySet<SessionTrack> | null,
+): GraphATrack[] {
+  return GRAPH_A_TRACKS.map((track) => track.key).filter(
+    (key) => visible == null || visible.has(key),
+  );
+}
+
 /** 그래프 A(cent) 트랙 선택 칩. pitch2 vs freq는 과제가 달라 겹치지 않고 하나씩 본다. */
 const GRAPH_A_TRACKS = [
   { key: "pitch2", label: "높낮이 비교" },
@@ -279,33 +221,40 @@ type GraphATrack = (typeof GRAPH_A_TRACKS)[number]["key"];
 function TrackChips({
   value,
   onChange,
-}: Readonly<{ value: GraphATrack; onChange: (next: GraphATrack) => void }>) {
+  allowed,
+}: Readonly<{
+  value: GraphATrack;
+  onChange: (next: GraphATrack) => void;
+  allowed: readonly GraphATrack[];
+}>) {
   const theme = useTheme();
   return (
     <View style={styles.chipRow}>
-      {GRAPH_A_TRACKS.map((track) => {
-        const active = track.key === value;
-        return (
-          <Pressable
-            key={track.key}
-            onPress={() => onChange(track.key)}
-            style={[
-              styles.chip,
-              {
-                borderColor: active ? theme.accentBorder : theme.border,
-                backgroundColor: active ? theme.accentTint : theme.surface,
-              },
-            ]}
-          >
-            <ThemedText
-              type="small"
-              style={{ color: active ? theme.accent : theme.textSecondary }}
+      {GRAPH_A_TRACKS.filter((track) => allowed.includes(track.key)).map(
+        (track) => {
+          const active = track.key === value;
+          return (
+            <Pressable
+              key={track.key}
+              onPress={() => onChange(track.key)}
+              style={[
+                styles.chip,
+                {
+                  borderColor: active ? theme.accentBorder : theme.border,
+                  backgroundColor: active ? theme.accentTint : theme.surface,
+                },
+              ]}
             >
-              {track.label}
-            </ThemedText>
-          </Pressable>
-        );
-      })}
+              <ThemedText
+                type="small"
+                style={{ color: active ? theme.accent : theme.textSecondary }}
+              >
+                {track.label}
+              </ThemedText>
+            </Pressable>
+          );
+        },
+      )}
     </View>
   );
 }
@@ -354,64 +303,78 @@ function TrendGraphCard({
   points,
   formatPlain,
   unitLabel,
-  caption,
+  howToRead,
+  startGuide,
+  referenceValue,
+  referenceLabel,
   chips,
 }: Readonly<{
   title: string;
   points: readonly TrendPoint[];
   /** 큰 값·델타 표기(단위어 없음). */
   formatPlain: (v: number) => string;
-  /** 큰 값 옆 단위 문구. 예: '음 높이 차이 · 최근' / 'dB · 최근'. */
+  /** 큰 값 옆 단위 문구. 예: '음높이 차이 · 최근' / 'dB · 최근'. */
   unitLabel: string;
-  /** 카드 하단 설명(순화). */
-  caption: string;
+  /** 숫자 바로 아래. 낮을수록 읽는 법. */
+  howToRead: string;
+  /** 출발·범위. 가짜 점 아님. */
+  startGuide: string;
+  referenceValue: number;
+  referenceLabel: string;
   chips?: ReactNode;
 }>) {
   const hasEnough = points.length >= 2;
-  const recent = points.length > 0 ? points[points.length - 1].value : null;
+  const recent = points.at(-1)?.value ?? null;
 
   return (
     <Card size="large" style={styles.graphCard}>
       <View style={styles.graphHeader}>
-        <View style={styles.graphHeaderLeft}>
-          <ThemedText
-            type="smallBold"
-            themeColor="accent"
-            style={styles.graphTitle}
-          >
-            {title}
-          </ThemedText>
-          {hasEnough && recent != null ? (
-            <View style={styles.recentRow}>
-              <ThemedText type="metric" style={styles.recentValue}>
-                {formatPlain(recent)}
-              </ThemedText>
-              <ThemedText
-                themeColor="textMuted"
-                type="small"
-                style={styles.recentUnit}
-              >
-                {unitLabel}
-              </ThemedText>
-            </View>
-          ) : null}
-        </View>
+        <ThemedText
+          type="smallBold"
+          themeColor="accent"
+          style={styles.graphTitle}
+        >
+          {title}
+        </ThemedText>
+        {hasEnough && recent != null ? (
+          <View style={styles.recentRow}>
+            <ThemedText type="metric" style={styles.recentValue}>
+              {formatPlain(recent)}
+            </ThemedText>
+            <ThemedText
+              themeColor="textMuted"
+              type="small"
+              style={styles.recentUnit}
+            >
+              {unitLabel}
+            </ThemedText>
+          </View>
+        ) : null}
         <ScoreFraming points={points} formatPlain={formatPlain} />
+        {hasEnough ? (
+          <>
+            <ThemedText type="smallBold" style={styles.howToRead}>
+              {howToRead}
+            </ThemedText>
+            <ThemedText
+              type="small"
+              themeColor="textMuted"
+              style={styles.startGuide}
+            >
+              {startGuide}
+            </ThemedText>
+          </>
+        ) : null}
       </View>
 
       {chips}
 
       {hasEnough ? (
-        <>
-          <TrendChart points={points} />
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            style={styles.graphCaption}
-          >
-            {caption}
-          </ThemedText>
-        </>
+        <TrendChart
+          points={points}
+          referenceValue={referenceValue}
+          referenceLabel={referenceLabel}
+        />
       ) : (
         <ThemedText
           themeColor="textMuted"
@@ -425,56 +388,8 @@ function TrendGraphCard({
   );
 }
 
-function HistoryCard({
-  record,
-  onDelete,
-}: Readonly<{
-  record: SavedSessionRecord;
-  onDelete: (id: string) => void;
-}>) {
-  const content = toCardContent(record);
-  // 연습/측정 구분을 목록에서 보이게. mode 없는 구버전은 배지 없음.
-  const badge = record.mode ? sessionModeLabel(record.mode) : null;
-
-  return (
-    <View>
-      <SummaryCard
-        header={
-          <SummaryCardHeader
-            title={content.trackTitle}
-            savedAt={content.savedAt}
-            badge={badge}
-          />
-        }
-        trialCount={content.trialCount}
-        correctCount={content.correctCount}
-        reversalCount={content.reversalCount}
-        meanLabel={content.meanLabel}
-        meanValue={content.meanValue}
-        easiestValue={content.easiestValue}
-        hardestValue={content.hardestValue}
-        footnote={content.reason}
-      />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="이 기록 삭제"
-        onPress={() => onDelete(record.id)}
-        style={styles.rowDelete}
-      >
-        <ThemedText
-          themeColor="textMuted"
-          type="small"
-          style={styles.rowDeleteLabel}
-        >
-          삭제
-        </ThemedText>
-      </Pressable>
-    </View>
-  );
-}
-
 /**
- * 로컬 연습 기록 목록(정적). AsyncStorage 요약만. 진단·점수 UI 아님.
+ * 로컬 연습 기록 통계(정적). AsyncStorage 요약만. 진단·점수 UI 아님.
  */
 export function SessionHistoryScreen({
   onBack,
@@ -552,66 +467,64 @@ export function SessionHistoryScreen({
     [doClearTrack],
   );
 
-  const doDeleteOne = useCallback(
-    (id: string) => {
-      void deleteSavedSession(id)
-        .then(() => {
-          reload();
-        })
-        .catch(() => {
-          Alert.alert("오류", "기록을 지우지 못했어요.");
-        });
-    },
-    [reload],
-  );
+  const visible = visibleTrackSet(clearTracks);
+  const visibleRows = filterRowsByTracks(rows, visible);
 
-  const confirmDeleteOne = useCallback(
-    (id: string) => {
-      Alert.alert("기록 삭제", "이 기록을 지울까요? 되돌릴 수 없어요.", [
-        { text: "취소", style: "cancel" },
-        {
-          text: "삭제",
-          style: "destructive",
-          onPress: () => {
-            doDeleteOne(id);
-          },
-        },
-      ]);
-    },
-    [doDeleteOne],
-  );
-
-  const hasRows = rows.length > 0;
-
-  // 통계·추세는 측정(measure) 세션만 집계한다. 연습(practice)은 목록에만 남긴다.
+  // 통계·추세는 연습(measure)만. 귀풀기는 저장하지 않음. 남은 구기록은 집계에서 제외.
   // mode가 없는 구버전 레코드는 측정으로 간주(집계 포함).
-  const statRows = rows.filter(isCountedInStats);
+  const statRows = visibleRows.filter(isCountedInStats);
   const hasStatRows = statRows.length > 0;
+
+  const pitchKeys = pitchGraphKeys(visible);
+  const graphPick: GraphATrack = pitchKeys.includes(graphTrackA)
+    ? graphTrackA
+    : (pitchKeys[0] ?? "pitch2");
+  const showPitchTrend = pitchKeys.length > 0;
+  const showAmTrend = visible == null || visible.has("am");
+  const showPitchChips = pitchKeys.length >= 2;
 
   const graphAPoints = collectPoints(
     statRows,
-    graphTrackA === "pitch2" ? pickPitchCents : pickFreqCents,
+    graphPick === "pitch2" ? pickPitchCents : pickFreqCents,
   );
   const amPoints = collectPoints(statRows, pickAmDepthDb);
 
-  const listHeader = hasStatRows ? (
+  const statsBody = hasStatRows ? (
     <View style={styles.headerStack}>
       <AggregateCard data={computeAggregate(statRows)} />
-      <TrendGraphCard
-        title="들을 수 있는 최소 차이 변화"
-        chips={<TrackChips value={graphTrackA} onChange={setGraphTrackA} />}
-        points={graphAPoints}
-        formatPlain={centPlain}
-        unitLabel="음높이 차이 · 최근"
-        caption="들을 수 있는 가장 작은 음높이 차이예요. 낮을수록 더 작은 차이까지 들려요."
-      />
-      <TrendGraphCard
-        title="떨림 변화"
-        points={amPoints}
-        formatPlain={dbPlain}
-        unitLabel="dB · 최근"
-        caption="느낄 수 있는 가장 얕은 떨림이에요. 낮을수록 더 얕은 떨림까지 느껴요."
-      />
+      {showPitchTrend ? (
+        <TrendGraphCard
+          title="음높이 차이 변화"
+          chips={
+            showPitchChips ? (
+              <TrackChips
+                value={graphPick}
+                onChange={setGraphTrackA}
+                allowed={pitchKeys}
+              />
+            ) : undefined
+          }
+          points={graphAPoints}
+          formatPlain={centPlain}
+          unitLabel="음높이 차이 · 최근"
+          howToRead="작을수록 더 비슷한 소리"
+          startGuide={`매 연습은 ${DEFAULT_START_DELTA_CENTS}에서 시작 · 대략 ${MIN_DELTA_CENTS}~${MAX_DELTA_CENTS}`}
+          referenceValue={DEFAULT_START_DELTA_CENTS}
+          referenceLabel={`시작 ${DEFAULT_START_DELTA_CENTS}`}
+        />
+      ) : null}
+      {showAmTrend ? (
+        <TrendGraphCard
+          title="떨림 변화"
+          points={amPoints}
+          formatPlain={dbPlain}
+          unitLabel="dB · 최근"
+          howToRead="작을수록 더 얕은 떨림"
+          startGuide={`매 연습은 ${DEFAULT_START_DEPTH_DB}에서 시작 · 대략 ${MAX_DEPTH_DB}~${MIN_DEPTH_DB}`}
+          referenceValue={DEFAULT_START_DEPTH_DB}
+          referenceLabel={`시작 ${DEFAULT_START_DEPTH_DB}`}
+        />
+      ) : null}
     </View>
   ) : null;
 
@@ -646,77 +559,79 @@ export function SessionHistoryScreen({
           </ThemedText>
         ) : null}
 
-        {!loading && !error && !hasRows ? (
+        {!loading && !error && !hasStatRows ? (
           <ThemedText themeColor="textMuted" type="small" style={styles.notice}>
             아직 기록된 연습이 없어요
           </ThemedText>
         ) : null}
 
-        <FlatList
-          data={rows}
-          keyExtractor={(item) => item.id}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={listHeader}
-          renderItem={({ item }) => (
-            <HistoryCard record={item} onDelete={confirmDeleteOne} />
-          )}
-        />
+        {statsBody ? (
+          <ScrollView
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {statsBody}
+          </ScrollView>
+        ) : (
+          <View style={styles.list} />
+        )}
 
-        {onBack ? (
-          <View style={styles.actions}>
-            <ActionButton
-              fill={false}
-              variant="primary"
-              label="돌아가기"
-              onPress={onBack}
-            />
-          </View>
-        ) : null}
-
-        {clearTracks.length > 0 ? (
-          <View style={styles.dangerZone}>
-            <CardDivider />
-            {clearTracks.length > 1 ? (
-              <ThemedText
-                themeColor="textMuted"
-                type="small"
-                style={styles.clearHint}
-              >
-                연습별로 기록을 지워요
-              </ThemedText>
-            ) : null}
-            {clearTracks.map((track) => {
-              const hasTrack = rows.some((row) => row.track === track);
-              const busy = clearingTrack != null;
-              const disabled = busy || !hasTrack;
-              return (
-                <Pressable
-                  key={track}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${TRACK_LABEL[track]} 기록 지우기`}
-                  accessibilityState={{ disabled }}
-                  disabled={disabled}
-                  onPress={() => confirmClearTrack(track)}
-                  style={({ pressed }) => [
-                    styles.clearTrack,
-                    disabled && styles.clearTrackDisabled,
-                    pressed && !disabled && styles.clearTrackPressed,
-                  ]}
-                >
+        {onBack || clearTracks.length > 0 ? (
+          <View style={styles.footer}>
+            {onBack ? (
+              <ActionButton
+                fill={false}
+                variant="primary"
+                label="돌아가기"
+                onPress={onBack}
+              />
+            ) : (
+              <View />
+            )}
+            {clearTracks.length > 0 ? (
+              <View style={styles.dangerZone}>
+                {clearTracks.length > 1 ? (
                   <ThemedText
-                    themeColor="danger"
+                    themeColor="textMuted"
                     type="small"
-                    style={styles.clearTrackLabel}
+                    style={styles.clearHint}
                   >
-                    {clearingTrack === track
-                      ? "지우는 중…"
-                      : `${TRACK_LABEL[track]} 지우기`}
+                    연습별로 기록을 지워요
                   </ThemedText>
-                </Pressable>
-              );
-            })}
+                ) : null}
+                {clearTracks.map((track) => {
+                  const hasTrack = rows.some((row) => row.track === track);
+                  const busy = clearingTrack != null;
+                  const disabled = busy || !hasTrack;
+                  return (
+                    <Pressable
+                      key={track}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${TRACK_LABEL[track]} 기록 지우기`}
+                      accessibilityState={{ disabled }}
+                      disabled={disabled}
+                      onPress={() => confirmClearTrack(track)}
+                      style={({ pressed }) => [
+                        styles.clearTrack,
+                        disabled && styles.clearTrackDisabled,
+                        pressed && !disabled && styles.clearTrackPressed,
+                      ]}
+                    >
+                      <ThemedText
+                        themeColor="danger"
+                        type="small"
+                        style={styles.clearTrackLabel}
+                      >
+                        {clearingTrack === track
+                          ? "지우는 중…"
+                          : `${TRACK_LABEL[track]} 지우기`}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
           </View>
         ) : null}
       </SafeAreaView>
@@ -766,13 +681,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   graphHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: Spacing.two,
-  },
-  graphHeaderLeft: {
-    flexShrink: 1,
     gap: Spacing.half,
   },
   graphTitle: {
@@ -793,10 +701,16 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   framingSub: {
-    fontSize: 11.5,
-    lineHeight: 16,
-    flexShrink: 1,
-    textAlign: "right",
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  howToRead: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  startGuide: {
+    fontSize: 12,
+    lineHeight: 17,
   },
   chipRow: {
     flexDirection: "row",
@@ -807,10 +721,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.three - 4,
     paddingVertical: Spacing.one + 2,
-  },
-  graphCaption: {
-    fontSize: 12.5,
-    lineHeight: 18,
   },
   graphEmpty: {
     fontSize: 12.5,
@@ -841,21 +751,15 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: "center",
   },
-  rowDelete: {
-    alignSelf: "flex-end",
-    minHeight: 48,
-    justifyContent: "center",
-    paddingHorizontal: Spacing.two,
-  },
-  rowDeleteLabel: {
-    fontSize: 12.5,
-    lineHeight: 18,
-  },
-  actions: {
+  footer: {
     flexDirection: "row",
-    justifyContent: "center",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: Spacing.two,
   },
   dangerZone: {
+    flexShrink: 1,
+    alignItems: "flex-end",
     gap: Spacing.one,
   },
   clearHint: {

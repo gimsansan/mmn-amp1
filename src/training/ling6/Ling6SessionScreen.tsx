@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   BottomTabInset,
   MaxContentWidth,
@@ -28,6 +29,7 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
 import { Ling6ProgressPanel } from "@/training/ling6/Ling6ProgressPanel";
+import { TabStatsScreen } from "@/training/TabStatsScreen";
 import {
   collectPhonemeResults,
   createLing6Trials,
@@ -89,6 +91,7 @@ export function Ling6SessionScreen() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedLing6Record[]>([]);
   const [clearing, setClearing] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
@@ -163,7 +166,23 @@ export function Ling6SessionScreen() {
     };
   }, []);
 
+  const openStats = useCallback(() => {
+    void refreshHistory();
+    setShowStats(true);
+  }, [refreshHistory]);
+
+  const closeStats = useCallback(() => {
+    setShowStats(false);
+  }, []);
+
   useEffect(() => {
+    if (showStats) {
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        closeStats();
+        return true;
+      });
+      return () => sub.remove();
+    }
     if (phase === "idle" || phase === "summary") {
       return;
     }
@@ -172,7 +191,7 @@ export function Ling6SessionScreen() {
       return true;
     });
     return () => sub.remove();
-  }, [phase, resetRun]);
+  }, [closeStats, phase, resetRun, showStats]);
 
   const playCurrent = useCallback(async (index: number) => {
     const trial = trialsRef.current[index];
@@ -282,12 +301,31 @@ export function Ling6SessionScreen() {
     void finishSession();
   }, [finishSession]);
 
+  if (showStats) {
+    return (
+      <TabStatsScreen
+        title="연습 기록"
+        onBack={closeStats}
+        empty={history.length === 0}
+      >
+        <Ling6ProgressPanel records={history} />
+        <Ling6ClearHistoryButton
+          clearing={clearing}
+          onPress={confirmClearHistory}
+        />
+      </TabStatsScreen>
+    );
+  }
+
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <ThemedText type="screenTitle">링 6</ThemedText>
+            {phase === "idle" || phase === "summary" ? (
+              <StatsEntryButton onPress={openStats} />
+            ) : null}
           </View>
           <ThemedText
             themeColor="textSecondary"
@@ -329,13 +367,6 @@ export function Ling6SessionScreen() {
                   <PreviewCell key={sound.id} sound={sound} />
                 ))}
               </View>
-            ) : null}
-            <Ling6ProgressPanel records={history} />
-            {history.length > 0 ? (
-              <Ling6ClearHistoryButton
-                clearing={clearing}
-                onPress={confirmClearHistory}
-              />
             ) : null}
           </ScrollView>
         ) : null}
@@ -385,13 +416,6 @@ export function Ling6SessionScreen() {
               </Card>
             ) : null}
             {saveNote ? <Pill stretch icon="check" label={saveNote} /> : null}
-            <Ling6ProgressPanel records={history} />
-            {history.length > 0 ? (
-              <Ling6ClearHistoryButton
-                clearing={clearing}
-                onPress={confirmClearHistory}
-              />
-            ) : null}
           </ScrollView>
         ) : null}
 

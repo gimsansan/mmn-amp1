@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   BottomTabInset,
   MaxContentWidth,
@@ -27,6 +28,7 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
 import { SessionProgressBar } from "@/training/SessionProgressBar";
+import { TabStatsScreen } from "@/training/TabStatsScreen";
 import {
   createTwoCharTrials,
   nextTwoCharListIndex,
@@ -85,6 +87,7 @@ export function WrsTwoCharScreen({
   const [lastError, setLastError] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedTwoCharRecord[]>([]);
   const [clearing, setClearing] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
@@ -159,6 +162,13 @@ export function WrsTwoCharScreen({
   }, []);
 
   useEffect(() => {
+    if (showStats) {
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        setShowStats(false);
+        return true;
+      });
+      return () => sub.remove();
+    }
     if (phase === "idle" || phase === "summary") {
       const sub = BackHandler.addEventListener("hardwareBackPress", () => {
         onBack();
@@ -171,7 +181,7 @@ export function WrsTwoCharScreen({
       return true;
     });
     return () => sub.remove();
-  }, [onBack, phase, resetRun]);
+  }, [onBack, phase, resetRun, showStats]);
 
   const playCurrent = useCallback(async (index: number) => {
     const trial = trialsRef.current[index];
@@ -281,12 +291,37 @@ export function WrsTwoCharScreen({
     void finishSession();
   }, [finishSession]);
 
+  const openStats = useCallback(() => {
+    void refreshHistory();
+    setShowStats(true);
+  }, [refreshHistory]);
+
+  const closeStats = useCallback(() => {
+    setShowStats(false);
+  }, []);
+
+  if (showStats) {
+    return (
+      <TabStatsScreen
+        title="연습 기록"
+        onBack={closeStats}
+        empty={history.length === 0}
+      >
+        <WrsProgressPanel records={history} />
+        <ClearHistoryButton clearing={clearing} onPress={confirmClearHistory} />
+      </TabStatsScreen>
+    );
+  }
+
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <ThemedText type="screenTitle">두 글자</ThemedText>
+            {phase === "idle" || phase === "summary" ? (
+              <StatsEntryButton onPress={openStats} />
+            ) : null}
           </View>
           <ThemedText
             themeColor="textSecondary"
@@ -322,13 +357,6 @@ export function WrsTwoCharScreen({
                 사람 말과 다를 수 있어요.
               </ThemedText>
             </Card>
-            <WrsProgressPanel records={history} />
-            {history.length > 0 ? (
-              <ClearHistoryButton
-                clearing={clearing}
-                onPress={confirmClearHistory}
-              />
-            ) : null}
           </ScrollView>
         ) : null}
 
@@ -369,13 +397,6 @@ export function WrsTwoCharScreen({
               </Card>
             ) : null}
             {saveNote ? <Pill stretch icon="check" label={saveNote} /> : null}
-            <WrsProgressPanel records={history} />
-            {history.length > 0 ? (
-              <ClearHistoryButton
-                clearing={clearing}
-                onPress={confirmClearHistory}
-              />
-            ) : null}
           </ScrollView>
         ) : null}
 

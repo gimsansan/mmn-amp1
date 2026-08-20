@@ -1,6 +1,15 @@
 import { useId, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Defs,
+  G,
+  Line,
+  LinearGradient,
+  Path,
+  Stop,
+  Text as SvgText,
+} from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -22,17 +31,25 @@ const DOT_R = 3.5;
 export type TrendChartProps = {
   /** 시간순(오래→최근). 최소 2점. */
   points: readonly TrendPoint[];
+  /** 출발선. 세션 점이 아님. 있으면 y범위에만 넣고 점선으로 그림. */
+  referenceValue?: number;
+  /** 점선 옆 짧은 라벨. 예: 시작 200 */
+  referenceLabel?: string;
 };
 
 /**
  * 경량 추이 라인 그래프. **Skia 미사용**(react-native-svg).
  *
  * **방향(2026-08-12 목업 채택)**: 값이 클수록 위, 작을수록 아래.
- * 대표값(들을 수 있는 최소 차이)은 작을수록 잘하는 것이라, 좋아질수록 선이 **내려간다**.
+ * 대표값은 작을수록 더 세밀한 연습이라, 숫자가 작아지면 선이 **내려간다**.
  * (이전 「위=잘함」 반전은 폐기 — 사용자 목업이 더 직관적이라 판단.)
  * 여기 값은 **점수·진단 역치가 아니다**(웰니스 방침).
  */
-export function TrendChart({ points }: Readonly<TrendChartProps>) {
+export function TrendChart({
+  points,
+  referenceValue,
+  referenceLabel,
+}: Readonly<TrendChartProps>) {
   const theme = useTheme();
   const [width, setWidth] = useState(0);
   // 한 화면에 그래프가 여러 개라 그라데이션 id가 겹치지 않게 고유값을 쓴다.
@@ -43,6 +60,9 @@ export function TrendChart({ points }: Readonly<TrendChartProps>) {
   };
 
   const values = points.map((p) => p.value);
+  if (referenceValue != null && Number.isFinite(referenceValue)) {
+    values.push(referenceValue);
+  }
   const min = Math.min(...values);
   const max = Math.max(...values);
   // 모든 값이 같으면 폭이 0 → 나눗셈 보호. 이때 선은 가운데 수평선이 된다.
@@ -65,12 +85,18 @@ export function TrendChart({ points }: Readonly<TrendChartProps>) {
     .join(' ');
 
   // 선 아래를 채우는 면(그라데이션). 마지막 점 → 바닥 → 첫 점 바닥으로 닫는다.
+  const lastX = xy.at(-1)?.x;
+  const firstX = xy.at(0)?.x;
   const areaPath =
-    xy.length > 0
-      ? `${linePath} L ${xy[xy.length - 1].x.toFixed(1)} ${baseY} L ${xy[0].x.toFixed(
-          1
-        )} ${baseY} Z`
+    lastX != null && firstX != null
+      ? `${linePath} L ${lastX.toFixed(1)} ${baseY} L ${firstX.toFixed(1)} ${baseY} Z`
       : '';
+
+  const ref = referenceValue;
+  const showReference = ref != null && Number.isFinite(ref) && width > 0;
+  const refY = showReference
+    ? PAD_TOP + ((max - ref) / span) * plotH
+    : 0;
 
   return (
     <View style={styles.wrap}>
@@ -85,6 +111,29 @@ export function TrendChart({ points }: Readonly<TrendChartProps>) {
             </Defs>
 
             <Path d={areaPath} fill={`url(#${gradientId})`} />
+            {showReference ? (
+              <G>
+                <Line
+                  x1={PAD_X}
+                  y1={refY}
+                  x2={width - PAD_X}
+                  y2={refY}
+                  stroke={theme.textMuted}
+                  strokeWidth={1}
+                  strokeDasharray="4 4"
+                />
+                {referenceLabel ? (
+                  <SvgText
+                    x={PAD_X}
+                    y={refY - 4}
+                    fontSize={9}
+                    fill={theme.textMuted}
+                  >
+                    {referenceLabel}
+                  </SvgText>
+                ) : null}
+              </G>
+            ) : null}
             <Path
               d={linePath}
               stroke={theme.accent}

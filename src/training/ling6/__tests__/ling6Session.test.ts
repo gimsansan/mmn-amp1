@@ -3,15 +3,20 @@ import {
   createLing6Trials,
   highFreqPassCount,
   isCompletePhonemeMap,
+  LING6_WEAKNESS_WINDOW,
   ling6HighFreqCopy,
   ling6ProgressCopy,
   ling6ResultCopy,
+  ling6WeaknessCopy,
+  ling6WeaknessSnapshot,
   passCountOf,
   scoreLing6Choice,
   SILENCE_TRIAL_COUNT,
   SOUND_TRIAL_COUNT,
   toDailySummary,
   TOTAL_TRIAL_COUNT,
+  type Ling6PhonemeMap,
+  type Ling6WeaknessDay,
 } from "@/training/ling6/ling6Session";
 import { LING6_SOUND_IDS } from "@/training/ling6/sounds";
 
@@ -114,5 +119,121 @@ describe("요약 문구", () => {
     ).toBe("고음(/s/·/ʃ/)이 지난주보다 좋아지고 있어요");
     expect(ling6HighFreqCopy(ALL_PASS, ALL_PASS)).toBeNull();
     expect(ling6HighFreqCopy(null, ALL_PASS)).toBeNull();
+  });
+});
+
+function dayMap(
+  dateKey: string,
+  misses: readonly string[],
+): Ling6WeaknessDay {
+  const byPhoneme = { ...ALL_PASS } as Ling6PhonemeMap;
+  for (const id of misses) {
+    byPhoneme[id as keyof Ling6PhonemeMap] = false;
+  }
+  return { dateKey, byPhoneme };
+}
+
+function sevenDays(
+  missPattern: readonly (readonly string[])[],
+): Ling6WeaknessDay[] {
+  return missPattern.map((misses, index) =>
+    dayMap(`2026-08-${String(20 - index).padStart(2, "0")}`, misses),
+  );
+}
+
+describe("링6 약점 창", () => {
+  it("7건이 안 모이면 표시하지 않는다", () => {
+    const rows = sevenDays([["s"], ["s"], ["s"], ["s"], ["s"], ["s"]]);
+    expect(rows).toHaveLength(6);
+    const snap = ling6WeaknessSnapshot(rows);
+    expect(snap.ready).toBe(false);
+    expect(snap.highlighted).toEqual([]);
+    expect(snap.copy).toBeNull();
+  });
+
+  it("4회 미만이면 강조·문구가 없다", () => {
+    const rows = sevenDays([
+      ["s"],
+      ["s"],
+      ["s"],
+      ["sh"],
+      ["m"],
+      [],
+      [],
+    ]);
+    const snap = ling6WeaknessSnapshot(rows);
+    expect(snap.ready).toBe(true);
+    expect(snap.missCounts.s).toBe(3);
+    expect(snap.highlighted).toEqual([]);
+    expect(snap.copy).toBeNull();
+  });
+
+  it("4회 이상 틀린 음소만 강조한다", () => {
+    const rows = sevenDays([
+      ["s"],
+      ["s"],
+      ["s"],
+      ["s"],
+      ["sh"],
+      ["m"],
+      [],
+    ]);
+    const snap = ling6WeaknessSnapshot(rows);
+    expect(snap.missCounts.s).toBe(4);
+    expect(snap.missCounts.sh).toBe(1);
+    expect(snap.highlighted).toEqual(["s"]);
+    expect(snap.copy).toBe("요즘 /s/가 아쉬운 날이 많아요");
+  });
+
+  it("4회 이상이 여러 개면 고정 순서대로 다 강조한다", () => {
+    const rows = sevenDays([
+      ["s", "sh"],
+      ["s", "sh"],
+      ["s", "sh"],
+      ["s", "sh"],
+      ["m"],
+      [],
+      [],
+    ]);
+    const snap = ling6WeaknessSnapshot(rows);
+    expect(snap.highlighted).toEqual(["sh", "s"]);
+    expect(snap.copy).toBe("요즘 /ʃ/·/s/가 아쉬운 날이 많아요");
+  });
+
+  it("최근 7건만 보고 더 오래된 날은 넣지 않는다", () => {
+    const recent = sevenDays([
+      ["s"],
+      ["s"],
+      ["s"],
+      ["s"],
+      [],
+      [],
+      [],
+    ]);
+    const older = dayMap("2026-08-01", ["s"]);
+    const snap = ling6WeaknessSnapshot([...recent, older]);
+    expect(snap.missCounts.s).toBe(4);
+    expect(snap.highlighted).toEqual(["s"]);
+  });
+
+  it("격차·2위만으로는 강조하지 않는다", () => {
+    const rows = sevenDays([
+      ["s"],
+      ["s"],
+      ["s"],
+      ["sh"],
+      ["sh"],
+      ["m"],
+      [],
+    ]);
+    const snap = ling6WeaknessSnapshot(rows);
+    expect(snap.missCounts.s).toBe(3);
+    expect(snap.missCounts.sh).toBe(2);
+    expect(snap.highlighted).toEqual([]);
+    expect(ling6WeaknessCopy([])).toBeNull();
+  });
+
+  it(`창 크기는 ${LING6_WEAKNESS_WINDOW}건이다`, () => {
+    expect(LING6_WEAKNESS_WINDOW).toBe(7);
   });
 });
