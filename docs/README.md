@@ -20,8 +20,9 @@
 
 | 카테고리 | 질문 | 문서 |
 |---------|------|------|
-| **① 설계·기준** | 무엇을 왜 만드는가 | `amp-mdt-training-design.md` |
+| **① 설계·기준** | 무엇을 왜 만드는가 | `amp-mdt-training-design.md`, `training-stats-recommendation.md` |
 | **② 환경·실행** | 어떻게 빌드·실행하는가 | `dev-client-setup-context.md`, `dev-client-connection-guide.md`, `cursor-rules-2-vs-3.md` |
+| **⑥ 읽기·질문** | 코드를 어떻게 물어보나 | `ask-file-behavior.md`(범용), `ask-app-behavior.md`(이 앱) |
 | **③ 할 일·상태** | 무엇이 문제이고 지금 어디까지 왔나 | `improvement-backlog.md` (+ `-easy`) |
 | **④ 기록** | 무엇을 했나 / 어떻게 고쳤나 | `impl-log_1.md`(이어서), `impl-log.md`(과거), `fix-reviews.md` |
 | **⑤ 인계** | 새로 오는 사람에게 넘길 맥락 | `handoff.md` |
@@ -35,6 +36,9 @@
 | 문서 | 성격 | 담는 것 | **이것의 정본** |
 |------|------|---------|----------------|
 | `amp-mdt-training-design.md` | 갱신 | 훈련·자극 설계, 근거 문헌, 제품 방침 | **왜 이런 과제·절차인가**, 자극 스펙의 의미 |
+| `training-stats-recommendation.md` | 갱신 | 탭별 기록 **수집·표시** 추천(봉투·kind 필터). 코드 미적용 | **기록을 어떻게 넣고 꺼내 보여주는가** |
+| `ask-file-behavior.md` | 갱신 | React 등 **범용** 질문 요령(역할 먼저, `[화면] --동작-->`) | **스택 무관하게 어떻게 물어보나** |
+| `ask-app-behavior.md` | 갱신 | 위 요령의 **이 앱** 예(탭·Store·차트 경로) | **이 저장소 파일을 어떻게 물어보나** |
 | `merge-host-decision.md` | 갱신 | HarmoniTune×mnn 병합 시 **호스트 선택** 개념·저장·기록 방침 | **어느 저장소를 살리는가**(제품 이름과 별개) |
 | `merge-plan-harmonitune.md` | 갱신 | HarmoniTune×mnn 병합 **절차·이식 매핑·순서** | **무엇을 어디로 옮기나**(저장 방침은 host-decision §4.1 링크) |
 | `dev-client-setup-context.md` | 갱신 | 스택·빌드·Metro/Babel·경량화 방침 | **어떻게 돌리는가**(스택·빌드) |
@@ -60,6 +64,8 @@
 | 어떻게 고쳤는지 상세(전후 코드·대안) | **fix-reviews** 맨 위에 블록 추가 | 백로그·impl-log에서는 **링크만** |
 | 예전 추정이 틀렸음이 드러남 | **백로그의 그 항목을 정정**(취소선 + 실측) | 리뷰에 측정 근거 |
 | 설계·과제 방식을 바꾸기로 합의 | **설계 문서** 갱신 | impl-log에 한 줄 |
+| 통계 수집·표시 방식을 바꾸기로 함 | **`training-stats-recommendation.md`** | 자극 설계 문서에 통계 UX를 섞지 않음 |
+| 코드를 어떻게 물어볼지 | **`ask-file-behavior.md`**(범용) · **`ask-app-behavior.md`**(이 앱) | 인계·설계에 질문 복붙을 흩뿌리지 않음 |
 | 빌드·실행 방법이 바뀜 | **셋업 문서** 갱신 | impl-log에 한 줄 |
 | 자극 스펙 숫자 | **코드 상수가 정본** + 설계 문서에 의미 | 문서에 숫자를 복사해 두지 말 것 |
 | 새 채팅으로 넘길 맥락 | **handoff** 맨 위 블록(이번 세션 변경+다음만) | 인계 저장만으로 impl-log에 한 줄 **넣지 않음**. 앱 상태는 백로그 |
@@ -92,6 +98,11 @@
 
 1. [`impl-log_1.md`](./impl-log_1.md)(이후) 또는 [`impl-log.md`](./impl-log.md)(과거)에서 **날짜로** 해당 작업 찾기 → 근거·결정·단정 금지
 2. 더 알고 싶으면 [`fix-reviews.md`](./fix-reviews.md)에서 **같은 항목 ID**(P0-1 등) 블록
+
+### 「이 파일 동작을 빨리 파악하려면?」
+
+1. [`ask-file-behavior.md`](./ask-file-behavior.md) — 범용. [`ask-app-behavior.md`](./ask-app-behavior.md) — 이 앱 예
+2. 그다음 코드·설계·impl-log
 
 ### 「이 코드 왜 이래?」
 
@@ -132,6 +143,9 @@
 docs/
 ├─ README.md                       ← 지금 이 파일(지도)
 ├─ amp-mdt-training-design.md      ① 설계·기준        [갱신형]
+├─ training-stats-recommendation.md ① 설계(통계 수집·표시) [갱신형] 코드 미적용
+├─ ask-file-behavior.md            ⑥ 읽기·질문(범용)   [갱신형]
+├─ ask-app-behavior.md             ⑥ 읽기·질문(이 앱)  [갱신형]
 ├─ merge-host-decision.md          ① 설계(병합 호스트) [갱신형]
 ├─ merge-plan-harmonitune.md       ① 설계(병합 절차)   [갱신형]
 ├─ dev-client-setup-context.md     ② 환경·실행        [갱신형]
