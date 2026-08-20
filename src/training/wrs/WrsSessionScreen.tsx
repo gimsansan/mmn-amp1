@@ -13,7 +13,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ActionButton } from "@/components/ui/action-button";
-import { BingoEntryButton } from "@/components/ui/bingo-entry-button";
 import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
@@ -30,7 +29,6 @@ import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
 import { SessionProgressBar } from "@/training/SessionProgressBar";
 import { TabStatsScreen } from "@/training/TabStatsScreen";
-import { WrsBingoScreen } from "@/training/wrs/WrsBingoScreen";
 import { WrsProgressPanel } from "@/training/wrs/WrsProgressPanel";
 import {
   createWrsTrials,
@@ -56,10 +54,15 @@ type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 type WrsSessionScreenProps = {
   /** 단어 듣기 목록으로 돌아가기(idle·요약에서만 노출). */
   onBack?: () => void;
+  /** 목록에서 막 들어왔을 때 바로 시작. */
+  autoStart?: boolean;
+  onAutoStartConsumed?: () => void;
 };
 
 export function WrsSessionScreen({
   onBack,
+  autoStart = false,
+  onAutoStartConsumed,
 }: Readonly<WrsSessionScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
@@ -78,7 +81,6 @@ export function WrsSessionScreen({
   const [lastError, setLastError] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedWrsRecord[]>([]);
   const [clearing, setClearing] = useState(false);
-  const [showBingo, setShowBingo] = useState(false);
   const [showStats, setShowStats] = useState(false);
 
   const running =
@@ -214,6 +216,16 @@ export function WrsSessionScreen({
     void playCurrent(0);
   }, [playCurrent]);
 
+  const autoStartOnceRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || autoStartOnceRef.current) {
+      return;
+    }
+    autoStartOnceRef.current = true;
+    onStart();
+    onAutoStartConsumed?.();
+  }, [autoStart, onAutoStartConsumed, onStart]);
+
   const finishSession = useCallback(async () => {
     abortRef.current = true;
     await stopWrsSpeech();
@@ -281,16 +293,6 @@ export function WrsSessionScreen({
     void finishSession();
   }, [finishSession]);
 
-  const openBingo = useCallback(() => {
-    abortRef.current = true;
-    void stopWrsSpeech();
-    setShowBingo(true);
-  }, []);
-
-  const closeBingo = useCallback(() => {
-    setShowBingo(false);
-  }, []);
-
   const openStats = useCallback(() => {
     void refreshHistory();
     setShowStats(true);
@@ -316,23 +318,14 @@ export function WrsSessionScreen({
     );
   }
 
-  if (showBingo) {
-    return <WrsBingoScreen onBack={closeBingo} />;
-  }
-
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <ThemedText type="screenTitle">한 글자</ThemedText>
-            {!running ? (
-              <View style={styles.headerActions}>
-                <BingoEntryButton onPress={openBingo} />
-                {phase === "idle" || phase === "summary" ? (
-                  <StatsEntryButton onPress={openStats} />
-                ) : null}
-              </View>
+            {phase === "idle" || phase === "summary" ? (
+              <StatsEntryButton onPress={openStats} />
             ) : null}
           </View>
           <ThemedText
@@ -626,11 +619,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
   },
   caption: {
     fontSize: 12,

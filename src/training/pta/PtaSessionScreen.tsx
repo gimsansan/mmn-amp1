@@ -26,6 +26,11 @@ import { FreqSessionScreen } from "@/training/freq/FreqSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { PitchCompareScreen } from "@/training/pitch2afc/PitchCompareScreen";
 import { SessionHistoryScreen } from "@/training/SessionHistoryScreen";
+import { SessionModeToggle } from "@/training/SessionModeToggle";
+import {
+  DEFAULT_SESSION_MODE,
+  type SessionMode,
+} from "@/training/sessionMode";
 
 type Track = "picker" | "pitch2" | "freq";
 
@@ -51,28 +56,37 @@ const TRACK_OPTIONS: readonly {
 ];
 
 /**
- * 소리 높낮이 탭 — 음고 2종 선택 → 듣기 준비 → 훈련.
+ * 소리 높낮이 탭 — 음고 2종 선택 → 듣기 준비 → 바로 훈련(idle 생략).
  * 통계는 헤더 버튼으로 이 탭 안에서 스와프.
  */
 export function PtaSessionScreen() {
   const theme = useTheme();
   const [track, setTrack] = useState<Track>("picker");
   const [checked, setChecked] = useState(false);
+  const [autoStart, setAutoStart] = useState(false);
+  const [mode, setMode] = useState<SessionMode>(DEFAULT_SESSION_MODE);
   const [showStats, setShowStats] = useState(false);
 
   const backToPicker = useCallback(() => {
     setTrack("picker");
     setChecked(false);
+    setAutoStart(false);
     setShowStats(false);
   }, []);
 
   const openTrack = useCallback((next: TrainingTrack) => {
     setChecked(false);
+    setAutoStart(false);
     setTrack(next);
   }, []);
 
   const passCheck = useCallback(() => {
     setChecked(true);
+    setAutoStart(true);
+  }, []);
+
+  const consumeAutoStart = useCallback(() => {
+    setAutoStart(false);
   }, []);
 
   const closeStats = useCallback(() => {
@@ -117,16 +131,40 @@ export function PtaSessionScreen() {
         sampleHz={DEFAULT_REFERENCE_HZ}
         onStart={passCheck}
         onBack={backToPicker}
+        extra={
+          <SessionModeToggle
+            value={mode}
+            onChange={setMode}
+            textScale={1.2}
+            style={{ marginBottom: Spacing.two }}
+          />
+        }
       />
     );
   }
 
   if (track === "pitch2") {
-    return <PitchCompareScreen onBack={backToPicker} />;
+    return (
+      <PitchCompareScreen
+        onBack={backToPicker}
+        autoStart={autoStart}
+        onAutoStartConsumed={consumeAutoStart}
+        initialMode={mode}
+        onModeChange={setMode}
+      />
+    );
   }
 
   if (track === "freq") {
-    return <FreqSessionScreen onBack={backToPicker} />;
+    return (
+      <FreqSessionScreen
+        onBack={backToPicker}
+        autoStart={autoStart}
+        onAutoStartConsumed={consumeAutoStart}
+        initialMode={mode}
+        onModeChange={setMode}
+      />
+    );
   }
 
   return (

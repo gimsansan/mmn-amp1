@@ -20,16 +20,18 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { WrsBingoScreen } from "@/training/wrs/WrsBingoScreen";
 import { WrsSessionScreen } from "@/training/wrs/WrsSessionScreen";
 import { WrsTwoCharScreen } from "@/training/wrs/WrsTwoCharScreen";
 
-type Track = "picker" | "one" | "two";
+type Track = "picker" | "one" | "two" | "bingo";
 
-type TrainingTrack = "one" | "two";
+type TrainingTrack = "one" | "two" | "bingo";
 
 const TRACK_FACE: Record<TrainingTrack, { icon: IconName; title: string }> = {
   one: { icon: "oneChar", title: "한 글자" },
   two: { icon: "twoChar", title: "두 글자" },
+  bingo: { icon: "bingoLine", title: "단어 빙고" },
 };
 
 const TRACK_OPTIONS: readonly {
@@ -44,22 +46,33 @@ const TRACK_OPTIONS: readonly {
     track: "two",
     description: "두 글자 단어를 듣고 보기에서 고르는 연습",
   },
+  {
+    track: "bingo",
+    description: "들은 단어를 판에서 눌러 줄을 만드는 연습",
+  },
 ];
 
 /**
- * 단어 듣기 탭 — 한 글자·두 글자 선택.
- * 소리 높낮이처럼 탭 안에서 고른 뒤 그 연습으로 들어간다.
+ * 단어 듣기 탭 — 한 글자·두 글자·빙고 선택.
+ * 카드에서 바로 시작(빙고는 난이도를 고르는 idle 유지).
  */
 export function WrsTabScreen() {
   const theme = useTheme();
   const [track, setTrack] = useState<Track>("picker");
+  const [autoStart, setAutoStart] = useState(false);
 
   const backToPicker = useCallback(() => {
     setTrack("picker");
+    setAutoStart(false);
   }, []);
 
   const openTrack = useCallback((next: TrainingTrack) => {
+    setAutoStart(next !== "bingo");
     setTrack(next);
+  }, []);
+
+  const consumeAutoStart = useCallback(() => {
+    setAutoStart(false);
   }, []);
 
   useFocusEffect(
@@ -76,11 +89,27 @@ export function WrsTabScreen() {
   );
 
   if (track === "one") {
-    return <WrsSessionScreen onBack={backToPicker} />;
+    return (
+      <WrsSessionScreen
+        onBack={backToPicker}
+        autoStart={autoStart}
+        onAutoStartConsumed={consumeAutoStart}
+      />
+    );
   }
 
   if (track === "two") {
-    return <WrsTwoCharScreen onBack={backToPicker} />;
+    return (
+      <WrsTwoCharScreen
+        onBack={backToPicker}
+        autoStart={autoStart}
+        onAutoStartConsumed={consumeAutoStart}
+      />
+    );
+  }
+
+  if (track === "bingo") {
+    return <WrsBingoScreen onBack={backToPicker} />;
   }
 
   return (

@@ -61,6 +61,9 @@ type TwoCharOutcome = {
 
 type WrsTwoCharScreenProps = {
   onBack: () => void;
+  /** 목록에서 막 들어왔을 때 바로 시작. */
+  autoStart?: boolean;
+  onAutoStartConsumed?: () => void;
 };
 
 /**
@@ -69,6 +72,8 @@ type WrsTwoCharScreenProps = {
  */
 export function WrsTwoCharScreen({
   onBack,
+  autoStart = false,
+  onAutoStartConsumed,
 }: Readonly<WrsTwoCharScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
@@ -224,6 +229,16 @@ export function WrsTwoCharScreen({
         setLastError("연습을 시작하지 못했어요.");
       });
   }, [playCurrent]);
+
+  const autoStartOnceRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || autoStartOnceRef.current) {
+      return;
+    }
+    autoStartOnceRef.current = true;
+    onStart();
+    onAutoStartConsumed?.();
+  }, [autoStart, onAutoStartConsumed, onStart]);
 
   const finishSession = useCallback(async () => {
     abortRef.current = true;

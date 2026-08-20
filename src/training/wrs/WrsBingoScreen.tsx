@@ -373,7 +373,7 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
                 onPress={() => onStart("hard")}
               />
               <ActionButton label="쉬운 판" onPress={() => onStart("easy")} />
-              <ActionButton label="맞히기로" onPress={leaveToA} />
+              <ActionButton label="뒤로 가기" onPress={leaveToA} />
             </View>
           ) : null}
 

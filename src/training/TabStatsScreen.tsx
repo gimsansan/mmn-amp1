@@ -57,7 +57,7 @@ export function TabStatsScreen({
           <ActionButton
             fill={false}
             variant="primary"
-            label="돌아가기"
+            label="뒤로 가기"
             onPress={onBack}
           />
         </View>

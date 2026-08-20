@@ -85,6 +85,12 @@ function progressCaption(
 type FreqSessionScreenProps = {
   /** 연습 목록으로 돌아가기(idle·요약에서만 노출). */
   onBack?: () => void;
+  /** 듣기 준비를 막 통과했을 때 세션을 바로 시작. */
+  autoStart?: boolean;
+  onAutoStartConsumed?: () => void;
+  /** 듣기 준비로 화면을 갈아끼워도 귀풀기/연습 선택을 유지. */
+  initialMode?: SessionMode;
+  onModeChange?: (next: SessionMode) => void;
 };
 
 /**
@@ -93,16 +99,20 @@ type FreqSessionScreenProps = {
  */
 export function FreqSessionScreen({
   onBack,
+  autoStart = false,
+  onAutoStartConsumed,
+  initialMode = DEFAULT_SESSION_MODE,
+  onModeChange,
 }: Readonly<FreqSessionScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
   /** 이번 세션 요약을 이미 저장했는지. 중복 저장 방지(세션 시작 시 리셋). */
   const savedRef = useRef(false);
   /** 이번 세션의 모드(반전 4/8·저장 mode). 세션 시작 시 토글값으로 고정. */
-  const runModeRef = useRef<SessionMode>(DEFAULT_SESSION_MODE);
+  const runModeRef = useRef<SessionMode>(initialMode);
   const [phase, setPhase] = useState<Phase>("idle");
   /** idle에서 고른 모드. 진행 중엔 `runModeRef`가 실제 세션 값을 들고 있다. */
-  const [mode, setMode] = useState<SessionMode>(DEFAULT_SESSION_MODE);
+  const [mode, setMode] = useState<SessionMode>(initialMode);
   const [session, setSession] = useState<FreqSessionState | null>(null);
   const [trial, setTrial] = useState<FreqAfcTrial | null>(null);
   const [result, setResult] = useState<FreqAfcChoiceResult | null>(null);
@@ -206,6 +216,24 @@ export function FreqSessionScreen({
     void runTrial(next);
   }, [mode, runTrial]);
 
+  const changeMode = useCallback(
+    (next: SessionMode) => {
+      setMode(next);
+      onModeChange?.(next);
+    },
+    [onModeChange],
+  );
+
+  const autoStartOnceRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || autoStartOnceRef.current) {
+      return;
+    }
+    autoStartOnceRef.current = true;
+    onStart();
+    onAutoStartConsumed?.();
+  }, [autoStart, onAutoStartConsumed, onStart]);
+
   const onChoose = useCallback(
     (index: number) => {
       // 완료된 세션은 다시 채점하지 않는다(중지 직후 잔여 UI 방어).
@@ -299,7 +327,7 @@ export function FreqSessionScreen({
             </ThemedText>
             <SessionModeToggle
               value={mode}
-              onChange={setMode}
+              onChange={changeMode}
               textScale={TEXT_SCALE}
               style={{ marginBottom: Spacing.six }}
             />

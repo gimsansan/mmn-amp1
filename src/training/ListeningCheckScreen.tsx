@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -28,7 +34,7 @@ type ListeningCheckScreenProps = {
   /** 어느 연습으로 들어가는지(제목에 표시). */
   trackTitle: string;
   /**
-   * 그 연습의 아이콘. 연습 선택 카드 → 이 화면 → 시작 화면이 **같은 그림**으로 이어져
+   * 그 연습의 아이콘. 연습 선택 카드 → 이 화면이 **같은 그림**으로 이어져
    * 제목을 읽기 전에 어떤 연습인지 알아볼 수 있게 한다.
    */
   trackIcon: IconName;
@@ -39,6 +45,8 @@ type ListeningCheckScreenProps = {
   sampleHz: number;
   onStart: () => void;
   onBack: () => void;
+  /** 소리 높낮이 — 귀풀기/연습 토글. 통과 후 idle을 건너뛰므로 여기서 고른다. */
+  extra?: ReactNode;
 };
 
 /** 카드 머리줄 — 파란 선 아이콘 + 굵은 한 줄. */
@@ -74,6 +82,7 @@ export function ListeningCheckScreen({
   sampleHz,
   onStart,
   onBack,
+  extra,
 }: Readonly<ListeningCheckScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
@@ -195,6 +204,8 @@ export function ListeningCheckScreen({
           </Pressable>
         </Card>
 
+        {extra}
+
         <ThemedText
           themeColor="textMuted"
           type="small"
@@ -221,7 +232,7 @@ export function ListeningCheckScreen({
             onPress={() => leave(onStart)}
           />
           <ActionButton
-            label="뒤로가기"
+            label="뒤로 가기"
             textScale={TEXT_SCALE}
             onPress={() => leave(onBack)}
           />

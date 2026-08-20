@@ -47,6 +47,32 @@
 
 ## 로그
 
+### 2026-08-21 02:31 — 뒤로 버튼 라벨 통일
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / UX |
+| 근거·결정 | 사용자: 「돌아가기」와 「뒤로 가기」가 같이 보임. 같은 동작이면 **「뒤로 가기」** 하나로. |
+| 변경 요약 | 통계 `돌아가기`, 듣기 준비 `뒤로가기` → `뒤로 가기`. |
+| 주요 경로 | `src/training/TabStatsScreen.tsx`, `src/training/SessionHistoryScreen.tsx`, `src/training/ListeningCheckScreen.tsx` |
+| 결과 | 코드 반영. |
+| 확인 | 해당 파일 라벨 문자열만 검색해 맞춤. |
+| 단정 금지 | 없음 |
+| 성능·주의 | 없음. **dev client 리빌드 불필요.** |
+
+### 2026-08-21 02:23 — 소리 높낮이·단어 듣기 시작 단계 축소
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / UX |
+| 근거·결정 | 사용자: 탭 안 불필요 단계 축소. 소리 높낮이는 듣기 준비 다음 idle「연습 시작」겹침. 단어 듣기는 한/두 글자 고른 뒤 idle, 빙고는 한 글자 안 한 겹. 떨림의 `autoStart`와 같게. 「소리 들어보기」는 유지. |
+| 변경 요약 | 소리 높낮이: 듣기 준비 통과 → 바로 세션. 귀풀기/연습은 준비 화면에서 고름. 단어 듣기: 한/두 글자 카드 → 바로 시작. 빙고는 목록 세 번째 카드. |
+| 주요 경로 | `src/training/pta/PtaSessionScreen.tsx`, `src/training/pitch2afc/PitchCompareScreen.tsx`, `src/training/freq/FreqSessionScreen.tsx`, `src/training/ListeningCheckScreen.tsx`, `src/training/wrs/WrsTabScreen.tsx`, `src/training/wrs/WrsSessionScreen.tsx`, `src/training/wrs/WrsTwoCharScreen.tsx`, `src/training/wrs/WrsBingoScreen.tsx` |
+| 결과 | 코드 반영. 실기기 탭 경로는 이 세션에서 안 봄. |
+| 확인 | 린트 해당 파일 오류 없음. |
+| 단정 금지 | `미검증`: 실기기에서 듣기 준비「연습 시작」→ 바로 소리. `추정`: 카드 탭 후 TTS/순음이 제스처 밖 `useEffect`로 시작(떨림과 동일). `주의`: 빙고는 쉬운/비슷한 난이도 선택이 있어 idle 유지. |
+| 성능·주의 | 화면 한 장 줄어 idle 플래시가 짧을 수 있음. **dev client 리빌드 불필요.** |
+
 ### 2026-08-20 17:06 — 음고 통계 「연습별로 기록을 지워요」 제거
 
 | 항목 | 내용 |
