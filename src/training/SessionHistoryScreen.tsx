@@ -591,15 +591,6 @@ export function SessionHistoryScreen({
             )}
             {clearTracks.length > 0 ? (
               <View style={styles.dangerZone}>
-                {clearTracks.length > 1 ? (
-                  <ThemedText
-                    themeColor="textMuted"
-                    type="small"
-                    style={styles.clearHint}
-                  >
-                    연습별로 기록을 지워요
-                  </ThemedText>
-                ) : null}
                 {clearTracks.map((track) => {
                   const hasTrack = rows.some((row) => row.track === track);
                   const busy = clearingTrack != null;
@@ -761,11 +752,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     alignItems: "flex-end",
     gap: Spacing.one,
-  },
-  clearHint: {
-    fontSize: 12,
-    lineHeight: 16,
-    alignSelf: "flex-end",
   },
   clearTrack: {
     alignSelf: "flex-end",
