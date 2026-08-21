@@ -21,6 +21,7 @@ export const Colors = {
     background: '#F6F9FD',
     /** 카드·버튼 면. 레거시 호출부와 이름을 맞추려고 유지(= surface). */
     backgroundElement: '#FFFFFF',
+    /** 선택 강조 면(= accentTint). 이 면 위 글자색 규칙은 accentTint 주석을 볼 것. */
     backgroundSelected: '#EAF2FE',
     /** 2차 본문. 흰 카드 4.78:1 · 배경 4.52:1 — WCAG AA. */
     textSecondary: '#667484',
@@ -36,6 +37,14 @@ export const Colors = {
      */
     textMuted: '#607489',
     accent: '#1668E3',
+    /**
+     * 옅은 파란 면 — 아이콘 타일 · 선택된 세그먼트 · 탭 인디케이터.
+     *
+     * **이 면 위에 얹을 수 있는 글자색은 `accent`(4.52:1)와 `text`(14.08:1)뿐이다.**
+     * 흰 카드에서 AA를 통과하던 나머지는 여기서 미달한다 —
+     * `textMuted` 4.28 · `textSecondary` 4.24 · `positive` 4.05.
+     * 흰 면 기준으로 고른 글자색을 이 면으로 그대로 옮기면 깨진다. 면을 바꾸면 글자색도 바꿀 것.
+     */
     accentTint: '#EAF2FE',
     accentBorder: '#CFE0F7',
     onAccent: '#FFFFFF',

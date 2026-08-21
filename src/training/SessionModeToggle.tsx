@@ -106,7 +106,14 @@ export function SessionModeToggle({
             >
               {opt.label}
             </ThemedText>
-            <ThemedText type="small" themeColor="textMuted" style={scaledHint}>
+            {/* 활성이면 바닥이 accentTint라 textMuted는 4.28:1로 AA 미달 → 라벨과 같은 accent. */}
+            <ThemedText
+              type="small"
+              style={[
+                { color: active ? theme.accent : theme.textMuted },
+                scaledHint,
+              ]}
+            >
               {opt.hint}
             </ThemedText>
           </Pressable>
