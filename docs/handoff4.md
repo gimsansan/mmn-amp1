@@ -4,6 +4,60 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-21 11:08
+
+새 채팅 AI용. **이번 세션 = 문서만. 학습 노트 3개 + docs 지도 정정. 코드 변경 0.**
+
+### 한 일
+
+- 학습 노트 3개 신설. 앞 세션 코드 수정의 **사후 설명**이지 새 결정이 아님.
+  - `as-const-리터럴타입-노트.md`: `theme.ts` `as const` → 리터럴 타입. `useTheme(): Record<ThemeColor, string>`로 넓힌 이유(`keyof`는 영향 없어 `themeColor` 자동완성 유지).
+  - `animated-value-초기화-노트.md`: `useRef(new Animated.Value()).current` 폐기 → 지연 초기화 `useState`. 인자는 매 렌더 계산됨 + 렌더 중 ref 접근 둘 다 해결. `useMemo`는 캐시를 버릴 수 있어 부적합. 3곳(`equalizer.tsx:34`, `WrsBingoScreen.tsx:478·629`).
+  - `ref-vs-state-노트.md`: 렌더에서 ref를 읽으면 화면이 밀림. `WrsTwoCharScreen`은 옆줄 `setPhase`가 우연히 재렌더를 일으켜 맞아 보였을 뿐. `PitchCompareScreen:513`은 진행 중 `mode`와 `runModeRef.current`가 같아 분기 자체가 불필요했음. 짝 패턴은 `WrsBingoScreen` `markedRef`+`marked`(53·59행).
+- `testing-guide.md` **손대지 않음** — jest CSS 매퍼·devDeps가 이미 적혀 있었음. `npx jest` 실측 **216 passed / 22 suites**로 문서 수치 확인.
+- `docs/README.md`: **⑦ 학습 노트** 카테고리 신설(정본 표·결정표·파일 목록·§5 신뢰도 표). 결정표에 남용 방지 조건 — 「여러 파일에서 반복될 때만, 한 곳뿐이면 코드 주석」.
+- 같은 파일에서 **인계 정본을 `handoff4.md`로** 바로잡음(표기가 `handoff.md`로 남아 있었음). 원칙 5 추가: 번호는 **이어붙임이지 사본이 아님** — 분량이 많아지면 넘기고 옛 파일을 얼린다(사용자 규칙, 줄 수 기준 없음). 폐지된 `handoff-YYYY-MM-DD.md` 날짜 사본과 다름.
+- `handoff.md`·`handoff2.md`·`handoff3.md` 머리말에 「**읽을 때**: 그때의 기록이라 지금과 다를 수 있고 그래도 고치지 않는다」 한 줄. 블록은 안 건드림.
+
+### 핵심 경로
+
+- `docs/as-const-리터럴타입-노트.md`
+- `docs/animated-value-초기화-노트.md`
+- `docs/ref-vs-state-노트.md`
+- `docs/README.md`
+- `docs/handoff.md` · `handoff2.md` · `handoff3.md`(머리말만)
+
+### 단정 금지
+
+- `주의`: 워킹트리에 **앞 세션 코드 변경분이 커밋 안 된 채** 남아 있음(`git status` 수정 17 + 신규 테스트·`WrsVoiceGuideScreen`). 이번 세션이 더한 것은 문서뿐.
+- 리빌드·`npm install` 불필요(문서만). `추정` 아님 — 코드 변경 0.
+- `미검증`: 없음. 노트에 적힌 동작 근거는 앞 세션 수정과 `npx jest` 실측에서 옴.
+
+---
+## 인계 — 2026-08-21 08:39
+
+새 채팅 AI용. **이번 세션 = 단어 통계 표 + 음고 지우기 안내 삭제. 키 합치기는 뒤.**
+
+### 한 일
+
+- `training-stats-recommendation.md` §4: 한 글자·두 글자 표시 표(공통 `WrsProgressPanel`·높을수록·청력 검사 아님·25/12·2회+·목록 8·저장 50·키 분리). impl-log_1 `16:47`.
+- `SessionHistoryScreen`: 「연습별로 기록을 지워요」 삭제. 버튼 라벨만. impl-log_1 `17:06`. 하단 3칸 재배치는 중단.
+- 표시 뼈대 완전 통일·저장 키 합치기·문항 로그는 **뒤**. 키 합치기 ≠ 한눈에 보기(그건 홈 요약 화면).
+- `git fetch` 후 `origin/feat_wrs` 맞춤. HEAD `eb5e640` 문서업댓. 인계 정본은 **`docs/handoff4.md`**.
+
+### 핵심 경로
+
+- `docs/training-stats-recommendation.md`
+- `src/training/SessionHistoryScreen.tsx`
+- `docs/handoff4.md`
+
+### 단정 금지
+
+- `미검증`: 실기기 통계 UX.
+- `추정`: **리빌드 불필요**(JS·문서).
+
+---
+
 ## 인계 — 2026-08-21 02:31
 
 새 채팅 AI용. **이번 세션 = 뒤로 버튼 라벨 통일.**
