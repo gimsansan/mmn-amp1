@@ -1,6 +1,7 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Animated,
   BackHandler,
   Pressable,
   ScrollView,
@@ -15,9 +16,12 @@ import { ActionButton } from "@/components/ui/action-button";
 import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
+import { Pill } from "@/components/ui/pill";
 import {
   BottomTabInset,
   MaxContentWidth,
+  Radius,
+  Shadows,
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
@@ -57,6 +61,8 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
   const [lastCorrect, setLastCorrect] = useState<boolean | undefined>(
     undefined,
   );
+  const [lastMarked, setLastMarked] = useState<number | null>(null);
+  const [cueUsed, setCueUsed] = useState(0);
   const [summary, setSummary] = useState<BingoSummary | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastDifficulty, setLastDifficulty] = useState<WrsDifficulty | null>(
@@ -66,6 +72,7 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
   const tapDisabled = phase !== "choose";
+  const markedCount = marked.filter(Boolean).length;
 
   const resetRun = useCallback(() => {
     abortRef.current = true;
@@ -78,6 +85,8 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
     setMarked(emptyMarked());
     setLine(null);
     setLastCorrect(undefined);
+    setLastMarked(null);
+    setCueUsed(0);
     setSummary(null);
     setLastError(null);
     setPhase("idle");
@@ -149,6 +158,7 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
       }
       cueRef.current = nextCue;
       cueCountRef.current += 1;
+      setCueUsed(cueCountRef.current);
       abortRef.current = false;
       setLastError(null);
       setLastCorrect(undefined);
@@ -187,6 +197,8 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
       setLine(null);
       setSummary(null);
       setLastCorrect(undefined);
+      setLastMarked(null);
+      setCueUsed(0);
       setLastError(null);
       void playCue(null);
     },
@@ -221,6 +233,7 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
       );
       markedRef.current = nextMarked;
       setMarked(nextMarked);
+      setLastMarked(index);
       const nextLine = bingoLineCells(nextMarked);
       if (nextLine) {
         finishRun(nextLine);
@@ -256,12 +269,8 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
           <View style={styles.headerRow}>
             <ThemedText type="screenTitle">단어 빙고</ThemedText>
           </View>
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            style={styles.caption}
-          >
-            들은 단어를 판에서 눌러요 · 병원 검사가 아니에요
+          <ThemedText themeColor="textSecondary" type="caption">
+            들은 단어를 판에서 눌러요 · 편하게 연습해요
           </ThemedText>
         </View>
 
@@ -272,12 +281,8 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
             showsVerticalScrollIndicator={false}
           >
             <Card style={styles.idleCard}>
-              <ThemedText type="smallBold">이렇게 연습해요</ThemedText>
-              <ThemedText
-                themeColor="textSecondary"
-                type="small"
-                style={styles.idleBody}
-              >
+              <ThemedText type="smallBold">이렇게 놀아요</ThemedText>
+              <ThemedText themeColor="textSecondary" type="caption">
                 3×3 판에 단어가 있어요. 들린 칸을 누르면 칠해집니다.
                 가로·세로·대각 한 줄이면 끝나요. 맞히기 기록에는 안 남아요.
               </ThemedText>
@@ -303,13 +308,25 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
               </ThemedText>
             </View>
             {board.length === BINGO_CELL_COUNT ? (
-              <BingoBoard
-                board={board}
-                marked={marked}
-                line={line}
-                disabled
-                onPress={() => undefined}
-              />
+              <View style={styles.boardWrap}>
+                {summary?.won ? <ConfettiBurst /> : null}
+                <BingoBoard
+                  board={board}
+                  marked={marked}
+                  line={line}
+                  phase={phase}
+                  lastMarked={lastMarked}
+                  disabled
+                  onPress={() => undefined}
+                />
+              </View>
+            ) : null}
+            {summary ? (
+              <View style={styles.resultRow}>
+                <StatChip value={String(summary.lineCount)} label="완성한 줄" />
+                <StatChip value={String(summary.markedCount)} label="표시한 칸" />
+                <StatChip value={String(summary.cueCount)} label="들은 단어" />
+              </View>
             ) : null}
           </ScrollView>
         ) : null}
@@ -325,11 +342,21 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
             />
             <ThemedText
               type="smallBold"
-              themeColor="textSecondary"
+              themeColor={phase === "playing" ? "textSecondary" : "accent"}
               style={styles.statusText}
             >
               {promptCopy(phase, lastCorrect)}
             </ThemedText>
+          </View>
+        ) : null}
+
+        {running ? (
+          <View style={styles.hud}>
+            <Pill label={`표시 ${markedCount} / 9`} />
+            <Pill
+              variant="surface"
+              label={`기회 ${Math.max(0, BINGO_MAX_CUES - cueUsed)}번 남음`}
+            />
           </View>
         ) : null}
 
@@ -338,17 +365,15 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
             board={board}
             marked={marked}
             line={line}
+            phase={phase}
+            lastMarked={lastMarked}
             disabled={tapDisabled}
             onPress={onTap}
           />
         ) : null}
 
         {lastError && running ? (
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            style={styles.caption}
-          >
+          <ThemedText themeColor="textSecondary" type="caption">
             {lastError}
           </ThemedText>
         ) : null}
@@ -424,40 +449,153 @@ function promptCopy(
   return "아쉬워요 · 그 칸이 아니에요";
 }
 
+/** 결과 화면의 사실 기술 칩. 점수·등급 아님 — "몇 줄/몇 칸/몇 단어"만. */
+function StatChip({
+  value,
+  label,
+}: Readonly<{ value: string; label: string }>) {
+  const theme = useTheme();
+  return (
+    <Card style={styles.statChip}>
+      <ThemedText style={[styles.statValue, { color: theme.accent }]}>
+        {value}
+      </ThemedText>
+      <ThemedText type="caption" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+    </Card>
+  );
+}
+
+/**
+ * 줄 완성 축하 연출. 요약 화면 전용(규칙 5: 듣는 중엔 연출 없음).
+ * 기존 컴포넌트로 대체 불가한 유일한 신규 요소 — 컨페티는 재사용 부품이 없다.
+ */
+function ConfettiBurst() {
+  const theme = useTheme();
+  const colors = [theme.accent, theme.positive, theme.highlight];
+  // 지연 초기화 useState가 Animated.Value를 한 번만 만드는 표준 방식(`equalizer.tsx`와 같음).
+  const [pieces] = useState(() =>
+    Array.from({ length: 16 }, (_, i) => ({
+      left: (i * 6.1) % 92,
+      color: colors[i % colors.length],
+      size: 6 + (i % 3) * 2,
+      delay: (i % 6) * 90,
+      dur: 1100 + (i % 4) * 260,
+      v: new Animated.Value(0),
+    })),
+  );
+
+  useEffect(() => {
+    const loops = pieces.map((p) => {
+      const anim = Animated.loop(
+        Animated.sequence([
+          Animated.delay(p.delay),
+          Animated.timing(p.v, {
+            toValue: 1,
+            duration: p.dur,
+            useNativeDriver: true,
+          }),
+          Animated.timing(p.v, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+      anim.start();
+      return anim;
+    });
+    return () => loops.forEach((l) => l.stop());
+  }, [pieces]);
+
+  return (
+    <View pointerEvents="none" style={styles.confettiLayer}>
+      {pieces.map((p, i) => {
+        const translateY = p.v.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-24, 170],
+        });
+        const opacity = p.v.interpolate({
+          inputRange: [0, 0.15, 1],
+          outputRange: [0, 1, 0],
+        });
+        const rotate = p.v.interpolate({
+          inputRange: [0, 1],
+          outputRange: ["0deg", "260deg"],
+        });
+        return (
+          <Animated.View
+            key={i}
+            style={[
+              styles.confettiPiece,
+              {
+                left: `${p.left}%`,
+                width: p.size,
+                height: p.size + 3,
+                backgroundColor: p.color,
+                opacity,
+                transform: [{ translateY }, { rotate }],
+              },
+            ]}
+          />
+        );
+      })}
+    </View>
+  );
+}
+
 function BingoBoard({
   board,
   marked,
   line,
+  phase,
+  lastMarked,
   disabled,
   onPress,
 }: Readonly<{
   board: readonly string[];
   marked: readonly boolean[];
   line: readonly number[] | null;
+  phase: Phase;
+  lastMarked: number | null;
   disabled: boolean;
   onPress: (word: string, index: number) => void;
 }>) {
   const theme = useTheme();
   const rows = [0, 1, 2];
+  const isSummary = phase === "summary";
   return (
-    <View style={[styles.bingoBoard, { borderColor: theme.border }]}>
+    <View style={[styles.tray, { backgroundColor: theme.accentTint }]}>
       {rows.map((row) => (
-        <View key={row} style={styles.bingoRow}>
+        <View key={row} style={styles.trayRow}>
           {rows.map((col) => {
             const index = row * 3 + col;
             const word = board[index];
             if (!word) {
               return null;
             }
+            const isMarked = marked[index] === true;
+            const inLine = line?.includes(index) === true;
+            // 연출은 맞음/완성에서만: 방금 찍힌 칸 팝, 완성 줄 순차 팝.
+            let animate = false;
+            let delay = 0;
+            if (inLine && isSummary) {
+              animate = true;
+              delay = (line?.indexOf(index) ?? 0) * 120;
+            } else if (isMarked && phase === "feedback" && index === lastMarked) {
+              animate = true;
+            }
             return (
-              <BingoCell
+              <BingoTile
                 key={word}
                 word={word}
-                row={row}
-                col={col}
-                marked={marked[index] === true}
-                inLine={line?.includes(index) === true}
-                disabled={disabled || marked[index] === true}
+                marked={isMarked}
+                inLine={inLine}
+                dimmed={isSummary && !inLine}
+                animate={animate}
+                delay={delay}
+                disabled={disabled || isMarked}
                 onPress={() => onPress(word, index)}
               />
             );
@@ -468,59 +606,82 @@ function BingoBoard({
   );
 }
 
-function BingoCell({
+function BingoTile({
   word,
-  row,
-  col,
   marked,
   inLine,
+  dimmed,
+  animate,
+  delay,
   disabled,
   onPress,
 }: Readonly<{
   word: string;
-  row: number;
-  col: number;
   marked: boolean;
   inLine: boolean;
+  dimmed: boolean;
+  animate: boolean;
+  delay: number;
   disabled: boolean;
   onPress: () => void;
 }>) {
   const theme = useTheme();
+  const [scale] = useState(() => new Animated.Value(animate ? 0.5 : 1));
+
+  useEffect(() => {
+    if (animate) {
+      scale.setValue(0.5);
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 5,
+        tension: 140,
+        delay,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      scale.setValue(1);
+    }
+  }, [animate, delay, scale]);
+
+  const filled = marked || inLine;
   let backgroundColor: string = theme.surface;
   let textColor: string = theme.text;
-  if (inLine) {
+  let tileShadow: object = Shadows.card;
+  if (filled) {
     backgroundColor = theme.accent;
     textColor = theme.onAccent;
-  } else if (marked) {
-    backgroundColor = theme.accentTint;
+    tileShadow = Shadows.accent;
+  } else if (dimmed) {
+    textColor = theme.textMuted;
+    tileShadow = styles.flat;
   }
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={word}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.bingoCell,
-        {
-          backgroundColor,
-          borderColor: theme.border,
-        },
-        col === 2 && styles.bingoCellLastCol,
-        row === 2 && styles.bingoCellLastRow,
-        pressed && !disabled && styles.pressed,
-        disabled && !marked && !inLine && styles.disabled,
-      ]}
-    >
-      <ThemedText
-        type="heading"
-        style={[styles.bingoWord, { color: textColor }]}
+    <Animated.View style={[styles.tileOuter, { transform: [{ scale }] }]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={word}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.tile,
+          { backgroundColor },
+          tileShadow,
+          inLine && { borderWidth: 3, borderColor: theme.accentBorder },
+          pressed && !disabled && styles.tilePressed,
+        ]}
       >
-        {word}
-      </ThemedText>
-    </Pressable>
+        {filled ? (
+          <View style={styles.tileCheck}>
+            <Icon name="check" size={18} color={theme.onAccent} strokeWidth={2.6} />
+          </View>
+        ) : null}
+        <ThemedText type="heading" style={[styles.bingoWord, { color: textColor }]}>
+          {word}
+        </ThemedText>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -546,20 +707,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  caption: {
-    fontSize: 12,
-    lineHeight: 18,
-  },
   idleContent: {
     gap: Spacing.three,
     paddingBottom: Spacing.two,
   },
   idleCard: {
     gap: Spacing.two,
-  },
-  idleBody: {
-    fontSize: 13,
-    lineHeight: 20,
   },
   summaryContent: {
     gap: Spacing.three,
@@ -580,34 +733,84 @@ const styles = StyleSheet.create({
   },
   statusText: {
     textAlign: "center",
+    fontSize: 16,
+    lineHeight: 22,
   },
-  bingoBoard: {
-    width: "90%",
-    alignSelf: "center",
-    borderWidth: 2,
-  },
-  bingoRow: {
+  hud: {
     flexDirection: "row",
+    justifyContent: "center",
+    gap: Spacing.two,
   },
-  bingoCell: {
+  boardWrap: {
+    position: "relative",
+  },
+  tray: {
+    width: "92%",
+    alignSelf: "center",
+    borderRadius: Radius.tile,
+    padding: Spacing.two,
+    gap: Spacing.two,
+  },
+  trayRow: {
+    flexDirection: "row",
+    gap: Spacing.two,
+  },
+  tileOuter: {
+    flex: 1,
+  },
+  tile: {
     flex: 1,
     aspectRatio: 1,
     minHeight: 58,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
+    borderRadius: Radius.medium,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing.one,
   },
-  bingoCellLastCol: {
-    borderRightWidth: 0,
+  tilePressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
-  bingoCellLastRow: {
-    borderBottomWidth: 0,
+  tileCheck: {
+    position: "absolute",
+    top: Spacing.two - 1,
+    right: Spacing.two - 1,
+  },
+  flat: {
+    shadowOpacity: 0,
+    elevation: 0,
   },
   bingoWord: {
-    fontSize: 24,
+    fontSize: 26,
     lineHeight: 32,
+  },
+  resultRow: {
+    flexDirection: "row",
+    gap: Spacing.two,
+  },
+  statChip: {
+    flex: 1,
+    alignItems: "center",
+    gap: Spacing.half,
+    paddingVertical: Spacing.three,
+  },
+  statValue: {
+    fontSize: 26,
+    lineHeight: 30,
+    fontWeight: "800",
+  },
+  confettiLayer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 5,
+  },
+  confettiPiece: {
+    position: "absolute",
+    top: 0,
+    borderRadius: 2,
   },
   actions: {
     gap: Spacing.two,
@@ -617,11 +820,5 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: "row",
     gap: Spacing.two,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  disabled: {
-    opacity: 0.55,
   },
 });

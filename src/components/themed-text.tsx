@@ -1,6 +1,6 @@
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Fonts, ThemeColor } from '@/constants/theme';
+import { Colors, Fonts, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
@@ -9,6 +9,7 @@ export type ThemedTextProps = TextProps & {
     | 'title'
     | 'small'
     | 'smallBold'
+    | 'caption'
     | 'subtitle'
     | 'heading'
     | 'screenTitle'
@@ -31,6 +32,7 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'title' && styles.title,
         type === 'small' && styles.small,
         type === 'smallBold' && styles.smallBold,
+        type === 'caption' && styles.caption,
         type === 'subtitle' && styles.subtitle,
         type === 'heading' && styles.heading,
         type === 'screenTitle' && styles.screenTitle,
@@ -56,6 +58,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: 700,
+  },
+  /**
+   * 캡션·안내·타임스탬프 등 2차 본문. 14px 하한을 지키는 유일한 캡션 자리.
+   * 화면에서 fontSize를 11~13으로 인라인으로 줄이지 말 것 — 이 타입을 쓴다.
+   * (고령·난청 사용자 가독성: 14px 미만 금지.)
+   */
+  caption: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: 500,
   },
   default: {
     fontSize: 16,
@@ -104,10 +116,11 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontSize: 14,
   },
+  /** 강조 링크. 색은 accent 토큰(하드코딩 금지). */
   linkPrimary: {
     lineHeight: 30,
     fontSize: 14,
-    color: '#3c87f7',
+    color: Colors.light.accent,
   },
   code: {
     fontFamily: Fonts.mono,

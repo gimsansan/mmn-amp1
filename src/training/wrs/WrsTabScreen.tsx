@@ -21,10 +21,12 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { WrsBingoScreen } from "@/training/wrs/WrsBingoScreen";
+import { hasKoreanVoice } from "@/training/wrs/wrsTts";
 import { WrsSessionScreen } from "@/training/wrs/WrsSessionScreen";
 import { WrsTwoCharScreen } from "@/training/wrs/WrsTwoCharScreen";
+import { WrsVoiceGuideScreen } from "@/training/wrs/WrsVoiceGuideScreen";
 
-type Track = "picker" | "one" | "two" | "bingo";
+type Track = "picker" | "one" | "two" | "bingo" | "voiceGuide";
 
 type TrainingTrack = "one" | "two" | "bingo";
 
@@ -61,15 +63,42 @@ export function WrsTabScreen() {
   const [track, setTrack] = useState<Track>("picker");
   const [autoStart, setAutoStart] = useState(false);
 
+  const [pendingTrack, setPendingTrack] = useState<TrainingTrack | null>(null);
+  const [checking, setChecking] = useState(false);
+
   const backToPicker = useCallback(() => {
     setTrack("picker");
     setAutoStart(false);
+    setPendingTrack(null);
   }, []);
 
+  /**
+   * 세 연습 모두 한국어 TTS로 단어를 읽어 준다. 음성이 없으면 무음으로 진행돼
+   * 찍기가 되므로, 시작 전에 확인하고 없으면 안내 화면으로 보낸다.
+   */
   const openTrack = useCallback((next: TrainingTrack) => {
-    setAutoStart(next !== "bingo");
-    setTrack(next);
+    setChecking(true);
+    void hasKoreanVoice()
+      .then((ok) => {
+        if (ok) {
+          setPendingTrack(null);
+          setAutoStart(next !== "bingo");
+          setTrack(next);
+          return;
+        }
+        setPendingTrack(next);
+        setTrack("voiceGuide");
+      })
+      .finally(() => {
+        setChecking(false);
+      });
   }, []);
+
+  const retryVoice = useCallback(() => {
+    if (pendingTrack) {
+      openTrack(pendingTrack);
+    }
+  }, [openTrack, pendingTrack]);
 
   const consumeAutoStart = useCallback(() => {
     setAutoStart(false);
@@ -112,6 +141,16 @@ export function WrsTabScreen() {
     return <WrsBingoScreen onBack={backToPicker} />;
   }
 
+  if (track === "voiceGuide") {
+    return (
+      <WrsVoiceGuideScreen
+        onRetry={retryVoice}
+        onBack={backToPicker}
+        checking={checking}
+      />
+    );
+  }
+
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea}>
@@ -140,10 +179,12 @@ export function WrsTabScreen() {
                     key={option.track}
                     accessibilityRole="button"
                     accessibilityLabel={`${face.title} — ${option.description}`}
+                    accessibilityState={{ disabled: checking }}
+                    disabled={checking}
                     onPress={() => openTrack(option.track)}
                     style={({ pressed }) => [
                       styles.cardPress,
-                      pressed && styles.pressed,
+                      pressed && !checking && styles.pressed,
                     ]}
                   >
                     <Card style={styles.card}>

@@ -92,6 +92,12 @@ export function Ling6SessionScreen() {
   const [history, setHistory] = useState<SavedLing6Record[]>([]);
   const [clearing, setClearing] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  /**
+   * 진행 막대가 그리는 값은 ref가 아니라 state로 둔다 — ref는 바꿔도 다시 그리지
+   * 않아서 옆에 있는 `setPhase` 덕에 우연히 맞게 보일 뿐이다. ref는 비동기
+   * 콜백에서 최신 값을 읽는 용도로 남긴다.
+   */
+  const [outcomeCount, setOutcomeCount] = useState(0);
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
@@ -103,6 +109,7 @@ export function Ling6SessionScreen() {
     trialsRef.current = [];
     outcomesRef.current = [];
     savedRef.current = false;
+    setOutcomeCount(0);
     setTrialIndex(0);
     setLastCorrect(undefined);
     setLastTarget(null);
@@ -221,6 +228,7 @@ export function Ling6SessionScreen() {
     savedRef.current = false;
     trialsRef.current = createLing6Trials();
     outcomesRef.current = [];
+    setOutcomeCount(0);
     setTrialIndex(0);
     setLastCorrect(undefined);
     setLastTarget(null);
@@ -278,6 +286,7 @@ export function Ling6SessionScreen() {
         ...outcomesRef.current,
         { target: trial.target, correct },
       ];
+      setOutcomeCount(outcomesRef.current.length);
       setLastCorrect(correct);
       setLastTarget(trial.target);
       setPhase("feedback");
@@ -337,10 +346,7 @@ export function Ling6SessionScreen() {
         </View>
 
         {running ? (
-          <SessionProgressBar
-            current={outcomesRef.current.length}
-            total={TOTAL_TRIAL_COUNT}
-          />
+          <SessionProgressBar current={outcomeCount} total={TOTAL_TRIAL_COUNT} />
         ) : null}
 
         {phase === "idle" ? (

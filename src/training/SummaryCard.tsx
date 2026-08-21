@@ -30,7 +30,7 @@ function Stat({
 
   return (
     <View style={styles.statCell}>
-      <ThemedText type="small" themeColor="textMuted" style={styles.statLabel}>
+      <ThemedText type="caption" themeColor="textMuted">
         {label}
       </ThemedText>
       <ThemedText type="metric" style={accent ? { color: theme.accent } : undefined}>
@@ -43,7 +43,7 @@ function Stat({
 function MetricRow({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
     <View style={styles.metricRow}>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.metricLabel}>
+      <ThemedText type="caption" themeColor="textSecondary" style={styles.metricLabel}>
         {label}
       </ThemedText>
       <ThemedText type="mono" style={styles.metricValue}>
@@ -57,7 +57,7 @@ function MetricRow({ label, value }: Readonly<{ label: string; value: string }>)
  * 연습 결과 요약 카드 — 세션 끝(①②)과 기록 목록이 같은 모양을 쓴다.
  *
  * `주의`: 수치를 색·게이지로 강조하지 않는다. 여기 값은 **점수도 진단 역치도 아니다**.
- * 강조 색은 「연습 횟수」 한 칸에만 쓴다(시안 규칙).
+ * 강조 색은 「연습 횟수」 한 칸에만 쓴다(시안 규칙). 수치는 mono로 계기판처럼 읽힌다.
  */
 export function SummaryCard({
   header,
@@ -92,7 +92,7 @@ export function SummaryCard({
       <CardDivider />
 
       <View style={styles.metrics}>
-        <ThemedText type="mono" themeColor="textMuted" style={styles.sectionTitle}>
+        <ThemedText type="caption" themeColor="textMuted" style={styles.sectionTitle}>
           최근 난이도 참고
         </ThemedText>
         <MetricRow label={meanLabel} value={meanValue} />
@@ -101,7 +101,7 @@ export function SummaryCard({
       </View>
 
       {footnote ? (
-        <ThemedText type="small" themeColor="textMuted" style={styles.footnote}>
+        <ThemedText type="caption" themeColor="textMuted" style={styles.footnote}>
           {footnote}
         </ThemedText>
       ) : null}
@@ -124,7 +124,7 @@ export function SummaryCardHeader({
         </ThemedText>
         {badge ? (
           <View style={[styles.badge, { backgroundColor: theme.borderSubtle }]}>
-            <ThemedText type="small" themeColor="textMuted" style={styles.badgeText}>
+            <ThemedText type="caption" themeColor="textMuted" style={styles.badgeText}>
               {badge}
             </ThemedText>
           </View>
@@ -161,12 +161,12 @@ const styles = StyleSheet.create({
   badge: {
     flexShrink: 0,
     borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.two - 2,
-    paddingVertical: 1,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
   },
   badgeText: {
-    fontSize: 10.5,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 16,
   },
   headerDate: {
     flexShrink: 0,
@@ -179,10 +179,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     gap: Spacing.one,
-  },
-  statLabel: {
-    fontSize: 11,
-    lineHeight: 15,
   },
   statDivider: {
     width: 1,
@@ -204,7 +200,6 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     flexShrink: 1,
-    fontSize: 13,
   },
   metricValue: {
     flexShrink: 0,
@@ -212,8 +207,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   footnote: {
-    fontSize: 11,
-    lineHeight: 16,
     textAlign: 'center',
   },
 });

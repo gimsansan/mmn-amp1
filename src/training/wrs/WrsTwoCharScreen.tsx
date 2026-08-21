@@ -93,11 +93,18 @@ export function WrsTwoCharScreen({
   const [history, setHistory] = useState<SavedTwoCharRecord[]>([]);
   const [clearing, setClearing] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  /**
+   * 화면이 그리는 값은 ref가 아니라 state로 둔다 — ref는 바꿔도 다시 그리지 않아서
+   * 옆에 있는 `setPhase` 덕에 우연히 맞게 보일 뿐이다. ref는 비동기 콜백에서
+   * 최신 값을 읽는 용도로 남긴다(`WrsBingoScreen`의 `markedRef`+`marked`와 같은 짝).
+   */
+  const [trials, setTrials] = useState<TwoCharTrial[]>([]);
+  const [outcomeCount, setOutcomeCount] = useState(0);
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
   const choiceDisabled = phase !== "choose";
-  const currentTrial = trialsRef.current[trialIndex];
+  const currentTrial = trials[trialIndex];
 
   const resetRun = useCallback(() => {
     abortRef.current = true;
@@ -105,6 +112,8 @@ export function WrsTwoCharScreen({
     trialsRef.current = [];
     outcomesRef.current = [];
     savedRef.current = false;
+    setTrials([]);
+    setOutcomeCount(0);
     setTrialIndex(0);
     setLastCorrect(undefined);
     setLastTarget(null);
@@ -216,8 +225,11 @@ export function WrsTwoCharScreen({
     savedRef.current = false;
     void listTwoCharRecords()
       .then((rows) => {
-        trialsRef.current = createTwoCharTrials(nextTwoCharListIndex(rows.length));
+        const nextTrials = createTwoCharTrials(nextTwoCharListIndex(rows.length));
+        trialsRef.current = nextTrials;
         outcomesRef.current = [];
+        setTrials(nextTrials);
+        setOutcomeCount(0);
         setTrialIndex(0);
         setLastCorrect(undefined);
         setLastTarget(null);
@@ -283,6 +295,7 @@ export function WrsTwoCharScreen({
           correct,
         },
       ];
+      setOutcomeCount(outcomesRef.current.length);
       setLastCorrect(correct);
       setLastTarget(trial.target);
       setPhase("feedback");
@@ -349,7 +362,7 @@ export function WrsTwoCharScreen({
 
         {running ? (
           <SessionProgressBar
-            current={outcomesRef.current.length}
+            current={outcomeCount}
             total={TWO_CHAR_TRIAL_COUNT}
           />
         ) : null}

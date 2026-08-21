@@ -16,7 +16,7 @@ type TabStatsScreenProps = {
 
 /**
  * 탭 통계 스와프 껍데기. `SessionHistoryScreen`과 같은 입구(헤더 차트 → 이 화면).
- * 진단·점수 UI 아님.
+ * 연습 기록 화면이다.
  */
 export function TabStatsScreen({
   title,
@@ -29,13 +29,8 @@ export function TabStatsScreen({
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
         <View style={styles.header}>
           <ThemedText type="screenTitle">{title}</ThemedText>
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            style={styles.caption}
-            numberOfLines={1}
-          >
-            이 기기에만 저장 · 점수·청력 검사·진단 결과 아님
+          <ThemedText themeColor="textSecondary" type="caption" numberOfLines={1}>
+            이 기기에만 저장돼요 · 연습 기록이에요
           </ThemedText>
         </View>
 
@@ -79,14 +74,10 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: Spacing.three,
     alignItems: "stretch",
-    gap: Spacing.three - 2,
+    gap: Spacing.three,
   },
   header: {
-    gap: Spacing.one + 2,
-  },
-  caption: {
-    fontSize: 11.5,
-    lineHeight: 17,
+    gap: Spacing.one,
   },
   empty: {
     textAlign: "center",

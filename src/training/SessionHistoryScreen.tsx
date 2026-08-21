@@ -1,5 +1,5 @@
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -417,11 +417,8 @@ export function SessionHistoryScreen({
       });
   }, []);
 
-  useEffect(() => {
-    reload();
-  }, [reload]);
-
-  // 탭이 살아있는 채로 포커스가 돌아올 때도 갱신한다(탭 전환 후 복귀 등).
+  // 첫 진입과, 탭이 살아있는 채로 포커스가 돌아올 때(탭 전환 후 복귀 등) 갱신한다.
+  // `useFocusEffect`는 마운트에서도 한 번 도므로 별도 `useEffect`를 두면 두 번 읽는다.
   useFocusEffect(
     useCallback(() => {
       reload();

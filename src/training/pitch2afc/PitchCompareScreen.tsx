@@ -513,9 +513,10 @@ export function PitchCompareScreen({
   const choiceDisabled = phase !== "choose";
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
-  const targetReversals = targetReversalsFor(
-    phase === "idle" ? mode : runModeRef.current,
-  );
+  // 모드 토글은 `SessionHeader`가 idle에서만 그리므로, 진행 중에도
+  // `mode` state가 곧 세션 모드다(`onStart`에서 `runModeRef`에 그대로 넣는다).
+  // ref를 렌더에서 읽으면 바뀌어도 다시 그리지 않아 값이 밀린다.
+  const targetReversals = targetReversalsFor(mode);
 
   return (
     <ThemedView style={styles.fill}>

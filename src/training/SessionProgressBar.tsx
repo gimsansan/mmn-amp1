@@ -18,7 +18,12 @@ export function SessionProgressBar({
   const ratio = total <= 0 ? 0 : Math.min(1, Math.max(0, current / total));
 
   return (
-    <View style={[styles.track, { backgroundColor: theme.border }]}>
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: total, now: current }}
+      style={[styles.track, { backgroundColor: theme.border }]}
+    >
       <View
         style={[
           styles.fill,
