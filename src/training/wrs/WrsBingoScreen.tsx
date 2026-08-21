@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import {
   BottomTabInset,
   MaxContentWidth,
@@ -265,14 +266,10 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <ThemedText type="screenTitle">단어 빙고</ThemedText>
-          </View>
-          <ThemedText themeColor="textSecondary" type="caption">
-            들은 단어를 판에서 눌러요 · 편하게 연습해요
-          </ThemedText>
-        </View>
+        <ScreenHeader
+          title="단어 빙고"
+          caption="들은 단어를 판에서 눌러요 · 편하게 연습해요"
+        />
 
         {phase === "idle" ? (
           <ScrollView
@@ -698,14 +695,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: BottomTabInset,
     gap: Spacing.three,
-  },
-  header: {
-    gap: Spacing.one,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
   },
   idleContent: {
     gap: Spacing.three,

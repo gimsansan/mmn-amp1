@@ -23,6 +23,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ActionButton } from "@/components/ui/action-button";
 import { Card } from "@/components/ui/card";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
@@ -391,17 +392,10 @@ export function StatsScreen({
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <View style={styles.screenHeader}>
-          <ThemedText type="screenTitle">연습 기록</ThemedText>
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            style={styles.caption}
-            numberOfLines={1}
-          >
-            이 기기에만 저장 · 점수·청력 검사·진단 결과 아님
-          </ThemedText>
-        </View>
+        <ScreenHeader
+          title="연습 기록"
+          caption="이 기기에만 저장 · 점수·청력 검사·진단 결과 아님"
+        />
 
         <KindTabs value={kind} onChange={pickKind} />
 
@@ -498,13 +492,6 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.three,
     alignItems: "stretch",
     gap: Spacing.three - 2,
-  },
-  screenHeader: {
-    gap: Spacing.one + 2,
-  },
-  caption: {
-    fontSize: 14,
-    lineHeight: 20,
   },
   /**
    * `horizontal` ScrollView는 RN 기본 스타일이 `flexGrow: 1`이라 세로로 늘어난다.

@@ -14,6 +14,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Card } from "@/components/ui/card";
 import { Icon, type IconName } from "@/components/ui/icon";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   BottomTabInset,
@@ -171,17 +172,11 @@ export function PtaSessionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.top}>
-            <View style={styles.headerRow}>
-              <ThemedText type="screenTitle">소리 높낮이</ThemedText>
-              <StatsEntryButton onPress={() => setShowStats(true)} />
-            </View>
-            <ThemedText
-              themeColor="textSecondary"
-              type="small"
-              style={styles.caption}
-            >
-              웰니스·훈련 · 병원 검사·진단을 대신하지 않아요
-            </ThemedText>
+            <ScreenHeader
+              title="소리 높낮이"
+              caption="웰니스·훈련 · 병원 검사·진단을 대신하지 않아요"
+              action={<StatsEntryButton onPress={() => setShowStats(true)} />}
+            />
 
             <View style={styles.list}>
               {TRACK_OPTIONS.map((option) => {
@@ -252,15 +247,6 @@ const styles = StyleSheet.create({
   },
   top: {
     gap: Spacing.two,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  caption: {
-    fontSize: 12,
-    lineHeight: 18,
   },
   list: {
     marginTop: Spacing.three,

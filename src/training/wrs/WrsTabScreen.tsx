@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Card } from "@/components/ui/card";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { Icon, type IconName } from "@/components/ui/icon";
 import {
   BottomTabInset,
@@ -160,16 +161,10 @@ export function WrsTabScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.top}>
-            <View style={styles.headerRow}>
-              <ThemedText type="screenTitle">단어 듣기</ThemedText>
-            </View>
-            <ThemedText
-              themeColor="textSecondary"
-              type="small"
-              style={styles.caption}
-            >
-              들은 단어를 보기에서 고르는 연습 · 병원 검사가 아니에요
-            </ThemedText>
+            <ScreenHeader
+              title="단어 듣기"
+              caption="들은 단어를 보기에서 고르는 연습 · 병원 검사가 아니에요"
+            />
 
             <View style={styles.list}>
               {TRACK_OPTIONS.map((option) => {
@@ -242,15 +237,6 @@ const styles = StyleSheet.create({
   },
   top: {
     gap: Spacing.two,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  caption: {
-    fontSize: 12,
-    lineHeight: 18,
   },
   list: {
     marginTop: Spacing.three,

@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   BottomTabInset,
@@ -294,21 +295,15 @@ export function WrsTwoCharScreen({
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <ThemedText type="screenTitle">두 글자</ThemedText>
-            {phase === "idle" || phase === "summary" ? (
+        <ScreenHeader
+          title="두 글자"
+          caption="들은 단어를 보기에서 고르는 연습 · 병원 검사가 아니에요"
+          action={
+            phase === "idle" || phase === "summary" ? (
               <StatsEntryButton onPress={openStats} />
-            ) : null}
-          </View>
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            style={styles.caption}
-          >
-            들은 단어를 보기에서 고르는 연습 · 병원 검사가 아니에요
-          </ThemedText>
-        </View>
+            ) : null
+          }
+        />
 
         {running ? (
           <SessionProgressBar
@@ -417,7 +412,6 @@ export function WrsTwoCharScreen({
           <ThemedText
             themeColor="textSecondary"
             type="small"
-            style={styles.caption}
           >
             {lastError}
           </ThemedText>
@@ -556,18 +550,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.three,
-  },
-  header: {
-    gap: Spacing.one,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  caption: {
-    fontSize: 12,
-    lineHeight: 18,
   },
   idleContent: {
     gap: Spacing.three,
