@@ -327,7 +327,15 @@ export function AmSessionScreen({
           </View>
         ) : null}
         {phase === "idle" ? (
-          <View style={styles.hero}>
+          /*
+            idle도 스크롤한다. 시스템 글씨 크기 120%부터 안내문이 「연습 시작」
+            버튼에 가려졌다(실기기 SC-01M 확인). 요약과 같은 처방이다.
+          */
+          <ScrollView
+            style={styles.heroScroll}
+            contentContainerStyle={styles.hero}
+            showsVerticalScrollIndicator={false}
+          >
             <View
               style={[styles.heroMark, { backgroundColor: theme.accentTint }]}
             >
@@ -369,7 +377,7 @@ export function AmSessionScreen({
             >
               {phaseCaption(phase, result?.correct)}
             </ThemedText>
-          </View>
+          </ScrollView>
         ) : (
           <View style={styles.header}>
             <ThemedText type="screenTitle" style={styles.runningTitle}>
@@ -605,8 +613,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
   },
-  hero: {
+  /**
+   * idle 히어로를 감싸는 스크롤 껍데기. `flex: 1`이라 버튼이 바닥에 남는다.
+   *
+   * `주의`: 음수 마진은 `safeArea`의 `gap`을 이 자식에서만 상쇄한다.
+   * 스크롤을 넣기 전에는 히어로 내용이 그 간격으로 흘러넘쳐 있었고(기본 배율에서
+   * 이미 상자보다 컸다), 스크롤이 생기면서 그만큼이 잘려 나갔다. 버튼과의 간격은
+   * `actions`의 `marginTop`이 따로 준다.
+   */
+  heroScroll: {
     flex: 1,
+    alignSelf: "stretch",
+    marginBottom: -(Spacing.two + 2),
+  },
+  /** 스크롤의 contentContainer. 자리가 남으면 가운데, 모자라면 스크롤. */
+  hero: {
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.two + 2,
