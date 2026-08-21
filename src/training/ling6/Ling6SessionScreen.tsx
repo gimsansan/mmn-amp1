@@ -1,7 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   BackHandler,
   Image,
   Pressable,
@@ -28,8 +27,7 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
-import { Ling6ProgressPanel } from "@/training/ling6/Ling6ProgressPanel";
-import { TabStatsScreen } from "@/training/TabStatsScreen";
+import { StatsScreen } from "@/training/StatsScreen";
 import {
   collectPhonemeResults,
   createLing6Trials,
@@ -44,7 +42,6 @@ import {
   type Ling6TrialOutcome,
 } from "@/training/ling6/ling6Session";
 import {
-  clearLing6DailyRecords,
   listLing6DailyRecords,
   peekHighFreqBaseline,
   peekPreviousDayPassCount,
@@ -90,7 +87,6 @@ export function Ling6SessionScreen() {
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedLing6Record[]>([]);
-  const [clearing, setClearing] = useState(false);
   const [showStats, setShowStats] = useState(false);
   /**
    * 진행 막대가 그리는 값은 ref가 아니라 state로 둔다 — ref는 바꿔도 다시 그리지
@@ -128,32 +124,6 @@ export function Ling6SessionScreen() {
       setHistory([]);
     }
   }, []);
-
-  const doClearHistory = useCallback(() => {
-    setClearing(true);
-    void clearLing6DailyRecords()
-      .then(() => {
-        Alert.alert("완료", "링 6 연습 기록을 지웠어요.");
-        return refreshHistory();
-      })
-      .catch(() => {
-        Alert.alert("오류", "기록을 지우지 못했어요.");
-      })
-      .finally(() => {
-        setClearing(false);
-      });
-  }, [refreshHistory]);
-
-  const confirmClearHistory = useCallback(() => {
-    Alert.alert(
-      "기록 삭제",
-      "링 6 연습 기록을 모두 지울까요? 되돌릴 수 없어요. 다른 연습 기록은 그대로예요.",
-      [
-        { text: "취소", style: "cancel" },
-        { text: "삭제", style: "destructive", onPress: doClearHistory },
-      ],
-    );
-  }, [doClearHistory]);
 
   useFocusEffect(
     useCallback(() => {
@@ -311,19 +281,7 @@ export function Ling6SessionScreen() {
   }, [finishSession]);
 
   if (showStats) {
-    return (
-      <TabStatsScreen
-        title="연습 기록"
-        onBack={closeStats}
-        empty={history.length === 0}
-      >
-        <Ling6ProgressPanel records={history} />
-        <Ling6ClearHistoryButton
-          clearing={clearing}
-          onPress={confirmClearHistory}
-        />
-      </TabStatsScreen>
-    );
+    return <StatsScreen initialKind="ling6" onBack={closeStats} />;
   }
 
   return (
@@ -545,34 +503,6 @@ export function Ling6SessionScreen() {
   );
 }
 
-function Ling6ClearHistoryButton({
-  clearing,
-  onPress,
-}: Readonly<{ clearing: boolean; onPress: () => void }>) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="링 6 연습 기록 지우기"
-      accessibilityState={{ disabled: clearing }}
-      disabled={clearing}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.clearHistory,
-        clearing && styles.clearHistoryDisabled,
-        pressed && !clearing && styles.clearHistoryPressed,
-      ]}
-    >
-      <ThemedText
-        themeColor="danger"
-        type="small"
-        style={styles.clearHistoryLabel}
-      >
-        {clearing ? "지우는 중…" : "링 6 기록 지우기"}
-      </ThemedText>
-    </Pressable>
-  );
-}
-
 function PreviewCell({ sound }: Readonly<{ sound: Ling6Sound }>) {
   const theme = useTheme();
   return (
@@ -758,23 +688,6 @@ const styles = StyleSheet.create({
     marginTop: "auto",
     gap: Spacing.two,
     flexGrow: 0,
-  },
-  clearHistory: {
-    alignSelf: "flex-end",
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
-  },
-  clearHistoryLabel: {
-    fontSize: 12.5,
-    lineHeight: 18,
-  },
-  clearHistoryPressed: {
-    opacity: 0.7,
-  },
-  clearHistoryDisabled: {
-    opacity: 0.4,
   },
   pressed: {
     opacity: 0.85,

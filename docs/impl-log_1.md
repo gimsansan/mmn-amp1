@@ -47,6 +47,20 @@
 
 ## 로그
 
+### 2026-08-21 — 통계 화면 통합(칩 6 + 「다른 연습」 3줄) + 읽기 창구 `statsFeed`
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / UX |
+| 근거·결정 | 사용자 목표: **한 번의 클릭으로 전 탭 통계**. 홈 탭(5탭) 안과 비교 — 홈 색인은 근황 1클릭이지만 실제 통계는 **2클릭**이라 목적에 못 미침. 반면 헤더 차트 버튼은 이미 네 탭에 다 있어, 그 버튼이 여는 화면을 통합하면 **통계 1클릭**. → **탭 4개 유지, 통계 화면 하나**로 결정. 부하 우려에는 「한 번에 하나만 그린다」로 답: 칩으로 전환, 네 그래프를 쌓지 않음. 칩만으로는 다른 종목 상태를 눌러 봐야 알기에 하단 「다른 연습」 3줄을 덧댐(사용자 지적). |
+| 변경 요약 | ① `statsFeed.ts` 신설 — 저장소 4개(`ling6Store`·`sessionStore`·`wrsStore`·`twoCharStore`)를 **그대로 두고** `loadStatsFeed()`가 `Promise.all`로 한 번에 읽어 `kind`로 투영. 귀풀기(`practice`) 필터·종목별 지우기(`clearStatsKind`)·상대 날짜(`relativeDayCopy`)·한 줄 근황(`glanceOfKind`/`glanceOfGroup`)도 여기. **저장 키·마이그레이션 없음.** ② `StatsScreen.tsx` 신설 — 칩 6개(링6·높낮이 비교·다른 음 찾기·한 글자·두 글자·떨림), 연 탭의 종목이 선택된 채로 시작(`initialKind`), 고른 종목 **하나만** 렌더, 하단 「다른 연습」 3줄(누르면 화면 이동이 아니라 칩만 전환), 그 종목만 지우기. 열 때 1회 읽고 칩 전환은 메모리. ③ `SessionTrendPanel.tsx` 신설 — 구 `SessionHistoryScreen`의 누적 카드+추이 그래프를 트랙 1개용으로 분리(pitch2↔freq 내부 칩은 상위 칩에 흡수돼 삭제). ④ 다섯 진입점을 `StatsScreen`으로 배선(`am`·`pitch2`·`ling6`·`wrs1`·`wrs2`). ⑤ **삭제**: `SessionHistoryScreen.tsx`(770줄)·`TabStatsScreen.tsx` — 참조 0. 각 세션 화면의 `history`/`clearing` 상태·`*ClearHistoryButton`·`clearHistory*` 스타일도 함께 제거. ⑥ `jest/setup.js` 신설 + `jest.config.js`에 `setupFilesAfterEnv` — 화면 테스트가 저장소를 **간접 임포트**하며 AsyncStorage 네이티브 모듈이 없어 스위트가 통째로 넘어지던 것 차단(프리셋 `setupFiles`를 덮지 않으려 `AfterEnv` 사용). ⑦ `statsFeed.test.ts` 신설(14케이스). |
+| 주요 경로 | `src/training/statsFeed.ts`(신) · `StatsScreen.tsx`(신) · `SessionTrendPanel.tsx`(신) · `__tests__/statsFeed.test.ts`(신) · `am/AmTabScreen.tsx` · `pta/PtaSessionScreen.tsx` · `ling6/Ling6SessionScreen.tsx` · `wrs/WrsSessionScreen.tsx` · `wrs/WrsTwoCharScreen.tsx` · `jest.config.js` · `jest/setup.js`(신) · `docs/training-stats-recommendation.md` · `docs/ask-app-behavior.md` (삭제: `SessionHistoryScreen.tsx` · `TabStatsScreen.tsx`) |
+| 결과 | 성공. |
+| 확인 | `npx tsc --noEmit` **0**. `npx expo lint` **0 errors**(경고 15는 전부 기존 — `SessionModeToggle` 배열 타입, 스토어 테스트 `import/first`). `npx jest` **216 → 230 passed / 22 suites**, 실패 0. `주의`: 통합 전에는 `WrsSessionScreen.test.tsx` 스위트가 AsyncStorage 때문에 **로드 단계에서 실패**했고(테스트 214개는 통과) ⑥으로 해소. |
+| 단정 금지 | `미검증`: **실기기 UX 미확인** — 칩 6개가 좁은 화면에서 어떻게 접히는지(가로 스크롤로 처리했으나 실측 안 함), 「다른 연습」 줄 탭 반응. `추정`: 부하는 무시할 수준 — 레코드가 전부 요약 숫자(한 건 100~200B, 저장소당 50건 상한)라 4키 합쳐 수십 KB. 실측은 안 함. `주의`: 화면 렌더 테스트는 `statsFeed` 순수 함수만 덮음. `StatsScreen` 자체의 렌더 테스트는 없음. |
+| 성능·주의 | 화면 열 때 AsyncStorage 읽기가 **1키 → 4키**로 늘어남(부분 읽기가 없어 「다른 연습」 최신 1건에도 키 전체가 필요). 칩 전환마다 다시 읽지는 않음. **JS만 변경 — dev client 리빌드 불필요.** |
+| 다음 | 실기기에서 칩 줄·「다른 연습」 확인. 저장 키 통합(4키→1키)은 여전히 뒤. |
+
 ### 2026-08-21 11:08 — 학습 노트 3개 신설 + docs 지도 정정
 
 | 항목 | 내용 |

@@ -25,7 +25,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { FreqSessionScreen } from "@/training/freq/FreqSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { PitchCompareScreen } from "@/training/pitch2afc/PitchCompareScreen";
-import { SessionHistoryScreen } from "@/training/SessionHistoryScreen";
+import { StatsScreen } from "@/training/StatsScreen";
 import { SessionModeToggle } from "@/training/SessionModeToggle";
 import {
   DEFAULT_SESSION_MODE,
@@ -114,12 +114,7 @@ export function PtaSessionScreen() {
   );
 
   if (showStats) {
-    return (
-      <SessionHistoryScreen
-        onBack={closeStats}
-        clearTracks={["pitch2", "freq"]}
-      />
-    );
+    return <StatsScreen initialKind="pitch2" onBack={closeStats} />;
   }
 
   if ((track === "pitch2" || track === "freq") && !checked) {

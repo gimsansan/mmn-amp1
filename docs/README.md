@@ -22,7 +22,7 @@
 |---------|------|------|
 | **① 설계·기준** | 무엇을 왜 만드는가 | `amp-mdt-training-design.md`, `training-stats-recommendation.md` |
 | **② 환경·실행** | 어떻게 빌드·실행하는가 | `dev-client-setup-context.md`, `dev-client-connection-guide.md`, `cursor-rules-2-vs-3.md` |
-| **⑥ 읽기·질문** | 코드를 어떻게 물어보나 | `ask-file-behavior.md`(범용), `ask-app-behavior.md`(이 앱) |
+| **⑥ 읽기·질문** | 코드를 어떻게 물어보나 | `ask-file-behavior.md`(범용), `ask-app-behavior.md`(이 앱), `analysis/`(7축을 이 앱에 **적용한 결과**) |
 | **③ 할 일·상태** | 무엇이 문제이고 지금 어디까지 왔나 | `improvement-backlog.md` (+ `-easy`) |
 | **④ 기록** | 무엇을 했나 / 어떻게 고쳤나 | `impl-log_1.md`(이어서), `impl-log.md`(과거), `fix-reviews.md` |
 | **⑤ 인계** | 새로 오는 사람에게 넘길 맥락 | `handoff4.md`(정본) — `handoff.md`~`handoff3.md`는 과거 |
@@ -40,6 +40,7 @@
 | `training-stats-recommendation.md` | 갱신 | 탭별 기록 **수집·표시** 추천(봉투·kind 필터). 코드 미적용 | **기록을 어떻게 넣고 꺼내 보여주는가** |
 | `ask-file-behavior.md` | 갱신 | React 등 **범용** 질문 요령(역할 먼저, `[화면] --동작-->`) | **스택 무관하게 어떻게 물어보나** |
 | `ask-app-behavior.md` | 갱신 | 위 요령의 **이 앱** 예(탭·Store·차트 경로) | **이 저장소 파일을 어떻게 물어보나** |
+| `analysis/` (7개 + README) | 갱신 | `analaysys/`의 7축 질문 요령을 이 앱 주요 파일에 **적용한 결과**(화면·데이터·상태·에러·타입·성능·테스트) | **이 앱이 각 축에서 실제로 어떻게 생겼나** |
 | `merge-host-decision.md` | 갱신 | HarmoniTune×mnn 병합 시 **호스트 선택** 개념·저장·기록 방침 | **어느 저장소를 살리는가**(제품 이름과 별개) |
 | `merge-plan-harmonitune.md` | 갱신 | HarmoniTune×mnn 병합 **절차·이식 매핑·순서** | **무엇을 어디로 옮기나**(저장 방침은 host-decision §4.1 링크) |
 | `dev-client-setup-context.md` | 갱신 | 스택·빌드·Metro/Babel·경량화 방침 | **어떻게 돌리는가**(스택·빌드) |

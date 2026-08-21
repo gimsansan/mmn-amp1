@@ -119,7 +119,8 @@
 |-----------|------|
 | `src/app/` · `*TabScreen` · `PtaSessionScreen` | 1. 화면 갈아끼움 |
 | `*Store.ts` | 2. 기록 |
-| `*ProgressPanel` · `TrendChart` · `SessionHistoryScreen` | 3. 숫자 그리기 (+ 1이 섞일 수 있음) |
+| `*ProgressPanel` · `TrendChart` · `SessionTrendPanel` · `StatsScreen` | 3. 숫자 그리기 (+ 1이 섞일 수 있음) |
+| `statsFeed.ts` | 2와 3 사이 — 저장소 4개를 읽어 `kind`로 넘겨주는 창구 |
 | `*Session.ts` · `*Staircase.ts` · `wrsTrend.ts` | 4. 계산 |
 
 감이 틀려도 §1 질문이 바로잡는다. 이름은 힌트일 뿐, 파일을 안 읽었으면 단정하지 말 것.

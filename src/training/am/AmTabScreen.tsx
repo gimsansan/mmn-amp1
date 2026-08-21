@@ -5,7 +5,7 @@ import { BackHandler } from "react-native";
 import { DEFAULT_CARRIER_HZ } from "@/audio/amTone";
 import { AmSessionScreen } from "@/training/am/AmSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
-import { SessionHistoryScreen } from "@/training/SessionHistoryScreen";
+import { StatsScreen } from "@/training/StatsScreen";
 import {
   DEFAULT_SESSION_MODE,
   type SessionMode,
@@ -71,7 +71,7 @@ export function AmTabScreen() {
   );
 
   if (showStats) {
-    return <SessionHistoryScreen onBack={closeStats} clearTracks={["am"]} />;
+    return <StatsScreen initialKind="am" onBack={closeStats} />;
   }
 
   if (showCheck) {

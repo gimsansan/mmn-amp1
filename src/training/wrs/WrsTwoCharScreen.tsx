@@ -1,7 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   BackHandler,
   Pressable,
   ScrollView,
@@ -28,7 +27,7 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
 import { SessionProgressBar } from "@/training/SessionProgressBar";
-import { TabStatsScreen } from "@/training/TabStatsScreen";
+import { StatsScreen } from "@/training/StatsScreen";
 import {
   createTwoCharTrials,
   nextTwoCharListIndex,
@@ -39,11 +38,8 @@ import {
 } from "@/training/wrs/twoCharSession";
 import {
   appendTwoCharSummary,
-  clearTwoCharRecords,
   listTwoCharRecords,
-  type SavedTwoCharRecord,
 } from "@/training/wrs/twoCharStore";
-import { WrsProgressPanel } from "@/training/wrs/WrsProgressPanel";
 import {
   wrsPercentCopy,
   wrsResultCopy,
@@ -90,8 +86,6 @@ export function WrsTwoCharScreen({
   const [summary, setSummary] = useState<WrsSessionSummary | null>(null);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
-  const [history, setHistory] = useState<SavedTwoCharRecord[]>([]);
-  const [clearing, setClearing] = useState(false);
   const [showStats, setShowStats] = useState(false);
   /**
    * 화면이 그리는 값은 ref가 아니라 state로 둔다 — ref는 바꿔도 다시 그리지 않아서
@@ -123,49 +117,14 @@ export function WrsTwoCharScreen({
     setPhase("idle");
   }, []);
 
-  const refreshHistory = useCallback(async () => {
-    try {
-      setHistory(await listTwoCharRecords());
-    } catch {
-      setHistory([]);
-    }
-  }, []);
-
-  const doClearHistory = useCallback(() => {
-    setClearing(true);
-    void clearTwoCharRecords()
-      .then(() => {
-        Alert.alert("완료", "두 글자 연습 기록을 지웠어요.");
-        return refreshHistory();
-      })
-      .catch(() => {
-        Alert.alert("오류", "기록을 지우지 못했어요.");
-      })
-      .finally(() => {
-        setClearing(false);
-      });
-  }, [refreshHistory]);
-
-  const confirmClearHistory = useCallback(() => {
-    Alert.alert(
-      "기록 삭제",
-      "두 글자 연습 기록을 모두 지울까요? 되돌릴 수 없어요. 다른 연습 기록은 그대로예요.",
-      [
-        { text: "취소", style: "cancel" },
-        { text: "삭제", style: "destructive", onPress: doClearHistory },
-      ],
-    );
-  }, [doClearHistory]);
-
   useFocusEffect(
     useCallback(() => {
       abortRef.current = false;
-      void refreshHistory();
       return () => {
         abortRef.current = true;
         void stopWrsSpeech();
       };
-    }, [refreshHistory]),
+    }, []),
   );
 
   useEffect(() => {
@@ -271,11 +230,10 @@ export function WrsTwoCharScreen({
     try {
       await appendTwoCharSummary(nextSummary);
       setSaveNote("기기에 기록했어요");
-      await refreshHistory();
     } catch {
       setSaveNote("기록에 남기지 못했어요");
     }
-  }, [refreshHistory]);
+  }, []);
 
   const onChoose = useCallback(
     (choice: string) => {
@@ -320,9 +278,8 @@ export function WrsTwoCharScreen({
   }, [finishSession]);
 
   const openStats = useCallback(() => {
-    void refreshHistory();
     setShowStats(true);
-  }, [refreshHistory]);
+  }, []);
 
   const closeStats = useCallback(() => {
     setShowStats(false);
@@ -330,14 +287,7 @@ export function WrsTwoCharScreen({
 
   if (showStats) {
     return (
-      <TabStatsScreen
-        title="연습 기록"
-        onBack={closeStats}
-        empty={history.length === 0}
-      >
-        <WrsProgressPanel records={history} />
-        <ClearHistoryButton clearing={clearing} onPress={confirmClearHistory} />
-      </TabStatsScreen>
+      <StatsScreen initialKind="wrs2" onBack={closeStats} />
     );
   }
 
@@ -554,34 +504,6 @@ function promptCopy(
   return `아쉬워요 · 정답은 ${lastTarget ?? ""}`;
 }
 
-function ClearHistoryButton({
-  clearing,
-  onPress,
-}: Readonly<{ clearing: boolean; onPress: () => void }>) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="두 글자 연습 기록 지우기"
-      accessibilityState={{ disabled: clearing }}
-      disabled={clearing}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.clearHistory,
-        clearing && styles.clearHistoryDisabled,
-        pressed && !clearing && styles.clearHistoryPressed,
-      ]}
-    >
-      <ThemedText
-        themeColor="danger"
-        type="small"
-        style={styles.clearHistoryLabel}
-      >
-        {clearing ? "지우는 중…" : "두 글자 기록 지우기"}
-      </ThemedText>
-    </Pressable>
-  );
-}
-
 function ChoiceCell({
   word,
   disabled,
@@ -713,23 +635,6 @@ const styles = StyleSheet.create({
     marginTop: "auto",
     gap: Spacing.two,
     flexGrow: 0,
-  },
-  clearHistory: {
-    alignSelf: "flex-end",
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
-  },
-  clearHistoryLabel: {
-    fontSize: 12.5,
-    lineHeight: 18,
-  },
-  clearHistoryPressed: {
-    opacity: 0.7,
-  },
-  clearHistoryDisabled: {
-    opacity: 0.4,
   },
   pressed: {
     opacity: 0.85,
