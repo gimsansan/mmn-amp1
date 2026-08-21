@@ -1,21 +1,29 @@
 /**
  * 통합 연습 기록 화면 — 네 탭 어디서 열어도 같은 화면.
- * 헤더 차트 버튼 한 번에 그 탭 통계가 뜨고(칩이 그 종목으로 열림), 다른 종목은
- * 칩 하나로 건너뛴다. 아래 「다른 연습」 줄은 눌러 보지 않아도 근황이 보이게 한다.
+ * 헤더 차트 버튼 한 번에 그 탭 통계가 뜨고(탭이 그 종목으로 열림), 다른 종목은
+ * 탭 하나로 건너뛴다. 아래 「다른 연습」 줄은 눌러 보지 않아도 근황이 보이게 한다.
  *
  * 한 번에 하나만 그린다 — 네 그래프를 세로로 쌓지 않는다.
- * 저장소는 열 때 한 번만 읽고(`loadStatsFeed`), 칩 전환은 메모리로 처리한다.
+ * 저장소는 열 때 한 번만 읽고(`loadStatsFeed`), 탭 전환은 메모리로 처리한다.
+ *
+ * 탭을 누르면 「그 종목 화면이 열린다」고 읽히게 세 가지를 준다.
+ *  1) 고른 탭만 파란 면 + 아래 삼각 꼬리로 본문을 가리킨다.
+ *  2) 본문 맨 위에 종목 아이콘·이름·기록 수를 단 제목줄이 선다.
+ *  3) 본문 전체가 누른 방향에서 밀려 들어온다(오른쪽 탭을 고르면 오른쪽에서).
+ * 화면 이동(navigation)은 없다 — 스크롤만 맨 위로 되돌린다.
  */
 
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Animated, { FadeInLeft, FadeInRight } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ActionButton } from "@/components/ui/action-button";
 import { Card } from "@/components/ui/card";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { SessionTrendPanel } from "@/training/SessionTrendPanel";
@@ -43,10 +51,23 @@ import {
 import { WrsProgressPanel } from "@/training/wrs/WrsProgressPanel";
 
 type StatsScreenProps = {
-  /** 이 화면을 연 탭의 종목. 칩이 여기서 시작한다. */
+  /** 이 화면을 연 탭의 종목. 탭이 여기서 시작한다. */
   initialKind: StatsKind;
   onBack: () => void;
 };
+
+/** 본문 제목줄의 그림 — 각 종목이 훈련 화면에서 쓰는 아이콘 그대로. */
+const KIND_ICON: Record<StatsKind, IconName> = {
+  ling6: "headphones",
+  pitch2: "bars",
+  freq: "findTone",
+  wrs1: "oneChar",
+  wrs2: "twoChar",
+  am: "vibrate",
+};
+
+/** 본문이 밀려 들어오는 시간(ms). 넘기는 느낌만 주고 기다리게 하지 않는다. */
+const ENTER_MS = 220;
 
 /** 선택한 종목의 본문. 종목마다 이미 있던 패널을 그대로 쓴다. */
 function KindPanel({
@@ -68,52 +89,138 @@ function KindPanel({
   return <SessionTrendPanel rows={sessionRowsOfKind(feed, kind)} track={kind} />;
 }
 
-function KindChips({
+type TabSpot = { x: number; width: number };
+
+/** 지금 보는 종목 + 본문이 밀려 들어올 방향(오른쪽 탭으로 갔으면 `true`). */
+type TabView = { kind: StatsKind; forward: boolean };
+
+/**
+ * 종목 탭 줄. 고른 것만 파란 면 + 꼬리로 아래 본문과 이어 보이게 한다.
+ * 여섯 개라 한 화면에 다 들어오지 않으므로, 고른 탭이 잘리면 가운데로 굴려 준다
+ * (헤더 차트 버튼으로 들어오면 그 종목이 줄 끝에 있을 수 있다).
+ */
+function KindTabs({
   value,
   onChange,
 }: Readonly<{ value: StatsKind; onChange: (next: StatsKind) => void }>) {
   const theme = useTheme();
+  const scrollRef = useRef<ScrollView>(null);
+  const spots = useRef<Partial<Record<StatsKind, TabSpot>>>({});
+  const rowWidth = useRef(0);
+
+  const revealTab = useCallback((kind: StatsKind) => {
+    const spot = spots.current[kind];
+    if (spot == null || rowWidth.current === 0) {
+      return;
+    }
+    const x = Math.max(0, spot.x - (rowWidth.current - spot.width) / 2);
+    scrollRef.current?.scrollTo({ x, animated: true });
+  }, []);
+
+  const pick = useCallback(
+    (kind: StatsKind) => {
+      onChange(kind);
+      revealTab(kind);
+    },
+    [onChange, revealTab],
+  );
 
   return (
     <ScrollView
+      ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={styles.chipScroll}
-      contentContainerStyle={styles.chipRow}
+      accessibilityRole="tablist"
+      style={styles.tabScroll}
+      contentContainerStyle={styles.tabRow}
+      onLayout={(event) => {
+        rowWidth.current = event.nativeEvent.layout.width;
+        revealTab(value);
+      }}
     >
       {STATS_KINDS.map((kind) => {
         const active = kind === value;
         return (
-          <Pressable
+          <View
             key={kind}
-            accessibilityRole="button"
-            accessibilityLabel={`${KIND_LABEL[kind]} 기록 보기`}
-            accessibilityState={{ selected: active }}
-            onPress={() => onChange(kind)}
-            style={[
-              styles.chip,
-              {
-                borderColor: active ? theme.accentBorder : theme.border,
-                backgroundColor: active ? theme.accentTint : theme.surface,
-              },
-            ]}
+            style={styles.tabSlot}
+            onLayout={(event) => {
+              const { x, width } = event.nativeEvent.layout;
+              spots.current[kind] = { x, width };
+              if (active) {
+                revealTab(kind);
+              }
+            }}
           >
-            <ThemedText
-              type="small"
-              style={{ color: active ? theme.accent : theme.textSecondary }}
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityLabel={`${KIND_LABEL[kind]} 기록 보기`}
+              accessibilityState={{ selected: active }}
+              onPress={() => pick(kind)}
+              style={({ pressed }) => [
+                styles.tab,
+                {
+                  borderColor: active ? theme.accent : theme.border,
+                  backgroundColor: active ? theme.accent : theme.surface,
+                },
+                pressed && styles.tabPressed,
+              ]}
             >
-              {KIND_LABEL[kind]}
-            </ThemedText>
-          </Pressable>
+              <ThemedText
+                type="smallBold"
+                style={{ color: active ? theme.onAccent : theme.textSecondary }}
+              >
+                {KIND_LABEL[kind]}
+              </ThemedText>
+            </Pressable>
+            {/* 고른 탭에서 본문으로 내려가는 꼬리. 자리는 늘 잡아 둔다(줄 높이 고정). */}
+            <View
+              style={[
+                styles.tabCaret,
+                { borderTopColor: theme.accent },
+                !active && styles.tabCaretHidden,
+              ]}
+            />
+          </View>
         );
       })}
     </ScrollView>
   );
 }
 
+/** 본문 맨 위 제목줄 — 지금 보고 있는 게 어느 종목인지 그림과 글로 못 박는다. */
+function PanelHeading({
+  kind,
+  count,
+}: Readonly<{ kind: StatsKind; count: number }>) {
+  const theme = useTheme();
+
+  return (
+    <View style={styles.panelHeading}>
+      <View
+        style={[
+          styles.panelMark,
+          {
+            backgroundColor: theme.accentTint,
+            borderColor: theme.accentBorder,
+          },
+        ]}
+      >
+        <Icon name={KIND_ICON[kind]} size={24} color={theme.accent} />
+      </View>
+      <View style={styles.panelHeadingText}>
+        <ThemedText style={styles.panelTitle}>{KIND_LABEL[kind]}</ThemedText>
+        <ThemedText themeColor="textMuted" type="small">
+          {count > 0 ? `기록 ${count}회` : "기록 없음"}
+        </ThemedText>
+      </View>
+    </View>
+  );
+}
+
 /**
  * 지금 보고 있는 탭을 뺀 나머지 근황. 그래프 없이 한 줄씩.
- * 누르면 화면을 옮기지 않고 위 칩만 바꾼다.
+ * 누르면 화면을 옮기지 않고 위 탭만 바꾼다.
  */
 function OtherTrainingCard({
   feed,
@@ -198,11 +305,18 @@ export function StatsScreen({
   initialKind,
   onBack,
 }: Readonly<StatsScreenProps>) {
-  const [kind, setKind] = useState<StatsKind>(initialKind);
+  // 고른 종목과, 본문이 들어올 방향을 한 상태로 묶는다 —
+  // 방향은 「어디서 어디로 갔나」라서 kind와 따로 두면 한 프레임 어긋난다.
+  const [view, setView] = useState<TabView>({
+    kind: initialKind,
+    forward: true,
+  });
   const [feed, setFeed] = useState<StatsFeed>(EMPTY_STATS_FEED);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
+  const bodyRef = useRef<ScrollView>(null);
+  const kind = view.kind;
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -226,6 +340,21 @@ export function StatsScreen({
     useCallback(() => {
       reload();
     }, [reload]),
+  );
+
+  /** 종목 바꾸기 — 새 본문은 늘 위에서부터(앞 종목 스크롤 위치를 물려주지 않는다). */
+  const pickKind = useCallback(
+    (next: StatsKind) => {
+      if (next === kind) {
+        return;
+      }
+      bodyRef.current?.scrollTo({ y: 0, animated: false });
+      setView({
+        kind: next,
+        forward: STATS_KINDS.indexOf(next) > STATS_KINDS.indexOf(kind),
+      });
+    },
+    [kind],
   );
 
   const doClear = useCallback(() => {
@@ -254,8 +383,10 @@ export function StatsScreen({
     );
   }, [doClear, kind]);
 
-  const hasRecords = countOfKind(feed, kind) > 0;
+  const count = countOfKind(feed, kind);
+  const hasRecords = count > 0;
   const currentGroup = GROUP_OF_KIND[kind];
+  const entering = (view.forward ? FadeInRight : FadeInLeft).duration(ENTER_MS);
 
   return (
     <ThemedView style={styles.fill}>
@@ -272,9 +403,10 @@ export function StatsScreen({
           </ThemedText>
         </View>
 
-        <KindChips value={kind} onChange={setKind} />
+        <KindTabs value={kind} onChange={pickKind} />
 
         <ScrollView
+          ref={bodyRef}
           style={styles.body}
           contentContainerStyle={styles.bodyContent}
           showsVerticalScrollIndicator={false}
@@ -299,26 +431,37 @@ export function StatsScreen({
             </ThemedText>
           ) : null}
 
-          {!loading && !error && !hasRecords ? (
-            <ThemedText
-              themeColor="textMuted"
-              type="small"
-              style={styles.notice}
-            >
-              아직 {KIND_LABEL[kind]} 기록이 없어요
-            </ThemedText>
-          ) : null}
-
-          {!loading && !error && hasRecords ? (
-            <KindPanel feed={feed} kind={kind} />
-          ) : null}
-
+          {/*
+           * `key`가 종목이라 탭을 바꾸면 이 덩어리째 새로 그려지고, 그때 등장
+           * 애니메이션이 돈다 — 제목줄·그래프·「다른 연습」이 한 화면처럼 같이 들어온다.
+           * 기록을 지워 `feed`만 바뀔 때는 key가 그대로라 움직이지 않는다.
+           */}
           {!loading && !error ? (
-            <OtherTrainingCard
-              feed={feed}
-              currentGroup={currentGroup}
-              onPick={setKind}
-            />
+            <Animated.View
+              key={kind}
+              entering={entering}
+              style={styles.panelStack}
+            >
+              <PanelHeading kind={kind} count={count} />
+
+              {hasRecords ? (
+                <KindPanel feed={feed} kind={kind} />
+              ) : (
+                <ThemedText
+                  themeColor="textMuted"
+                  type="small"
+                  style={styles.notice}
+                >
+                  아직 {KIND_LABEL[kind]} 기록이 없어요
+                </ThemedText>
+              )}
+
+              <OtherTrainingCard
+                feed={feed}
+                currentGroup={currentGroup}
+                onPick={pickKind}
+              />
+            </Animated.View>
           ) : null}
         </ScrollView>
 
@@ -365,24 +508,45 @@ const styles = StyleSheet.create({
   },
   /**
    * `horizontal` ScrollView는 RN 기본 스타일이 `flexGrow: 1`이라 세로로 늘어난다.
-   * 그러면 칩이 `stretch`로 따라 늘어나 화면을 잡아먹는다 — 둘 다 막는다.
+   * 그러면 탭이 `stretch`로 따라 늘어나 화면을 잡아먹는다 — 둘 다 막는다.
    */
-  chipScroll: {
+  tabScroll: {
     flexGrow: 0,
     flexShrink: 0,
   },
-  chipRow: {
+  tabRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: Spacing.two,
     paddingRight: Spacing.two,
   },
-  chip: {
+  tabSlot: {
+    alignItems: "center",
+  },
+  tab: {
     borderWidth: 1,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.three - 4,
     paddingVertical: Spacing.one + 2,
     justifyContent: "center",
+  },
+  tabPressed: {
+    opacity: 0.7,
+  },
+  /** 아래를 가리키는 삼각형 — RN에 도형이 없어 테두리로 만든다. */
+  tabCaret: {
+    width: 0,
+    height: 0,
+    marginTop: Spacing.one,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 6,
+    borderBottomWidth: 0,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+  },
+  tabCaretHidden: {
+    opacity: 0,
   },
   body: {
     flex: 1,
@@ -390,6 +554,32 @@ const styles = StyleSheet.create({
   bodyContent: {
     gap: Spacing.three,
     paddingBottom: Spacing.two,
+  },
+  panelStack: {
+    gap: Spacing.three,
+  },
+  panelHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two + 2,
+  },
+  panelMark: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.small,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  panelHeadingText: {
+    flexShrink: 1,
+    gap: 1,
+  },
+  /** 화면 제목(23)보다 한 단 아래. 14px 하한 위라 인라인 축소가 아니다. */
+  panelTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: 700,
   },
   notice: {
     textAlign: "center",
