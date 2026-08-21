@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { playPureTone, stopPureTone } from "@/audio/pureTone";
@@ -16,7 +16,6 @@ import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon, type IconName } from "@/components/ui/icon";
 import {
-  BottomTabInset,
   MaxContentWidth,
   Radius,
   Shadows,
@@ -128,102 +127,110 @@ export function ListeningCheckScreen({
 
   return (
     <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          {/* 시작 화면 hero 타일을 줄인 것 — 안내 카드가 쌓이는 화면이라 링은 뺀다. */}
-          <View
-            style={[styles.trackMark, { backgroundColor: theme.accentTint }]}
-          >
-            <Icon name={trackIcon} size={30} color={theme.accent} />
-          </View>
-          <ThemedText
-            type="screenTitle"
-            style={[styles.centered, styles.title]}
-          >
-            듣기 준비
-          </ThemedText>
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            style={styles.subtitle}
-          >
-            {trackTitle}
-          </ThemedText>
-        </View>
-
-        <Card style={styles.box}>
-          <GuideHeader
-            icon="headphones"
-            title="이어폰이나 헤드폰을 쓰는 게 좋아요"
-          />
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            style={styles.body}
-          >
-            조용한 곳에서, 연습하는 동안 같은 기기를 쓰면 지난 연습과 견주어
-            보기 쉬워요
-          </ThemedText>
-        </Card>
-
-        <Card style={styles.box}>
-          <GuideHeader
-            icon="speaker"
-            title="소리 크기를 편안하게 맞춰 주세요"
-          />
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            style={styles.body}
-          >
-            아래 소리를 들으며 기기 볼륨을 조절하세요. 또렷하게 들리되 크게
-            느껴지지 않는 정도가 좋아요
-          </ThemedText>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ disabled: playing, busy: playing }}
-            disabled={playing}
-            onPress={onPlaySample}
-            style={({ pressed }) => [
-              styles.sampleButton,
-              { backgroundColor: theme.accent },
-              Shadows.accent,
-              playing && styles.playing,
-              pressed && !playing && styles.pressed,
-            ]}
-          >
-            {playing ? (
-              <Equalizer color={theme.onAccent} height={16} barWidth={3} />
-            ) : null}
-            <ThemedText
-              type="smallBold"
-              style={[{ color: theme.onAccent }, styles.sampleButtonText]}
-            >
-              {playing ? "재생 중…" : "소리 들어보기"}
-            </ThemedText>
-          </Pressable>
-        </Card>
-
-        {extra}
-
-        <ThemedText
-          themeColor="textMuted"
-          type="small"
-          style={styles.disclaimer}
+      {/*
+        하단 inset은 빼야 한다 — 그 자리는 이미 네이티브 탭바가 덮고 있어서
+        기본값을 쓰면 버튼 아래에 쓸모없는 48dp가 남고 안내가 그만큼 잘린다.
+      */}
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
         >
-          웰니스 연습 · 병원 검사·진단을 대신하지 않아요
-        </ThemedText>
+          <View style={styles.header}>
+            {/* 시작 화면 hero 타일을 줄인 것 — 안내 카드가 쌓이는 화면이라 링은 뺀다. */}
+            <View
+              style={[styles.trackMark, { backgroundColor: theme.accentTint }]}
+            >
+              <Icon name={trackIcon} size={30} color={theme.accent} />
+            </View>
+            <ThemedText
+              type="screenTitle"
+              style={[styles.centered, styles.title]}
+            >
+              듣기 준비
+            </ThemedText>
+            <ThemedText
+              themeColor="textSecondary"
+              type="small"
+              style={styles.subtitle}
+            >
+              {trackTitle}
+            </ThemedText>
+          </View>
 
-        {error ? (
+          <Card style={styles.box}>
+            <GuideHeader
+              icon="headphones"
+              title="이어폰이나 헤드폰을 쓰는 게 좋아요"
+            />
+            <ThemedText
+              themeColor="textSecondary"
+              type="small"
+              style={styles.body}
+            >
+              조용한 곳에서, 연습하는 동안 같은 기기를 쓰면 지난 연습과 견주어
+              보기 쉬워요
+            </ThemedText>
+          </Card>
+
+          <Card style={styles.box}>
+            <GuideHeader
+              icon="speaker"
+              title="소리 크기를 편안하게 맞춰 주세요"
+            />
+            <ThemedText
+              themeColor="textSecondary"
+              type="small"
+              style={styles.body}
+            >
+              아래 소리를 들으며 기기 볼륨을 조절하세요. 또렷하게 들리되 크게
+              느껴지지 않는 정도가 좋아요
+            </ThemedText>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: playing, busy: playing }}
+              disabled={playing}
+              onPress={onPlaySample}
+              style={({ pressed }) => [
+                styles.sampleButton,
+                { backgroundColor: theme.accent },
+                Shadows.accent,
+                playing && styles.playing,
+                pressed && !playing && styles.pressed,
+              ]}
+            >
+              {playing ? (
+                <Equalizer color={theme.onAccent} height={16} barWidth={3} />
+              ) : null}
+              <ThemedText
+                type="smallBold"
+                style={[{ color: theme.onAccent }, styles.sampleButtonText]}
+              >
+                {playing ? "재생 중…" : "소리 들어보기"}
+              </ThemedText>
+            </Pressable>
+          </Card>
+
+          {extra}
+
           <ThemedText
-            themeColor="textSecondary"
+            themeColor="textMuted"
             type="small"
-            style={styles.centered}
+            style={styles.disclaimer}
           >
-            {error}
+            웰니스 연습 · 병원 검사·진단을 대신하지 않아요
           </ThemedText>
-        ) : null}
 
+          {error ? (
+            <ThemedText
+              themeColor="textSecondary"
+              type="small"
+              style={styles.centered}
+            >
+              {error}
+            </ThemedText>
+          ) : null}
+        </ScrollView>
         <View style={styles.actions}>
           <ActionButton
             variant="primary"
@@ -253,8 +260,24 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    // 하단 탭은 NativeTabs(네이티브)라 화면 영역이 이미 탭바 위에서 끝난다.
+    // 탭바 높이를 또 더하면 버튼 아래에 80dp 빈 공간이 생긴다 — 스크롤을 씌우기
+    // 전에는 내용이 넘쳐 흐르며 그 자리를 먹어 안 보였을 뿐이다.
+    paddingBottom: Spacing.three,
     alignItems: "stretch",
+    gap: Spacing.three - 4,
+  },
+  /**
+   * 안내는 스크롤, 버튼은 그 밖에 고정.
+   * 시스템 글씨 크기를 키우면 안내 카드가 화면을 넘치는데, 스크롤이 없으면
+   * 「연습 시작」이 화면 밖으로 밀려 아예 눌리지 않는다(font_scale 1.2부터).
+   */
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    // 자리가 남으면 예전처럼 위에서부터, 모자랄 때만 스크롤.
+    flexGrow: 1,
     gap: Spacing.three - 4,
   },
   header: {
@@ -328,8 +351,8 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     gap: Spacing.three - 4,
-    // 안내 카드가 위에 쌓이므로 버튼은 바닥으로 민다(시안의 `margin-top:auto`).
-    marginTop: "auto",
+    // 스크롤 밖에 고정한다 — 배율을 키워도 버튼은 항상 화면에 남는다.
+    // `marginTop: "auto"`는 스크롤과 같이 쓰면 1.0에서 레이아웃을 깬다(두 번 겪음).
     paddingTop: Spacing.three,
   },
   playing: {
