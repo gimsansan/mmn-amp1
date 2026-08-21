@@ -26,8 +26,6 @@ const PAD_RIGHT = 10;
 const DOT_R = 3.5;
 const BAR_MAX_H = 56;
 const BAR_STUB_H = 3;
-const BAR_TRACK_BG = "#EEF3F8";
-const BAR_MUTED = "#D5DDE6";
 
 function chronological(
   records: readonly SavedLing6Record[],
@@ -118,14 +116,14 @@ function Ling6WeaknessBars({
           <View key={sound.id} style={styles.barCol}>
             <View
               accessibilityLabel={`${sound.label} /${sound.ipa}/ 아쉬움 ${missCount}회`}
-              style={styles.barTrack}
+              style={[styles.barTrack, { backgroundColor: theme.borderSubtle }]}
             >
               <View
                 style={[
                   styles.barFill,
                   {
                     height: fillH,
-                    backgroundColor: isHot ? theme.highlight : BAR_MUTED,
+                    backgroundColor: isHot ? theme.highlight : theme.chartMuted,
                   },
                 ]}
               />
@@ -294,7 +292,6 @@ const styles = StyleSheet.create({
     width: "70%",
     height: BAR_MAX_H,
     justifyContent: "flex-end",
-    backgroundColor: BAR_TRACK_BG,
     borderRadius: 4,
     overflow: "hidden",
   },
