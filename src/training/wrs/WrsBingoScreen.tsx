@@ -116,20 +116,24 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
     };
   }, []);
 
-  useEffect(() => {
-    if (phase === "idle" || phase === "summary") {
+  // 탭이 마운트된 채 남으므로 포커스가 없을 때는 걷어낸다 — 안 그러면 다른 탭의
+  // 뒤로가기를 이 화면이 가로챈다(`BackHandler`는 등록 역순으로 먼저 true를 문다).
+  useFocusEffect(
+    useCallback(() => {
+      if (phase === "idle" || phase === "summary") {
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+          leaveToA();
+          return true;
+        });
+        return () => sub.remove();
+      }
       const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-        leaveToA();
+        confirmEndSession(resetRun);
         return true;
       });
       return () => sub.remove();
-    }
-    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      confirmEndSession(resetRun);
-      return true;
-    });
-    return () => sub.remove();
-  }, [leaveToA, phase, resetRun]);
+    }, [leaveToA, phase, resetRun]),
+  );
 
   const finishRun = useCallback((nextLine: readonly number[] | null) => {
     abortRef.current = true;

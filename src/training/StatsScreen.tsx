@@ -455,22 +455,29 @@ export function StatsScreen({
                 currentGroup={currentGroup}
                 onPick={pickKind}
               />
+
+              {/*
+               * 기록 지우기는 본문 맨 아래. 되돌릴 수 없는 동작이라 화면 하단에
+               * 「뒤로 가기」와 나란히 상시 노출하지 않는다 — 끝까지 내려야 닿는다.
+               */}
+              {hasRecords ? (
+                <ClearKindButton
+                  kind={kind}
+                  clearing={clearing}
+                  disabled={clearing}
+                  onPress={confirmClear}
+                />
+              ) : null}
             </Animated.View>
           ) : null}
         </ScrollView>
 
         <View style={styles.footer}>
           <ActionButton
-            fill={false}
+            fill
             variant="primary"
             label="뒤로 가기"
             onPress={onBack}
-          />
-          <ClearKindButton
-            kind={kind}
-            clearing={clearing}
-            disabled={clearing || !hasRecords}
-            onPress={confirmClear}
           />
         </View>
       </SafeAreaView>
@@ -510,10 +517,12 @@ const styles = StyleSheet.create({
   tabSlot: {
     alignItems: "center",
   },
+  /** `minHeight` 44 = 손가락 최소 타깃. 글자만으로는 32px밖에 안 됐다. */
   tab: {
+    minHeight: 44,
     borderWidth: 1,
     borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.three - 4,
+    paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one + 2,
     justifyContent: "center",
   },
@@ -597,19 +606,16 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: Spacing.two,
   },
+  /** 본문 맨 아래 한 줄. 오른쪽 구석이 아니라 가운데 — 실수로 스치지 않을 자리다. */
   clearKind: {
-    flexShrink: 1,
     minHeight: 44,
+    alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing.two,
   },
   clearKindLabel: {
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: "right",
+    textAlign: "center",
   },
   clearKindPressed: {
     opacity: 0.7,

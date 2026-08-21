@@ -153,23 +153,27 @@ export function Ling6SessionScreen() {
     setShowStats(false);
   }, []);
 
-  useEffect(() => {
-    if (showStats) {
+  // 탭이 마운트된 채 남으므로 포커스가 없을 때는 걷어낸다 — 안 그러면 다른 탭의
+  // 뒤로가기를 이 화면이 가로챈다(`BackHandler`는 등록 역순으로 먼저 true를 문다).
+  useFocusEffect(
+    useCallback(() => {
+      if (showStats) {
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+          closeStats();
+          return true;
+        });
+        return () => sub.remove();
+      }
+      if (phase === "idle" || phase === "summary") {
+        return;
+      }
       const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-        closeStats();
+        confirmEndSession(resetRun);
         return true;
       });
       return () => sub.remove();
-    }
-    if (phase === "idle" || phase === "summary") {
-      return;
-    }
-    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      confirmEndSession(resetRun);
-      return true;
-    });
-    return () => sub.remove();
-  }, [closeStats, phase, resetRun, showStats]);
+    }, [closeStats, phase, resetRun, showStats]),
+  );
 
   const playCurrent = useCallback(async (index: number) => {
     const trial = trialsRef.current[index];
