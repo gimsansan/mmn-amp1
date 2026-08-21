@@ -5,8 +5,8 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-/** mono(12/16)·small(14/20) 기본 크기. textScale 배율의 기준. */
-const MONO_BASE = { fontSize: 12, lineHeight: 16 };
+/** mono·small 기본 크기(둘 다 14/20). `themed-text.tsx`의 같은 타입과 값을 맞춘다. */
+const MONO_BASE = { fontSize: 14, lineHeight: 20 };
 const SMALL_BASE = { fontSize: 14, lineHeight: 20 };
 
 type PillProps = {
@@ -34,12 +34,13 @@ export function Pill({
   const theme = useTheme();
   const surface = variant === 'surface';
   const base = mono ? MONO_BASE : SMALL_BASE;
+  // mono·small이 같은 크기가 되면서 `surface` 전용 크기(13/18)는 없어졌다 — 배율만 남는다.
   const scaledLabel =
-    textScale === 1 && !surface
+    textScale === 1
       ? null
       : {
-          fontSize: (surface && mono ? 13 : base.fontSize) * textScale,
-          lineHeight: (surface && mono ? 18 : base.lineHeight) * textScale,
+          fontSize: base.fontSize * textScale,
+          lineHeight: base.lineHeight * textScale,
         };
 
   return (

@@ -503,8 +503,8 @@ const styles = StyleSheet.create({
     gap: Spacing.one + 2,
   },
   caption: {
-    fontSize: 11.5,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
   },
   /**
    * `horizontal` ScrollView는 RN 기본 스타일이 `flexGrow: 1`이라 세로로 늘어난다.
@@ -603,8 +603,8 @@ const styles = StyleSheet.create({
   },
   otherValue: {
     flexShrink: 1,
-    fontSize: 12.5,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "right",
   },
   footer: {
@@ -620,8 +620,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
   },
   clearKindLabel: {
-    fontSize: 12.5,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "right",
   },
   clearKindPressed: {

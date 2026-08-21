@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   idleBody: {
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 20,
   },
   summaryContent: {
@@ -582,8 +582,8 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   footnote: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   promptArea: {
     alignItems: "center",

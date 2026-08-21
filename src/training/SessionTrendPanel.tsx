@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   graphTitle: {
-    fontSize: 13.5,
+    fontSize: 14,
   },
   recentRow: {
     flexDirection: "row",
@@ -332,24 +332,24 @@ const styles = StyleSheet.create({
   },
   recentUnit: {
     flexShrink: 1,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
   },
   framingSub: {
-    fontSize: 12.5,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   howToRead: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   startGuide: {
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
   },
   graphEmpty: {
-    fontSize: 12.5,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
     paddingVertical: Spacing.three,
   },
@@ -362,13 +362,13 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   metricLabel: {
-    fontSize: 11.5,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
   },
   aggregateNote: {
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
   },
 });

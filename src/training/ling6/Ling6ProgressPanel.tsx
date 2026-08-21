@@ -269,12 +269,12 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   howToRead: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   emptyTrend: {
-    fontSize: 12.5,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
     paddingVertical: Spacing.three,
   },
@@ -303,12 +303,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   barIpa: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 20,
   },
   weaknessCopy: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   chartWrap: {
     gap: Spacing.one,
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   axisText: {
-    fontSize: 11.5,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

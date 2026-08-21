@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   axisText: {
-    fontSize: 11.5,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

@@ -320,8 +320,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.small,
   },
   disclaimer: {
-    fontSize: 11 * TEXT_SCALE,
-    lineHeight: 16 * TEXT_SCALE,
+    fontSize: 14 * TEXT_SCALE,
+    lineHeight: 20 * TEXT_SCALE,
     textAlign: "center",
     marginTop: Spacing.two,
   },

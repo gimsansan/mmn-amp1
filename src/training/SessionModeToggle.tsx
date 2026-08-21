@@ -57,11 +57,11 @@ export function SessionModeToggle({
           lineHeight: HINT_BASE_LINE_HEIGHT * textScale,
         };
 
-  const options: ReadonlyArray<{
+  const options: readonly {
     key: SessionMode;
     label: string;
     hint: string;
-  }> = [
+  }[] = [
     {
       key: "practice",
       label: sessionModeLabel("practice"),
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   hint: {
-    fontSize: 10.5,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

@@ -647,8 +647,8 @@ const styles = StyleSheet.create({
   heroPrompt: {
     textAlign: "center",
     maxWidth: 240,
-    fontSize: 12.5,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
   },
   header: {
     alignItems: "center",
@@ -664,8 +664,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   disclaimer: {
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
   },
   headline: {
@@ -710,8 +710,8 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   detail: {
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
   },
   /** 요약 카드 영역만 스크롤. `flex: 1`이라 버튼이 자연히 바닥에 남는다. */

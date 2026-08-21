@@ -22,22 +22,31 @@ export const Colors = {
     /** 카드·버튼 면. 레거시 호출부와 이름을 맞추려고 유지(= surface). */
     backgroundElement: '#FFFFFF',
     backgroundSelected: '#EAF2FE',
-    textSecondary: '#6B7A8A',
+    /** 2차 본문. 흰 카드 4.78:1 · 배경 4.52:1 — WCAG AA. */
+    textSecondary: '#667484',
     /** 카드 면. */
     surface: '#FFFFFF',
     border: '#E4EBF3',
     /** 카드 안쪽 구분선(테두리보다 더 옅음). */
     borderSubtle: '#EEF3F8',
-    /** 라벨·타임스탬프 등 3차 텍스트. */
-    textMuted: '#8A9BAD',
+    /**
+     * 라벨·타임스탬프 등 3차 텍스트.
+     * 흰 카드 4.82:1 · 배경 4.56:1 — 이전 `#8A9BAD`는 2.85:1로 AA 미달이었다.
+     * 여기 쓰이는 문구에 「청력 검사·진단 결과가 아니에요」 고지가 들어간다 — 흐리게 두지 말 것.
+     */
+    textMuted: '#607489',
     accent: '#1668E3',
     accentTint: '#EAF2FE',
     accentBorder: '#CFE0F7',
     onAccent: '#FFFFFF',
-    /** 추이 그래프 최근 점 강조(따뜻한 대비색). 점수·역치 색 아님. */
-    highlight: '#F5833F',
-    /** 통계 아이콘 막대 등 긍정 표시. */
-    positive: '#1F9D6B',
+    /**
+     * 추이 그래프 최근 점 강조(따뜻한 대비색). 점수·역치 색 아님.
+     * 흰 면 3.01:1 — 비텍스트 요소 기준(3:1)을 맞춘 값. **글자색으로 쓰지 말 것**
+     * (본문 4.5:1을 맞추려면 벽돌색이 되어 「따뜻한 대비색」이라는 의도가 죽는다).
+     */
+    highlight: '#F36C1C',
+    /** 통계 아이콘 막대 등 긍정 표시. 흰 면 4.56:1 — 14px 굵은 글자색으로도 쓰인다. */
+    positive: '#1A865B',
     /** 파괴적 행동 글자(전체 삭제 등). 흰 면 유지, 채도 낮은 빨강. */
     danger: '#9B3B3B',
   },

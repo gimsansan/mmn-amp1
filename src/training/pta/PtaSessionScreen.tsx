@@ -292,8 +292,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   cardCaption: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   pressed: {
     opacity: 0.7,

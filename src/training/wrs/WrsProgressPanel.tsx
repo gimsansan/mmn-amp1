@@ -189,12 +189,12 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   howToRead: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   note: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   historyRow: {
     flexDirection: "row",
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   axisText: {
-    fontSize: 11.5,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

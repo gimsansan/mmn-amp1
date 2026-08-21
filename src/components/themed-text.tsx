@@ -105,11 +105,11 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontWeight: 600,
   },
-  /** 배지·타임스탬프 등 작은 수치. */
+  /** 배지·타임스탬프 등 수치. 크기는 `small`과 같다 — 14px 하한 때문에 더 줄이지 않는다. */
   mono: {
     fontFamily: Fonts.mono,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: 600,
   },
   link: {
@@ -125,6 +125,6 @@ const styles = StyleSheet.create({
   code: {
     fontFamily: Fonts.mono,
     fontWeight: Platform.select({ android: 700 }) ?? 500,
-    fontSize: 12,
+    fontSize: 14,
   },
 });

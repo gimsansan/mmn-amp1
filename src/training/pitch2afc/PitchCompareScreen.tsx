@@ -695,8 +695,8 @@ const styles = StyleSheet.create({
   heroPrompt: {
     textAlign: "center",
     maxWidth: 240,
-    fontSize: 12.5,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
   },
   header: {
     alignItems: "center",
@@ -712,8 +712,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   disclaimer: {
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
   },
   headline: {
