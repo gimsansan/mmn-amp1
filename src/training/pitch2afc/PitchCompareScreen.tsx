@@ -586,41 +586,45 @@ export function PitchCompareScreen({
         ) : null}
 
         {running ? (
-          <View style={styles.promptArea}>
-            <Equalizer
-              color={theme.accent}
-              height={26}
-              barWidth={4}
-              bars={4}
-              playing={phase === "playing"}
-            />
-            <ThemedText
-              type="smallBold"
-              themeColor="textSecondary"
-              style={styles.statusText}
-            >
-              {phaseCaption(phase, correct)}
-            </ThemedText>
-          </View>
-        ) : null}
+          <ScrollView
+            style={styles.runningScroll}
+            contentContainerStyle={styles.runningContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.promptArea}>
+              <Equalizer
+                color={theme.accent}
+                height={26}
+                barWidth={4}
+                bars={4}
+                playing={phase === "playing"}
+              />
+              <ThemedText
+                type="smallBold"
+                themeColor="textSecondary"
+                style={styles.statusText}
+              >
+                {phaseCaption(phase, correct)}
+              </ThemedText>
+            </View>
 
-        {running ? (
-          <View style={styles.choices}>
-            <ChoiceButton
-              label="더 낮아요"
-              a11yLabel="두 번째 소리가 더 낮아요"
-              icon="arrowDown"
-              disabled={choiceDisabled}
-              onPress={() => onAnswer(false)}
-            />
-            <ChoiceButton
-              label="더 높아요"
-              a11yLabel="두 번째 소리가 더 높아요"
-              icon="arrowUp"
-              disabled={choiceDisabled}
-              onPress={() => onAnswer(true)}
-            />
-          </View>
+            <View style={styles.choices}>
+              <ChoiceButton
+                label="더 낮아요"
+                a11yLabel="두 번째 소리가 더 낮아요"
+                icon="arrowDown"
+                disabled={choiceDisabled}
+                onPress={() => onAnswer(false)}
+              />
+              <ChoiceButton
+                label="더 높아요"
+                a11yLabel="두 번째 소리가 더 높아요"
+                icon="arrowUp"
+                disabled={choiceDisabled}
+                onPress={() => onAnswer(true)}
+              />
+            </View>
+          </ScrollView>
         ) : null}
 
         {lastError ? (
@@ -747,6 +751,19 @@ const styles = StyleSheet.create({
   headlineText: {
     fontSize: 15,
     lineHeight: 22,
+  },
+  /**
+   * 연습 중 내용은 스크롤, 버튼은 그 밖에 고정.
+   * `flexShrink`가 아니라 `flex: 1` + `flexGrow: 1`인 이유는 `AmSessionScreen`과
+   * 같다 — 아래 `promptArea`가 `flex: 1`로 남는 자리를 먹어 가운데 정렬을 만든다.
+   * 보기 칸이 `minHeight: 132`라 7개 화면 중 세로로 제일 키가 크다.
+   */
+  runningScroll: {
+    flex: 1,
+  },
+  runningContent: {
+    flexGrow: 1,
+    gap: Spacing.two + 2,
   },
   promptArea: {
     flex: 1,

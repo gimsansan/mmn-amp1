@@ -377,38 +377,46 @@ export function WrsSessionScreen({
         ) : null}
 
         {running ? (
-          <View style={styles.promptArea}>
-            <Equalizer
-              color={theme.accent}
-              height={24}
-              barWidth={4}
-              bars={3}
-              playing={phase === "playing" && !leadIn}
-            />
-            <ThemedText
-              type="smallBold"
-              themeColor="textSecondary"
-              style={styles.statusText}
-            >
-              {promptCopy(phase, lastCorrect, lastTarget, leadIn)}
-            </ThemedText>
-          </View>
-        ) : null}
-
-        {running && currentTrial ? (
-          <View style={styles.choiceGrid}>
-            {currentTrial.choices.map((word) => (
-              <ChoiceCell
-                key={word}
-                word={word}
-                disabled={choiceDisabled}
-                marked={
-                  phase === "feedback" && lastTarget === word ? "answer" : null
-                }
-                onPress={() => onChoose(word)}
+          <ScrollView
+            style={styles.runningScroll}
+            contentContainerStyle={styles.runningContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.promptArea}>
+              <Equalizer
+                color={theme.accent}
+                height={24}
+                barWidth={4}
+                bars={3}
+                playing={phase === "playing" && !leadIn}
               />
-            ))}
-          </View>
+              <ThemedText
+                type="smallBold"
+                themeColor="textSecondary"
+                style={styles.statusText}
+              >
+                {promptCopy(phase, lastCorrect, lastTarget, leadIn)}
+              </ThemedText>
+            </View>
+
+            {currentTrial ? (
+              <View style={styles.choiceGrid}>
+                {currentTrial.choices.map((word) => (
+                  <ChoiceCell
+                    key={word}
+                    word={word}
+                    disabled={choiceDisabled}
+                    marked={
+                      phase === "feedback" && lastTarget === word
+                        ? "answer"
+                        : null
+                    }
+                    onPress={() => onChoose(word)}
+                  />
+                ))}
+              </View>
+            ) : null}
+          </ScrollView>
         ) : null}
 
         {lastError ? (
@@ -592,6 +600,22 @@ const styles = StyleSheet.create({
   footnote: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  /**
+   * 연습 중 내용은 스크롤, 「중지」는 그 밖에 고정.
+   * 화면이 짧으면(568dp) 기본 글씨에서도 보기가 넘쳐 「중지」가 화면 밖으로 밀린다.
+   *
+   * `flex: 1`이 아니라 `flexShrink: 1`인 이유 — 자리가 남을 때는 내용 높이 그대로
+   * 두어 키 큰 화면(868dp)의 배치를 건드리지 않는다. 모자랄 때만 줄어들며
+   * 스크롤이 생긴다. `flex: 1`을 쓰면 남는 자리를 스크롤이 다 먹어 버튼이 아래로
+   * 내려가고, 그게 곧 사용자 기기의 회귀가 된다.
+   */
+  runningScroll: {
+    flexShrink: 1,
+  },
+  runningContent: {
+    // `safe`의 gap과 같은 값 — 감싸기 전후로 promptArea·보기 사이가 벌어지지 않는다.
+    gap: Spacing.three,
   },
   promptArea: {
     alignItems: "center",

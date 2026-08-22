@@ -420,9 +420,13 @@ export function AmSessionScreen({
         ) : null}
 
         {/*
-          요약만 스크롤한다. 글자 크기를 키우면(시스템 설정 최대 200%) 카드가
+          요약을 스크롤한다. 글자 크기를 키우면(시스템 설정 최대 200%) 카드가
           화면을 넘겨 버튼에 닿을 수 없게 되므로. 버튼은 스크롤 밖에 두어
-          항상 보이게 한다 — 진행 중 화면은 선택지가 고정돼야 해서 감싸지 않는다.
+          항상 보이게 한다.
+
+          「진행 중 화면은 선택지가 고정돼야 해서 감싸지 않는다」고 적어 뒀던 것을
+          철회한다(2026-08-22). 짧은 화면(568dp)에서는 기본 글씨에서도 선택지가
+          넘쳐 버튼이 화면 밖으로 나갔다. 고정이 지킬 게 없다.
         */}
         {phase === "summary" ? (
           <ScrollView
@@ -460,26 +464,29 @@ export function AmSessionScreen({
         ) : null}
 
         {running ? (
-          <View style={styles.promptArea}>
-            <Equalizer
-              color={theme.accent}
-              height={24}
-              barWidth={4}
-              bars={3}
-              playing={phase === "playing"}
-            />
-            <ThemedText
-              type="smallBold"
-              themeColor="textSecondary"
-              style={styles.statusText}
-            >
-              {phaseCaption(phase, result?.correct)}
-            </ThemedText>
-          </View>
-        ) : null}
+          <ScrollView
+            style={styles.runningScroll}
+            contentContainerStyle={styles.runningContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.promptArea}>
+              <Equalizer
+                color={theme.accent}
+                height={24}
+                barWidth={4}
+                bars={3}
+                playing={phase === "playing"}
+              />
+              <ThemedText
+                type="smallBold"
+                themeColor="textSecondary"
+                style={styles.statusText}
+              >
+                {phaseCaption(phase, result?.correct)}
+              </ThemedText>
+            </View>
 
-        {running ? (
-          <View style={styles.choices}>
+            <View style={styles.choices}>
             {Array.from({ length: DEFAULT_AFC_N }, (_, i) => (
               <Pressable
                 key={i}
@@ -522,14 +529,19 @@ export function AmSessionScreen({
                 )}
               </Pressable>
             ))}
-          </View>
-        ) : null}
+            </View>
 
-        {phase === "feedback" && result && stair ? (
-          <ThemedText themeColor="textMuted" type="small" style={styles.detail}>
-            {`선택 ${result.chosenIndex + 1} · 정답 ${result.oddIndex + 1}`}
-            {` · 방금 떨림 ${result.depthDb.toFixed(0)} · 다음 떨림 ${stair.depthDb.toFixed(0)}`}
-          </ThemedText>
+            {phase === "feedback" && result && stair ? (
+              <ThemedText
+                themeColor="textMuted"
+                type="small"
+                style={styles.detail}
+              >
+                {`선택 ${result.chosenIndex + 1} · 정답 ${result.oddIndex + 1}`}
+                {` · 방금 떨림 ${result.depthDb.toFixed(0)} · 다음 떨림 ${stair.depthDb.toFixed(0)}`}
+              </ThemedText>
+            ) : null}
+          </ScrollView>
         ) : null}
 
         {lastError ? (
@@ -699,6 +711,23 @@ const styles = StyleSheet.create({
   headlineText: {
     fontSize: 15,
     lineHeight: 22,
+  },
+  /**
+   * 연습 중 내용은 스크롤, 버튼은 그 밖에 고정.
+   *
+   * 여기는 WRS·링6와 달리 `flexShrink`가 아니라 `flex: 1` + `flexGrow: 1`이다 —
+   * 아래 `promptArea`가 `flex: 1`로 남는 자리를 먹어 가운데 정렬을 만들고 있어서,
+   * 스크롤이 자리를 넘겨주지 않으면 그 정렬이 무너지기 때문이다.
+   * 자리가 남는 화면(868dp)에서는 스크롤이 그 자리를 그대로 promptArea에 넘겨
+   * 배치가 수정 전과 같다.
+   */
+  runningScroll: {
+    flex: 1,
+  },
+  runningContent: {
+    // 자리가 남으면 예전처럼, 모자랄 때만 스크롤. gap은 `safeArea`와 같은 값.
+    flexGrow: 1,
+    gap: Spacing.two + 2,
   },
   promptArea: {
     flex: 1,

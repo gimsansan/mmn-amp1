@@ -382,70 +382,75 @@ export function Ling6SessionScreen() {
         ) : null}
 
         {running ? (
-          <View style={styles.promptArea}>
-            <Equalizer
-              color={theme.accent}
-              height={24}
-              barWidth={4}
-              bars={3}
-              playing={phase === "playing"}
-            />
-            <ThemedText
-              type="smallBold"
-              themeColor="textSecondary"
-              style={styles.statusText}
-            >
-              {phase === "playing" ? "듣는 중… 소리가 끝난 뒤 고르세요" : null}
-              {phase === "choose" ? "들은 소리를 고르세요" : null}
-              {phase === "feedback"
-                ? lastCorrect
-                  ? "맞았어요"
-                  : `아쉬워요 · 정답은 ${soundLabel(lastTarget ?? "silence")}`
-                : null}
-            </ThemedText>
-          </View>
-        ) : null}
-
-        {running ? (
-          <View style={styles.choiceGrid}>
-            {LING6_SOUNDS.map((sound) => (
-              <ChoiceCell
-                key={sound.id}
-                sound={sound}
-                disabled={choiceDisabled}
-                marked={
-                  phase === "feedback" && lastTarget === sound.id
-                    ? "answer"
-                    : null
-                }
-                onPress={() => onChoose(sound.id)}
-              />
-            ))}
-          </View>
-        ) : null}
-
-        {running ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="못 들었어요"
-            accessibilityState={{ disabled: choiceDisabled }}
-            disabled={choiceDisabled}
-            onPress={() => onChoose("silence")}
-            style={({ pressed }) => [
-              styles.silenceButton,
-              {
-                backgroundColor: theme.surface,
-                borderColor:
-                  phase === "feedback" && lastTarget === "silence"
-                    ? theme.accent
-                    : theme.border,
-              },
-              pressed && !choiceDisabled && styles.pressed,
-              choiceDisabled && styles.disabled,
-            ]}
+          <ScrollView
+            style={styles.runningScroll}
+            contentContainerStyle={styles.runningContent}
+            showsVerticalScrollIndicator={false}
           >
-            <ThemedText type="smallBold">못 들었어요</ThemedText>
-          </Pressable>
+            <View style={styles.promptArea}>
+              <Equalizer
+                color={theme.accent}
+                height={24}
+                barWidth={4}
+                bars={3}
+                playing={phase === "playing"}
+              />
+              <ThemedText
+                type="smallBold"
+                themeColor="textSecondary"
+                style={styles.statusText}
+              >
+                {phase === "playing"
+                  ? "듣는 중… 소리가 끝난 뒤 고르세요"
+                  : null}
+                {phase === "choose" ? "들은 소리를 고르세요" : null}
+                {phase === "feedback"
+                  ? lastCorrect
+                    ? "맞았어요"
+                    : `아쉬워요 · 정답은 ${soundLabel(lastTarget ?? "silence")}`
+                  : null}
+              </ThemedText>
+            </View>
+
+            <View style={styles.choiceGrid}>
+              {LING6_SOUNDS.map((sound) => (
+                <ChoiceCell
+                  key={sound.id}
+                  sound={sound}
+                  disabled={choiceDisabled}
+                  marked={
+                    phase === "feedback" && lastTarget === sound.id
+                      ? "answer"
+                      : null
+                  }
+                  onPress={() => onChoose(sound.id)}
+                />
+              ))}
+            </View>
+
+            {/* 「못 들었어요」도 보기의 하나라 스크롤 안에 둔다. */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="못 들었어요"
+              accessibilityState={{ disabled: choiceDisabled }}
+              disabled={choiceDisabled}
+              onPress={() => onChoose("silence")}
+              style={({ pressed }) => [
+                styles.silenceButton,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor:
+                    phase === "feedback" && lastTarget === "silence"
+                      ? theme.accent
+                      : theme.border,
+                },
+                pressed && !choiceDisabled && styles.pressed,
+                choiceDisabled && styles.disabled,
+              ]}
+            >
+              <ThemedText type="smallBold">못 들었어요</ThemedText>
+            </Pressable>
+          </ScrollView>
         ) : null}
 
         {lastError ? (
@@ -636,6 +641,18 @@ const styles = StyleSheet.create({
   footnote: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  /**
+   * 연습 중 내용은 스크롤, 「중지」는 그 밖에 고정.
+   * 짧은 화면(568dp)에서는 기본 글씨에서도 그림 6개 중 4개만 보이고
+   * 「쉬」·「스」와 「못 들었어요」가 화면 밖으로 밀려 고를 수조차 없었다.
+   * `flexShrink: 1`인 이유는 `WrsSessionScreen`과 같다.
+   */
+  runningScroll: {
+    flexShrink: 1,
+  },
+  runningContent: {
+    gap: Spacing.three,
   },
   promptArea: {
     alignItems: "center",

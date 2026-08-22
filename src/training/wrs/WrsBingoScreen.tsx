@@ -332,50 +332,54 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
         ) : null}
 
         {running ? (
-          <View style={styles.promptArea}>
-            <Equalizer
-              color={theme.accent}
-              height={24}
-              barWidth={4}
-              bars={3}
-              playing={phase === "playing"}
-            />
-            <ThemedText
-              type="smallBold"
-              themeColor={phase === "playing" ? "textSecondary" : "accent"}
-              style={styles.statusText}
-            >
-              {promptCopy(phase, lastCorrect)}
-            </ThemedText>
-          </View>
-        ) : null}
+          <ScrollView
+            style={styles.runningScroll}
+            contentContainerStyle={styles.runningContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.promptArea}>
+              <Equalizer
+                color={theme.accent}
+                height={24}
+                barWidth={4}
+                bars={3}
+                playing={phase === "playing"}
+              />
+              <ThemedText
+                type="smallBold"
+                themeColor={phase === "playing" ? "textSecondary" : "accent"}
+                style={styles.statusText}
+              >
+                {promptCopy(phase, lastCorrect)}
+              </ThemedText>
+            </View>
 
-        {running ? (
-          <View style={styles.hud}>
-            <Pill label={`표시 ${markedCount} / 9`} />
-            <Pill
-              variant="surface"
-              label={`기회 ${Math.max(0, BINGO_MAX_CUES - cueUsed)}번 남음`}
-            />
-          </View>
-        ) : null}
+            <View style={styles.hud}>
+              <Pill label={`표시 ${markedCount} / 9`} />
+              <Pill
+                variant="surface"
+                label={`기회 ${Math.max(0, BINGO_MAX_CUES - cueUsed)}번 남음`}
+              />
+            </View>
 
-        {running && board.length === BINGO_CELL_COUNT ? (
-          <BingoBoard
-            board={board}
-            marked={marked}
-            line={line}
-            phase={phase}
-            lastMarked={lastMarked}
-            disabled={tapDisabled}
-            onPress={onTap}
-          />
-        ) : null}
+            {board.length === BINGO_CELL_COUNT ? (
+              <BingoBoard
+                board={board}
+                marked={marked}
+                line={line}
+                phase={phase}
+                lastMarked={lastMarked}
+                disabled={tapDisabled}
+                onPress={onTap}
+              />
+            ) : null}
 
-        {lastError && running ? (
-          <ThemedText themeColor="textSecondary" type="caption">
-            {lastError}
-          </ThemedText>
+            {lastError ? (
+              <ThemedText themeColor="textSecondary" type="caption">
+                {lastError}
+              </ThemedText>
+            ) : null}
+          </ScrollView>
         ) : null}
 
         <View style={styles.actions}>
@@ -718,6 +722,18 @@ const styles = StyleSheet.create({
   headlineText: {
     fontSize: 16,
     lineHeight: 22,
+  },
+  /**
+   * 연습 중 내용은 스크롤, 버튼은 그 밖에 고정.
+   * 짧은 화면(568dp)에서는 기본 글씨에서도 3×3 판 아래로 「중지」가 통째로
+   * 사라졌다 — 7개 화면 중 파손이 제일 심했다.
+   * `flexShrink: 1`인 이유는 `WrsSessionScreen`과 같다.
+   */
+  runningScroll: {
+    flexShrink: 1,
+  },
+  runningContent: {
+    gap: Spacing.three,
   },
   promptArea: {
     alignItems: "center",

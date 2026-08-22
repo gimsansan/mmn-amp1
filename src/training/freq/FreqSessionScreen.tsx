@@ -398,9 +398,13 @@ export function FreqSessionScreen({
         ) : null}
 
         {/*
-          요약만 스크롤한다. 글자 크기를 키우면(시스템 설정 최대 200%) 카드가
+          요약을 스크롤한다. 글자 크기를 키우면(시스템 설정 최대 200%) 카드가
           화면을 넘겨 버튼에 닿을 수 없게 되므로. 버튼은 스크롤 밖에 두어
-          항상 보이게 한다 — 진행 중 화면은 선택지가 고정돼야 해서 감싸지 않는다.
+          항상 보이게 한다.
+
+          「진행 중 화면은 선택지가 고정돼야 해서 감싸지 않는다」고 적어 뒀던 것을
+          철회한다(2026-08-22). 짧은 화면(568dp)에서는 기본 글씨에서도 선택지가
+          넘쳐 버튼이 화면 밖으로 나갔다. 고정이 지킬 게 없다.
         */}
         {phase === "summary" ? (
           <ScrollView
@@ -438,26 +442,29 @@ export function FreqSessionScreen({
         ) : null}
 
         {running ? (
-          <View style={styles.promptArea}>
-            <Equalizer
-              color={theme.accent}
-              height={24}
-              barWidth={4}
-              bars={3}
-              playing={phase === "playing"}
-            />
-            <ThemedText
-              type="smallBold"
-              themeColor="textSecondary"
-              style={styles.statusText}
-            >
-              {phaseCaption(phase, result?.correct)}
-            </ThemedText>
-          </View>
-        ) : null}
+          <ScrollView
+            style={styles.runningScroll}
+            contentContainerStyle={styles.runningContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.promptArea}>
+              <Equalizer
+                color={theme.accent}
+                height={24}
+                barWidth={4}
+                bars={3}
+                playing={phase === "playing"}
+              />
+              <ThemedText
+                type="smallBold"
+                themeColor="textSecondary"
+                style={styles.statusText}
+              >
+                {phaseCaption(phase, result?.correct)}
+              </ThemedText>
+            </View>
 
-        {running ? (
-          <View style={styles.choices}>
+            <View style={styles.choices}>
             {Array.from({ length: DEFAULT_AFC_N }, (_, i) => (
               <Pressable
                 key={i}
@@ -500,14 +507,19 @@ export function FreqSessionScreen({
                 )}
               </Pressable>
             ))}
-          </View>
-        ) : null}
+            </View>
 
-        {phase === "feedback" && result && stair ? (
-          <ThemedText themeColor="textMuted" type="small" style={styles.detail}>
-            {`선택 ${result.chosenIndex + 1} · 정답 ${result.oddIndex + 1}`}
-            {` · 방금 차이 ${result.deltaCents} · 다음 차이 ${stair.deltaCents}`}
-          </ThemedText>
+            {phase === "feedback" && result && stair ? (
+              <ThemedText
+                themeColor="textMuted"
+                type="small"
+                style={styles.detail}
+              >
+                {`선택 ${result.chosenIndex + 1} · 정답 ${result.oddIndex + 1}`}
+                {` · 방금 차이 ${result.deltaCents} · 다음 차이 ${stair.deltaCents}`}
+              </ThemedText>
+            ) : null}
+          </ScrollView>
         ) : null}
 
         {lastError ? (
@@ -673,6 +685,18 @@ const styles = StyleSheet.create({
   headlineText: {
     fontSize: 15,
     lineHeight: 22,
+  },
+  /**
+   * 연습 중 내용은 스크롤, 버튼은 그 밖에 고정.
+   * `flexShrink`가 아니라 `flex: 1` + `flexGrow: 1`인 이유는 `AmSessionScreen`과
+   * 같다 — 아래 `promptArea`가 `flex: 1`로 남는 자리를 먹어 가운데 정렬을 만든다.
+   */
+  runningScroll: {
+    flex: 1,
+  },
+  runningContent: {
+    flexGrow: 1,
+    gap: Spacing.two + 2,
   },
   promptArea: {
     flex: 1,
