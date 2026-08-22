@@ -5,6 +5,68 @@
 
 ---
 
+## 2026-08-22 · **P3-2 잔재 정리 — 의존성 9개·죽은 파일 제거**
+
+**브랜치**: `color_ui` · `tsc` 통과 · 테스트 230/230 통과 · `expo-doctor` 20/21 ·
+**⚠️ 네이티브 재빌드가 필요하다**
+
+### 왜 지금인가
+
+P3-2는 2026-08-07에 **「안 함」으로 정한 항목**이었다. 사유는 「리빌드 비용이 크다」였다.
+P3-1 때문에 **어차피 재빌드를 하므로 그 사유가 사라졌다.**
+
+### 지운 것
+
+| | |
+|---|---|
+| 네이티브·큰 것 | `rive-react-native` · `@shopify/react-native-skia` · `expo-updates` |
+| 나머지 | `expo-image` · `expo-haptics` · `expo-status-bar` · `expo-system-ui` · `expo-device` · `expo-web-browser` |
+| 파일 | `external-link.tsx` · `react-logo{,@2x,@3x}.png` · `tabIcons/`(7개) · `tutorial-web.png` |
+
+`dependencies` 35개 → **26개**.
+
+Rive/Skia는 백로그에 「연출에 쓸 계획이면 유지」로 달려 있었으나, 실제 구현 결정은
+**매번 `react-native-svg`·View 격자를 골랐다**(`impl-log.md:223`·`733`). 되살리려면
+`npx expo install <이름>` + 재빌드다.
+
+### ★ 소스에 안 보인다고 지우면 안 되는 것들
+
+**`grep`으로 0건이라고 미사용이 아니다.** 역참조를 봐야 한다
+(`node_modules/*/package.json`의 `dependencies`·`peerDependencies`).
+
+| 남긴 것 | 왜 |
+|---|---|
+| `react-native-worklets` | **`react-native-reanimated` 4.5.1의 peer(`0.10.x`) · `babel.config.js`가 플러그인으로 등록.** 지우면 빌드가 깨진다 |
+| `react-native-gesture-handler` | `expo-router` 선택 peer · `react-native-drawer-layout` peer |
+| `expo-glass-effect` · `expo-symbols` · `@expo/ui` · `expo-linking` · `expo-constants` | `expo-router`가 요구 |
+| `react-dom` · `react-native-web` | **웹 결정 대기** — `npm run web`과 `src/global.css`가 살아 있다 |
+
+> 앞선 블록에서 `react-native-worklets`를 「미사용」이라 적었던 것은 **틀렸다.**
+> 소스 `grep`만 보고 판단한 결과였다. 문서를 고쳤다.
+
+### ★ 막혔던 것 — `EBUSY`
+
+`npm uninstall`이 처음엔 **실패했다.** Gradle 데몬이 `node_modules` 안의
+빌드 산출물(`expo-eas-client/android/build/...`)을 붙들고 있었다.
+
+```bash
+cd android && ./gradlew --stop   # 데몬만 멈춘다. 앱·Metro는 그대로
+```
+
+`npm`이 스스로 되돌려 `package.json`은 그대로였다 — **반쯤 지워진 상태는 아니었다.**
+
+### 다음
+
+```bash
+npx expo prebuild -p android
+npm run android
+```
+
+네이티브 모듈 3개(Rive·Skia·expo-updates)가 빠졌으므로 **APK가 작아진다.**
+빌드 후 앱이 정상으로 켜지는지 볼 것.
+
+---
+
 ## 2026-08-22 · **앱 첫 화면에서 Expo 로고를 걷어냄 (P3-1 ①)**
 
 **브랜치**: `color_ui` · **파일 3개 삭제 · 이미지 2개 삭제 · `_layout.tsx` 수정** ·

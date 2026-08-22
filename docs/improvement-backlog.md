@@ -23,7 +23,8 @@
 | **P1-2** ①② 코드 중복 | ⏸ **보류** — 훈련 로직을 더 건드릴 때 |
 | **P1-4** 뒤로가기·라우팅 | 🔶 **일부** — Android `BackHandler`로 훈련·통계→연습 목록. **연습 중 뒤로가기는 7개 화면 전부 확인을 묻는다**(2026-08-22, 높낮이 비교·다른 음 찾기 추가). 라우트 승격은 안 함 |
 | **P3-1** Expo 로고 스플래시 | ✅ **수정함** (2026-08-22) · **실기기 확인함**(재빌드 후 스플래시 교체 확인) — 오버레이 제거 · 스플래시 · 아이콘 6종. 절차: [`splash-icon-교체-가이드.md`](./splash-icon-교체-가이드.md) |
-| **P1-3 · P2-1 · P2-2 · P2-6 · P3-2 · P3-3** | 🚫 **안 함** | 사유는 아래 「§6 안 하기로 한 것」 |
+| **P3-2** 미사용 의존성·스타터 잔재 | ✅ **수정함** (2026-08-22) — 의존성 **9개**·죽은 파일·잔재 자산 제거. **재빌드 필요** |
+| **P1-3 · P2-1 · P2-2 · P2-6 · P3-3** | 🚫 **안 함** | 사유는 아래 「§6 안 하기로 한 것」 |
 | **P2-4** 세션 중 사용자 통제 | 🔶 **일부** — 진행바 있음. 다시 듣기·일시정지·휴식 안내는 없음 |
 | **P2-5** 피드백 내부 수치 | ⬜ 미착수 | 제품 판단 대기 |
 | **P2-7** 기록 화면 기능 | 🔶 **일부** — 전체 삭제·건별 삭제·추이 그래프·탭 kind 필터 있음. 내보내기 없음 |
@@ -291,6 +292,30 @@
 ### P3-2. 미사용 의존성 · 스타터 잔재
 
 > 🚫 **안 하기로 함(2026-08-07)** — 앱 크기 문제를 실제로 겪기 전엔 불필요. 게다가 **네이티브 의존성 제거는 dev client 리빌드**가 필요해 비용이 큼.
+>
+> ✅ **2026-08-22 — 했다.** 미룬 이유(「리빌드 비용」)가 사라졌기 때문이다. P3-1 때문에 **어차피 재빌드를 하는 김에** 묶었다.
+
+**지운 의존성 9개** — 소스 참조 0 · 다른 패키지도 요구하지 않음(`node_modules` 역참조로 확인):
+
+| | |
+|---|---|
+| 네이티브·큰 것 | `rive-react-native` · `@shopify/react-native-skia` · `expo-updates` |
+| 나머지 | `expo-image` · `expo-haptics` · `expo-status-bar` · `expo-system-ui` · `expo-device` · `expo-web-browser` |
+
+Rive/Skia는 「결과 화면 연출에 쓸 계획이면 유지」였으나, 실제 구현 결정은 **매번 `react-native-svg`·View 격자를 골랐고**(`impl-log.md:223`·`733`, `handoff2.md:824`) 나무 성장도 **이미지 전환 방식으로 검토** 중이다(`dev-client-setup-context.md:121`). 되살리려면 `npx expo install <이름>` + 재빌드다.
+
+**지운 파일** — `src/components/external-link.tsx`(참조 0 · `expo-web-browser`의 유일한 사용처) · `assets/images/react-logo{,@2x,@3x}.png` · `assets/images/tabIcons/`(7개) · `assets/images/tutorial-web.png`.
+
+**★ 남긴 것과 이유** — 소스에 안 보인다고 지우면 안 되는 것들이다.
+
+| 패키지 | 왜 남겼나 |
+|---|---|
+| `react-native-worklets` | **`react-native-reanimated` 4.5.1의 peer(`0.10.x`) · `babel.config.js`가 플러그인으로 등록.** 지우면 빌드가 깨진다 |
+| `react-native-gesture-handler` | `expo-router`의 선택 peer · `react-native-drawer-layout`의 peer |
+| `expo-glass-effect` · `expo-symbols` · `@expo/ui` · `expo-linking` · `expo-constants` | `expo-router`가 요구 |
+| `react-dom` · `react-native-web` | **웹 지원 결정 대기** — `npm run web` 스크립트와 `src/global.css`가 아직 살아 있다 |
+
+**검증**: `tsc` 통과 · 테스트 230/230 통과 · `expo-doctor` **20/21**(남은 1건은 이 작업과 무관한 SDK 패치 버전 드리프트).
 
 | 항목 | 근거 | 비고 |
 |------|------|------|

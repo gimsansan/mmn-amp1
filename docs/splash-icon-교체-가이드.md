@@ -35,18 +35,15 @@ animated-icon   SplashScreen.hideAsync()              ← 여기서만 놓아줬
 > `catch(() => {})`는 개발 중 새로고침 때문이다 — 이미 내려간 스플래시를
 > 다시 내리려 하면 거부된다. 삼켜도 되는 예외다.
 
-### 남은 흔적 (P3-2 몫 · 지금은 안 건드림)
+### 남은 흔적 → **P3-2에서 정리함(같은 날)**
 
-오버레이가 유일한 사용처였던 패키지 둘이 **쓰이지 않는 채로 남아 있다.**
+오버레이가 유일한 사용처였던 `expo-image`는 P3-2에서 지웠다.
+`assets/images/react-logo*.png` · `tabIcons/` · `tutorial-web.png`도 함께 지웠다.
 
-| 패키지 | 지금 쓰는 곳 |
-|---|---|
-| `expo-image` | **없음** |
-| `react-native-worklets` | **없음** |
-| `react-native-reanimated` | `src/training/StatsScreen.tsx` — **살아 있음(지우지 말 것)** |
-
-`assets/images/react-logo*.png` · `tabIcons/`도 스타터 잔재로 보인다.
-**의존성 제거는 네이티브 재빌드를 부르므로 ②③과 함께 한 번에 하는 게 싸다.**
+> ⚠️ **`react-native-worklets`는 지우면 안 된다.** 소스에서 직접 부르는 곳이 없어
+> 한때 「미사용」으로 적었으나 **틀렸다** — `react-native-reanimated` 4.5.1의
+> **peer dependency(`0.10.x`)이고 `babel.config.js`가 플러그인으로 등록**한다.
+> 지우면 빌드가 깨진다. `react-native-reanimated`도 `StatsScreen`이 쓴다.
 
 ---
 
