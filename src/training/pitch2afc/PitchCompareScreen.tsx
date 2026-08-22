@@ -1,5 +1,12 @@
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  BackHandler,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -549,6 +556,36 @@ export function PitchCompareScreen({
     managerRef.current = null;
     onBack?.();
   }, [onBack]);
+
+  /**
+   * 시스템 뒤로가기.
+   *
+   * 이게 없던 동안 연습 중에 뒤로가기를 누르면 부모 탭(`PtaSessionScreen`)의
+   * 핸들러가 **묻지 않고** 연습 목록으로 돌아갔다. 화면이 사라지면서 세션은
+   * 저장되지 않으므로 **하던 기록이 통째로 사라졌다.**
+   *
+   * 연습 중이면 「중지」와 같게 다룬다 — 소리를 먼저 끊고 확인을 묻는다.
+   * 요약에서는 목록으로 돌아간다(이미 저장된 뒤다).
+   *
+   * idle에서는 **등록하지 않는다.** 부모가 목록으로 보내는 게 맞고,
+   * 부모보다 늦게 등록해야 이 화면이 먼저 문다(`BackHandler`는 등록 역순).
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (phase === "idle") {
+        return;
+      }
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        if (phase === "summary") {
+          leaveToList();
+          return true;
+        }
+        onStopPress();
+        return true;
+      });
+      return () => sub.remove();
+    }, [leaveToList, onStopPress, phase]),
+  );
 
   const choiceDisabled = phase !== "choose";
   const running =
