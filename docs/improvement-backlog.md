@@ -17,7 +17,7 @@
 | **P0-1** 「중지」 미작동 · 기록 중복 저장 | ✅ **수정함** | `tsc` 통과 · **에뮬 확인 안 함** → 「고친 것으로 보인다」 단계 |
 | **P0-2** 저장 경쟁 · 기록 유실 | ✅ **수정함** | **테스트 8/8 + 수정 전 실패 재현 확인** |
 | **P0-3** 저장 데이터 형태 검증·마이그레이션 | ✅ **수정함** | **테스트 23/23 + 검증 무력화 시 11건 실패 재현** |
-| **P0-4** 테마 널 가드 | ✅ **수정함** | `tsc` 통과 · **테스트 없음**(RN 훅 목 비용 대비 2줄 수정) |
+| **P0-4** 테마 널 가드 | ✅ **무효화됨** (2026-08-22 확인) | 라이트 고정(2026-08-11) 이후 `useColorScheme`·`Colors[동적키]`가 **코드에 없다.** 널이 들어갈 자리가 없어 **확인할 대상이 없음** |
 | **P2-3** 청취 조건(헤드폰·볼륨) 안내 | ✅ **수정함** | `tsc`·테스트 통과 · **에뮬 확인 안 함** |
 | **P1-1** 단위 테스트 | 🔶 **일부** — `sessionStore`·freq/am 계단식·pitch2afc(`SessionManager`·`trainingFlow`). freq/am 세션·자극 테스트는 없음 | — |
 | **P1-2** ①② 코드 중복 | ⏸ **보류** — 훈련 로직을 더 건드릴 때 |
@@ -98,7 +98,15 @@
 
 ### P0-4. `useColorScheme` null 반환 시 테마 접근 크래시 가능
 
-> ✅ **2026-08-07 수정함** — `scheme === 'dark' ? 'dark' : 'light'`로 널 병합(2곳). 상세: [`fix-reviews.md`](./fix-reviews.md). **테스트 없음 · 에뮬 확인 안 함.**
+> ✅ **2026-08-07 수정함** — `scheme === 'dark' ? 'dark' : 'light'`로 널 병합(2곳). 상세: [`fix-reviews.md`](./fix-reviews.md).
+>
+> 🔒 **2026-08-22 재확인 — 이 항목은 무효화됐습니다(닫음).** 다크 모드를 안 하기로 한
+> 2026-08-11 결정 이후 `useTheme`은 `Colors.light`를 그대로 돌려주고(`use-theme.ts:15`),
+> `app-tabs.tsx:10`도 `Colors.light`를 직접 씁니다. 검색해 보면 **`useColorScheme`도,
+> `Colors[동적키]` 형태의 인덱싱도 코드에 하나도 없고, `Colors`에는 `dark` 키 자체가
+> 없습니다.** 널이 들어갈 입구가 사라졌으므로 **테스트로 재현할 대상이 없습니다.**
+> 다크 모드를 다시 하게 되면 이 항목이 되살아납니다 — `use-theme.ts`에서 갈라질 때
+> **널 병합을 먼저 넣을 것.**
 
 - **근거**: `app-tabs.tsx:8` `Colors[scheme === 'unspecified' ? 'light' : scheme]`, `use-theme.ts:11` 동일 패턴. RN 타입 선언은 `useColorScheme(): 'light'|'dark'|'unspecified'`(`Appearance.d.ts:51`)이지만 **구현은 `?ColorSchemeName`**(`Libraries/Utilities/useColorScheme.js`) — 즉 런타임에 `null`/`undefined`가 나올 수 있고 **타입 검사로는 잡히지 않음**.
 - **결과(추정)**: `Colors[null] === undefined` → `colors.background` 접근에서 TypeError. 발생 빈도 낮음(`추정` · 미재현).
