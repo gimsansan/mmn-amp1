@@ -356,11 +356,18 @@ export function AmSessionScreen({
           resetToIdle();
           return true;
         }
+        // 되짚기 단계는 소리가 없고 채점도 끝났다. 「끝내기」 버튼과 **같은**
+        // 물음을 쓴다 — `onStopPress`를 태우면 취소했을 때 다음 문제로
+        // 넘어가 버려서, 이어서 보려던 되짚기가 사라진다.
+        if (phase === "feedback") {
+          confirmEndSession(onEndManual);
+          return true;
+        }
         onStopPress();
         return true;
       });
       return () => sub.remove();
-    }, [onStopPress, phase, resetToIdle]),
+    }, [onEndManual, onStopPress, phase, resetToIdle]),
   );
 
   const choiceDisabled = phase !== "choose";
