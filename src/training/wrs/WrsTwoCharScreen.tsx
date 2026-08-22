@@ -19,7 +19,6 @@ import { Pill } from "@/components/ui/pill";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
-  BottomTabInset,
   MaxContentWidth,
   Radius,
   Shadows,
@@ -552,7 +551,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.four,
+    paddingBottom: Spacing.four,
     gap: Spacing.three,
   },
   idleContent: {

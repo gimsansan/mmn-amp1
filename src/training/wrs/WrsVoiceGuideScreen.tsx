@@ -7,7 +7,6 @@ import { ActionButton } from "@/components/ui/action-button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import {
-  BottomTabInset,
   MaxContentWidth,
   Radius,
   Spacing,
@@ -120,7 +119,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset,
+    paddingBottom: Spacing.three,
     gap: Spacing.three,
   },
   body: {

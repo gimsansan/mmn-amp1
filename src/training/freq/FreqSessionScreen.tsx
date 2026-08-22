@@ -9,7 +9,6 @@ import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
 import {
-  BottomTabInset,
   MaxContentWidth,
   Radius,
   Shadows,
@@ -303,7 +302,7 @@ export function FreqSessionScreen({
 
   return (
     <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
         {phase === "idle" ? (
           /*
             idle도 스크롤한다. 시스템 글씨 크기 120%부터 안내문이 「연습 시작」
@@ -583,7 +582,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 22,
     paddingTop: 20,
-    paddingBottom: BottomTabInset + 26,
+    paddingBottom: 26,
     alignItems: "stretch",
     gap: Spacing.two + 2,
   },

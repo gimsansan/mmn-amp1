@@ -10,7 +10,6 @@ import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
-  BottomTabInset,
   MaxContentWidth,
   Radius,
   Shadows,
@@ -320,7 +319,7 @@ export function AmSessionScreen({
 
   return (
     <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
         {onOpenStats && (phase === "idle" || phase === "summary") ? (
           <View style={styles.statsRow}>
             <StatsEntryButton onPress={onOpenStats} />
@@ -605,7 +604,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 22,
     paddingTop: 20,
-    paddingBottom: BottomTabInset + 26,
+    paddingBottom: 26,
     alignItems: "stretch",
     gap: Spacing.two + 2,
   },

@@ -5,6 +5,102 @@
 
 ---
 
+## 2026-08-22 · **바닥 여백 정리 — 10개 화면에서 `BottomTabInset`을 걷어냈다**
+
+**브랜치**: `color_ui` · **10개 파일** · 실기기 1.0/1.3 대조 완료
+
+### 요청
+
+「인계문 보고 작업해줘. 아마 하단 작업일 것이다.」
+→ `인계_바닥여백.md` 3절에 **범위가 이미 확정돼 있어** 묻지 않고 바로 실행했다.
+
+### 판단 — 인계문의 처방을 그대로 따랐다
+
+`BottomTabInset`(안드로이드 80dp)은 이 앱에서 죽은 값이다. 하단 탭이 `NativeTabs`(네이티브)라
+**화면 영역이 이미 탭바 위에서 끝난다.** `SafeAreaView`의 하단 inset(≈48dp)도 탭바가 덮는
+자리라 헛돈다. 둘을 합쳐 화면당 최대 128dp(≈336px)가 헛돌고 있었다.
+
+### **인계문 정정 — 「남은 9곳」이 아니라 10곳이었다**
+
+`grep -rn BottomTabInset src` 결과 쓰는 화면은 **10개**다. 인계문 3절의
+「10곳 − `ListeningCheckScreen` = 남은 9곳」은 셈이 어긋났다 —
+`ListeningCheckScreen`은 이미 처리돼 그 10곳에 애초에 들어 있지 않았다.
+또 인계문이 손댈 대상으로 적은 `StatsScreen`은 **`BottomTabInset`을 쓰지 않고 `edges`도
+이미 있어** 손댈 게 없었다.
+
+### 실제 변경
+
+| 파일 | `paddingBottom` | `edges` 추가 |
+|---|---|---|
+| `AmSessionScreen` | `BottomTabInset + 26` → `26` | ✔ |
+| `FreqSessionScreen` | `BottomTabInset + 26` → `26` | ✔ |
+| `PitchCompareScreen` | `BottomTabInset + 26` → `26` | ✔ |
+| `PtaSessionScreen` | `BottomTabInset + Spacing.three` → `Spacing.three` | ✔ |
+| `WrsTabScreen` | `BottomTabInset + Spacing.three` → `Spacing.three` | ✔ |
+| `Ling6SessionScreen` | `BottomTabInset + Spacing.four` → `Spacing.four` | 이미 있음 |
+| `WrsSessionScreen` | `BottomTabInset + Spacing.four` → `Spacing.four` | 이미 있음 |
+| `WrsTwoCharScreen` | `BottomTabInset + Spacing.four` → `Spacing.four` | 이미 있음 |
+| `WrsBingoScreen` | `BottomTabInset` → **`Spacing.three`** | 이미 있음 |
+| `WrsVoiceGuideScreen` | `BottomTabInset` → **`Spacing.three`** | 이미 있음 |
+
+**`BottomTabInset`을 쓰는 화면은 이제 0곳이다.** `theme.ts:144`의 정의만 남았다
+(iOS 값이 들어 있고 이 앱은 안드로이드 전용이라 정의 자체는 건드리지 않았다).
+
+> **마지막 두 줄만 처방에서 벗어났다.** `WrsBingoScreen`·`WrsVoiceGuideScreen`은
+> `paddingBottom: BottomTabInset` 단독이라 인계문 공식(`+ N → N`)을 그대로 쓰면 **0**이 되어
+> 버튼이 탭바에 붙는다. 이웃 화면과 맞춰 `Spacing.three`(16dp)를 넣었다.
+> 실기기에서 두 화면 다 버튼이 붙지 않는다.
+
+### 막힌 곳 — **`sed -i`가 줄바꿈을 갈아엎었다**
+
+인계문 7절 1번이 경고한 그 함정에 그대로 빠졌다. `sed -i`가 CRLF였던 7개 파일
+(`Ling6` · `Pta` · `WrsBingo` · `WrsSession` · `WrsTab` · `WrsTwoChar` · `WrsVoiceGuide`)을
+**LF로 바꿔 버렸다.**
+
+- `core.autocrlf=true`라 **`git diff`는 오염되지 않았다** — 의도한 15줄만 잡혔다.
+  하지만 워킹 트리 파일은 실제로 바뀌었다
+- `sed -i 's/$/\r/'`로 **원래 CRLF였던 7개만** 되돌렸다.
+  `Am`·`Freq`·`PitchCompare`는 원래부터 LF라 그대로 뒀다
+- **다음 세션에**: 이 저장소에서 `sed -i`는 줄바꿈을 통일해 버린다. 고치기 전에
+  `file <경로>`로 확인하고, 고친 뒤 다시 확인할 것
+
+### **곁다리 「WRS 요약 pill」 — 저절로 풀렸다. 닫는다**
+
+인계문 3절 곁다리: 1.3에서 「25개를 다 고르지 않아 기록에는 안 남겼어요」 알림이
+「다시 연습」 버튼에 절반 가려지던 문제.
+**여백 104dp를 회수하자 그대로 해소됐다.** 1.3 실기기에서 pill이 온전히 보이고
+버튼 3개(다시 연습 · 처음으로 · 뒤로 가기)도 전부 보인다. 인계문의 예측이 맞았다.
+
+### 검증
+
+```
+npx tsc --noEmit -p tsconfig.json    → exit 0
+npx eslint src --ext .ts,.tsx        → 0 errors / 경고 14   (기준선과 동일)
+npx jest                             → exit 0 · 23 suites · 230 tests
+```
+
+**실기기 대조 (SC-01M · w411dp · 1080x2280).** 화면마다 `font_scale` 1.0과 1.3을 둘 다 찍었다.
+
+```
+1.0  링6 idle · Am idle/듣기준비/진행/요약 · Pta 고르기 · PitchCompare ·
+     Freq · WrsTab · Wrs 한글자/요약 · 두글자 · 빙고 idle
+1.3  같은 경로 전체 + Wrs 한글자 idle · 빙고 판(3×3)
+```
+
+- **1.0에서 회귀 없음.** 어느 화면도 내용이 탭바에 붙지 않는다
+- **1.3에서 잘리거나 가려지는 곳 없음.** 모든 주 버튼이 온전하고 누를 수 있다
+- 눈에 보이는 변화: 링 6 idle의 「연습 시작」이 **210px 아래로 내려왔다**(헛돌던 80dp 회수)
+- 끝나고 `font_scale`은 **1.0으로 되돌려 놓았다**
+
+### 미결
+
+- **`WrsVoiceGuideScreen`만 실기기 미검증.** 이 화면은 **한국어 TTS가 없을 때만** 뜬다
+  (`WrsTabScreen:82` `hasKoreanVoice()`). 시험기에는 있어서 진입할 방법이 없었다.
+  변경은 나머지 9곳과 같은 기계적 수정이고 jest 테스트 4건은 통과한다
+- `main` 병합. `main` 대비 69 커밋 앞선다. PR 없음
+
+---
+
 ## 2026-08-22 · **③ `chartMuted` 판정 — 기기에 기록을 심어 실제로 봤다** · 푸시 · 인계문
 
 **브랜치**: `color_ui` · **코드 변경 없음**(판정과 문서만)

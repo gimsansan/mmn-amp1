@@ -17,7 +17,6 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
-  BottomTabInset,
   MaxContentWidth,
   Radius,
   Spacing,
@@ -165,7 +164,7 @@ export function PtaSessionScreen() {
 
   return (
     <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
         <ScrollView
           style={styles.fill}
           contentContainerStyle={styles.scrollContent}
@@ -243,7 +242,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
-    paddingBottom: BottomTabInset + Spacing.three,
+    paddingBottom: Spacing.three,
   },
   top: {
     gap: Spacing.two,

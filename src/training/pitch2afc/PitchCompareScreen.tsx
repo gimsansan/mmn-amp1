@@ -9,7 +9,6 @@ import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
 import {
-  BottomTabInset,
   MaxContentWidth,
   Radius,
   Shadows,
@@ -528,7 +527,7 @@ export function PitchCompareScreen({
 
   return (
     <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
         <SessionHeader
           phase={phase}
           trialNumber={trialNumber}
@@ -658,7 +657,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 22,
     paddingTop: 20,
-    paddingBottom: BottomTabInset + 26,
+    paddingBottom: 26,
     alignItems: "stretch",
     gap: Spacing.two + 2,
   },

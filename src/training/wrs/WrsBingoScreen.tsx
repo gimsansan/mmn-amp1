@@ -19,7 +19,6 @@ import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import {
-  BottomTabInset,
   MaxContentWidth,
   Radius,
   Shadows,
@@ -697,7 +696,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset,
+    paddingBottom: Spacing.three,
     gap: Spacing.three,
   },
   idleContent: {
