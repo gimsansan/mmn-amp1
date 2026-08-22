@@ -313,7 +313,7 @@ Rive/Skia는 「결과 화면 연출에 쓸 계획이면 유지」였으나, 실
 | `react-native-worklets` | **`react-native-reanimated` 4.5.1의 peer(`0.10.x`) · `babel.config.js`가 플러그인으로 등록.** 지우면 빌드가 깨진다 |
 | `react-native-gesture-handler` | `expo-router`의 선택 peer · `react-native-drawer-layout`의 peer |
 | `expo-glass-effect` · `expo-symbols` · `@expo/ui` · `expo-linking` · `expo-constants` | `expo-router`가 요구 |
-| `react-dom` · `react-native-web` | **웹 지원 결정 대기** — `npm run web` 스크립트와 `src/global.css`가 아직 살아 있다 |
+| `react-dom` · `react-native-web` | **그대로 두기로 함**(2026-08-22 사용자 결정) — `npm run web`·`src/global.css`도 유지. 웹은 네이티브 빌드에 안 들어가므로 **APK 크기와 무관**하고, 지워 봐야 얻는 게 없다. **다시 묻지 말 것** |
 
 **검증**: `tsc` 통과 · 테스트 230/230 통과 · `expo-doctor` **20/21**(남은 1건은 이 작업과 무관한 SDK 패치 버전 드리프트).
 
