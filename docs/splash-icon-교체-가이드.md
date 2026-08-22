@@ -2,7 +2,7 @@
 
 > **작성**: 2026-08-22 · 브랜치 `color_ui`
 > **왜**: 앱의 첫 화면과 홈 화면 얼굴이 **Expo 기본 브랜딩**이었다. **배포 전 필수**.
-> **상태**: **① 오버레이 제거는 끝났다**(아래 「끝난 것」). ②③은 **이미지가 준비되면** 이 문서대로 하면 된다.
+> **상태**: **①②③ 모두 적용함**(2026-08-22). 남은 것은 **네이티브 재빌드뿐** — 아래 「반영 절차」.
 
 ---
 
@@ -50,18 +50,51 @@ animated-icon   SplashScreen.hideAsync()              ← 여기서만 놓아줬
 
 ---
 
-## 준비할 이미지 (사용자)
+## 쓴 원본 — `assets/images/splash.png`
 
-**원본 하나(정사각형 1024×1024 PNG, 배경 투명)** 만 주면 나머지는 이 문서대로 굽는다.
+사용자가 준 **귀 + 파형** 저폴리 렌더(512×512, 배경 투명). **이 파일이 원본이다** —
+아래 6개는 전부 여기서 구웠으므로, 그림을 바꾸려면 **이것만 갈고 다시 구우면 된다.**
 
-| 쓰임 | 파일 | 크기 | 주의 |
+### ★ 손본 것 둘 — 그냥 넣으면 안 됐다
+
+**① 가운데가 안 맞았다.** 그림이 `x 63~403 · y 103~380`으로 왼쪽 위에 치우쳐 있었다.
+잘라서 정사각 가운데로 다시 맞췄다. **안드로이드 적응형 아이콘은 바깥이 잘리므로
+이 작업을 건너뛰면 귀 끝이 잘린다.**
+
+**② 너무 창백했다(대표색 `#CCD7E0`).** 앱 배경 `#F6F9FD` 위에 그냥 올리면
+**대비 1.38:1 — 사실상 안 보인다.**
+
+| 배경 | 원본 그대로의 대비 |
+|---|---|
+| 앱 배경 `#F6F9FD` | **1.38:1** ❌ |
+| 이전 스플래시 `#208AEF` | 2.42:1 |
+| 앱 강조 `#1668E3` | 3.48:1 |
+| 짙은 남색 `#10233A` | 10.85:1 |
+
+사용자 선택(「다」)에 따라 **배경은 앱 색 그대로 두고 그림을 파랑으로 재색**했다.
+켤 때 **스플래시 → 앱에서 색이 튀지 않는 것**을 택한 것이다.
+
+재색은 **밝기(3D 음영)를 그대로 두고 색조만 옮긴다** — 어두운 곳 `#0A3E8F`,
+밝은 곳 `#6AA2E8` 사이로 원본 밝기를 다시 편다. 대표색 `#497FC9` ·
+앱 배경 대비 **3.85:1**. 명암을 뒤집지 않으므로 입체감이 살아 있다.
+
+> **512뿐이라 아이콘(1024)은 2배 확대했다.** 저폴리라 티는 적지만 조금 무르다.
+> 1024 원본이 생기면 `splash.png`를 갈고 다시 구울 것.
+
+## 구운 것
+
+
+| 쓰임 | 파일 | 크기 | 어떻게 |
 |---|---|---|---|
-| 앱 아이콘 | `assets/images/icon.png` | 1024×1024 | 배경 **불투명**(투명하면 검게 나오는 기기가 있다) |
-| 안드로이드 적응형 앞면 | `assets/images/android-icon-foreground.png` | 512×512 | **가운데 66%** 안에 그림을 둘 것 — 바깥은 기기 모양대로 잘린다 |
-| 안드로이드 적응형 뒷면 | `assets/images/android-icon-background.png` | 512×512 | 단색이면 충분 |
-| 흑백판 | `assets/images/android-icon-monochrome.png` | 512×512 | 테마 아이콘용. 실루엣만 |
-| 스플래시 마크 | `assets/images/splash-icon.png` | 512×512 권장 | **배경 투명** · 여백 없이 그림만 |
-| 웹 파비콘 | `assets/images/favicon.png` | 48×48 | |
+| 스플래시 마크 | `splash-icon.png` | 512² · 투명 | 여백 없이 그림만(크기는 `imageWidth`가 정한다) |
+| 앱 아이콘 | `icon.png` | 1024² · **불투명** | 바탕 `#EAF2FE` · 마크 78%(런처가 모서리를 깎는다) |
+| 적응형 앞면 | `android-icon-foreground.png` | 512² · 투명 | 마크 **60%** — 가운데 66% 안전지대 안 |
+| 적응형 뒷면 | `android-icon-background.png` | 512² | `#EAF2FE` 단색 |
+| 테마 아이콘 | `android-icon-monochrome.png` | 432² · 투명 | 검은 실루엣만(시스템이 색을 입힌다) |
+| 웹 파비콘 | `favicon.png` | 48² · 불투명 | 아이콘과 같은 구성 |
+
+> 굽는 코드는 커밋 메시지가 아니라 **이 문서의 규칙**이 정본이다. 다시 구울 일이
+> 생기면 위 비율(78% / 60%)과 색을 그대로 쓸 것.
 
 ### 색은 앱 색에 맞출 것
 
@@ -76,34 +109,31 @@ animated-icon   SplashScreen.hideAsync()              ← 여기서만 놓아줬
 
 ---
 
-## ② 스플래시 갈이
+## ② 스플래시 — ✅ 적용함
 
-`app.json`의 `expo-splash-screen` 플러그인 블록을 고친다.
+`app.json`의 `expo-splash-screen` 블록을 이렇게 바꿨다.
 
 ```jsonc
 [
   "expo-splash-screen",
   {
-    "backgroundColor": "#F6F9FD",        // ← #208AEF 에서
+    "backgroundColor": "#F6F9FD",   // ← #208AEF 에서. 앱 배경과 같은 색
     "image": "./assets/images/splash-icon.png",
-    "imageWidth": 160                     // ← 76 에서. 화면 폭에 대한 dp
+    "imageWidth": 180                // ← 76 에서
   }
 ]
 ```
 
 `imageWidth`는 **마크가 화면에서 차지할 너비(dp)** 다. 76은 작은 로고용이었다.
-그림에 여백이 없다면 **150~200 사이**가 무난하다.
 
 ---
 
-## ③ 앱 아이콘 갈이
+## ③ 앱 아이콘 — ✅ 적용함
 
-`app.json`의 경로는 이미 맞다. **파일만 같은 이름으로 덮으면 된다.**
+경로는 원래 맞았으므로 **파일만 같은 이름으로 덮었다.**
+`adaptiveIcon.backgroundColor`도 `#E6F4FE` → **`#EAF2FE`**(마크 바탕과 같은 색)로 맞췄다.
 
-- `icon.png` · `favicon.png` · `android-icon-{foreground,background,monochrome}.png`
-- `ios.icon`(`./assets/expo.icon`)은 iOS 전용 — **안드로이드 전용 앱이면 안 건드려도 된다.**
-
-`adaptiveIcon.backgroundColor`(`#E6F4FE`)도 새 색에 맞출 것.
+`ios.icon`(`./assets/expo.icon`)은 iOS 전용이라 **안 건드렸다** — 안드로이드 전용 앱이다.
 
 ---
 
@@ -119,11 +149,19 @@ android/app/src/main/res/values/styles.xml:10   windowSplashScreenAnimatedIcon �
 `android/`는 `.gitignore:43`으로 **git이 무시**한다(= 생성물이다. 손으로 고치지 말 것 — 다음 prebuild에서 날아간다).
 
 ```bash
-npx expo prebuild -p android --clean   # app.json → 네이티브 리소스 다시 굽기
-npx expo run:android                   # dev-client 다시 설치
+npx expo prebuild -p android     # app.json → 네이티브 리소스 다시 굽기
+npm run android                  # = expo run:android. 기기를 연결한 채로
 ```
 
-`--clean`은 `android/`를 **지우고 다시 만든다.** 거기 손으로 넣은 게 있으면 사라진다.
+`--clean` **없이도 대개 된다** — 스플래시 플러그인이 `colors.xml`·`styles.xml`과
+drawable을 다시 쓴다. 다만 **예전 마크의 밀도별 drawable이 남을 수 있다.**
+고쳤는데 옛 그림이 계속 보이면 그때 붙일 것.
+
+```bash
+npx expo prebuild -p android --clean   # android/를 지우고 다시 만든다
+```
+
+`--clean`은 `android/`를 **통째로 지운다.** 거기 손으로 넣은 게 있으면 사라진다.
 지금은 없다(전부 `app.json`에서 생성됨).
 
 ### 확인
