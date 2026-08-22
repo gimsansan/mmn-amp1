@@ -5,6 +5,76 @@
 
 ---
 
+## 2026-08-22 · **인계문 — 반응형 구멍을 새 세션으로 넘긴다**
+
+**브랜치**: `color_ui` · **코드 변경 없음**(문서만) · 새 파일 `인계_반응형.md`
+
+### 요청
+
+「0.7초 적당하다. 구멍은 "새 창에서 인계문 이어서" 방식으로 하겠다.」
+
+### 한 것
+
+`인계_반응형.md`를 썼다. 직전 `인계_바닥여백.md`의 구조를 따랐다 —
+0 프로젝트 / 1 실기기 / 2 저장소 / **3 할 일** / 4 이번에 한 것 / 5 검증 기준선 /
+**6 다시 열지 말 것** / 7 반응형 현황 / 8 걸려 넘어지는 것 / 9 사용자 / 10 시작 / 11 작업 후.
+
+### 판단 — 「7개 화면」을 짐작으로 적지 않았다
+
+인계문에 대상 화면을 적기 전에 7개 전부 `awk`로 `<SafeAreaView>` 블록을 훑어
+**`running` 블록이 정말 `ScrollView` 밖의 맨 `View`인지 확인했다.**
+
+```
+WrsSessionScreen · WrsTwoCharScreen · WrsBingoScreen · AmSessionScreen ·
+FreqSessionScreen · PitchCompareScreen · Ling6SessionScreen
+```
+
+`PtaSessionScreen`·`WrsTabScreen`은 고르기 목록뿐이라 `running`이 없다 — 대상 아님.
+`PitchCompareScreen`은 `idle`이 아예 없고(`ListeningCheckScreen`이 대신한다)
+보기 칸이 `minHeight: 132`로 제일 크다 — **가장 위험한 화면이라고 인계문에 표시했다.**
+
+### 정직하게 적은 것
+
+**실기기에서 직접 깨지는 걸 본 것은 `WrsSessionScreen` 하나뿐이다.**
+나머지 6개는 구조가 같아서 같은 처방이 필요하다고 **판단한 것**이다.
+인계문에 그대로 적고 **「화면마다 재현부터 해 보고 고칠 것」**을 못 박았다.
+이 계보는 「안 본 화면에도 파손이 있다」는 가정이 틀렸던 적이 있다(2026-08-22).
+같은 실수를 반복하지 않으려고 근거의 등급을 구분해 뒀다.
+
+### 인계문에 새로 넣은 함정
+
+1. **`wm size reset` / `wm density reset`을 쓰지 마라.** 이 기기는 사용자가
+   물리 1440x3040·560dpi를 **1080x2280·420dpi로 낮춰 쓰고 있다.**
+   `reset`은 사용자의 그 설정까지 지운다. **명시값으로 되돌릴 것.**
+   (이번에 실제로 `reset`을 눌렀다가 `wm size 1080x2280` · `wm density 420`으로 복구했다.)
+2. **`sed -i`·`cat >>`가 줄바꿈을 갈아엎는다** — 오늘 하루에 두 번 밟았다.
+   1순위 함정으로 올렸고 `replaceOnce` 방식(치환 건수를 세서 1건이 아니면 멈춤)을 적어 뒀다.
+3. **커밋 메시지에 PowerShell 히어스트링(`@'...'@`)을 Bash에서 쓰지 마라** —
+   `@`가 메시지에 박힌다(오늘 겪고 amend했다). Bash에서는 `git commit -F - <<'EOF'`.
+4. **`font_scale`을 바꾸면 액티비티가 재시작되어 기본 탭(떨림)으로 돌아간다.**
+5. **`adb shell input tap`이 가끔 씹힌다** — 좌표를 의심하기 전에 스크린샷으로
+   현재 위치부터 다시 볼 것.
+6. **화면 이동 지도**를 표로 넣었다(탭 좌표 · 각 탭에서 어느 화면으로 가는지).
+
+### 미결 / 넘긴 것
+
+- **`running` 화면 7개 스크롤** — `인계_반응형.md` 3절. 유일하게 열린 작업
+- **`main` 병합** — 사용자가 **미루라고 했다**(2026-08-22). 72 커밋 앞섬
+- `WrsVoiceGuideScreen`은 한국어 TTS 없는 기기에서만 떠서 **여전히 실기기 미검증**
+
+### 검증
+
+코드 변경이 없어 tsc/eslint/jest는 직전 블록의 기준선 그대로다
+(tsc 0 · eslint 0 errors/경고 14 · 230 tests).
+인계문이 주장하는 수치는 전부 명령으로 다시 확인했다 —
+`BottomTabInset` 사용 화면 **0곳** · `theme.ts:144` 정의 · `WRS_FIRST_WORD_LEAD_MS = 700` ·
+`hasKoreanVoice` **`WrsTabScreen:81`**(처음에 82로 적었다가 정정) ·
+`PitchCompareScreen:770 minHeight: 132` · `orientation: "portrait"` ·
+`MaxContentWidth = 800` · `Dimensions.get`은 `animated-icon.tsx` 한 곳 · `core.autocrlf=true` ·
+`main` 대비 **72 커밋**.
+
+---
+
 ## 2026-08-22 · **단어 듣기 — 첫 음에 뜸을 들인다** · 반응형 점검(작은 화면에서 파손 발견)
 
 **브랜치**: `color_ui` · **3개 파일 + 테스트 1개**
