@@ -49,6 +49,8 @@ type WrsBingoScreenProps = {
 export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
+  /** 낭독 실행 세대. 새 실행이 시작되면 이전 낭독은 스스로 빠진다. */
+  const runSeqRef = useRef(0);
   const boardRef = useRef<string[]>([]);
   const markedRef = useRef<boolean[]>(emptyMarked());
   const cueRef = useRef<string | null>(null);
@@ -163,6 +165,11 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
       cueRef.current = nextCue;
       cueCountRef.current += 1;
       setCueUsed(cueCountRef.current);
+      // 이 실행의 세대 번호. 「중지」를 취소해 단서를 다시 읽힐 때, 끊긴
+      // 이전 낭독이 abortRef가 false로 돌아간 것을 보고 되살아나 단계를
+      // 잘못 넘기는 것을 막는다.
+      const seq = ++runSeqRef.current;
+      const aborted = () => abortRef.current || runSeqRef.current !== seq;
       abortRef.current = false;
       setLastError(null);
       setLastCorrect(undefined);
@@ -172,12 +179,12 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
       }
       try {
         await speakWrsWord(nextCue);
-        if (abortRef.current) {
+        if (aborted()) {
           return;
         }
         setPhase("choose");
       } catch {
-        if (abortRef.current) {
+        if (aborted()) {
           return;
         }
         setLastError("단어를 읽지 못했어요. 칸을 고르거나 다시 시작해 주세요.");
@@ -186,6 +193,37 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
     },
     [finishRun],
   );
+
+  /**
+   * 지금 단서를 **다시** 읽어 준다. 기회를 소모하지 않는다.
+   *
+   * `playCue`는 새 단서를 뽑으면서 `cueCountRef`를 1 올린다. 「중지」를
+   * 취소한 것뿐인데 남은 기회가 줄면 안 되므로 이 경로를 따로 둔다.
+   */
+  const replayCue = useCallback(async () => {
+    const cue = cueRef.current;
+    if (!cue) {
+      return;
+    }
+    const seq = ++runSeqRef.current;
+    const aborted = () => abortRef.current || runSeqRef.current !== seq;
+    abortRef.current = false;
+    setLastError(null);
+    setPhase("playing");
+    try {
+      await speakWrsWord(cue);
+      if (aborted()) {
+        return;
+      }
+      setPhase("choose");
+    } catch {
+      if (aborted()) {
+        return;
+      }
+      setLastError("단어를 읽지 못했어요. 칸을 고르거나 다시 시작해 주세요.");
+      setPhase("choose");
+    }
+  }, []);
 
   const onStart = useCallback(
     (difficulty: WrsDifficulty) => {
@@ -265,6 +303,24 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
   const onEndManual = useCallback(() => {
     finishRun(bingoLineCells(markedRef.current));
   }, [finishRun]);
+
+  /**
+   * 「중지」 — 읽던 소리를 **먼저** 끊고 확인을 묻는다.
+   *
+   * 확인을 먼저 띄우면 대화상자가 떠 있는 내내 낭독이 이어져 소리가
+   * 안 멈춘다. 취소하면 같은 단서를 다시 읽어 준다(기회는 그대로).
+   */
+  const onStopPress = useCallback(() => {
+    confirmEndSession(onEndManual, {
+      onOpen: () => {
+        abortRef.current = true;
+        void stopWrsSpeech();
+      },
+      onCancel: () => {
+        void replayCue();
+      },
+    });
+  }, [onEndManual, replayCue]);
 
   return (
     <ThemedView style={styles.fill}>
@@ -418,10 +474,7 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
 
           {phase === "playing" || phase === "choose" ? (
             <View style={styles.actionRow}>
-              <ActionButton
-                label="중지"
-                onPress={() => confirmEndSession(onEndManual)}
-              />
+              <ActionButton label="중지" onPress={onStopPress} />
             </View>
           ) : null}
         </View>

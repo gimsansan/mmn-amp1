@@ -71,6 +71,8 @@ function soundLabel(choice: Ling6Choice): string {
 export function Ling6SessionScreen() {
   const theme = useTheme();
   const abortRef = useRef(false);
+  /** 재생 실행 세대. 새 실행이 시작되면 이전 재생은 스스로 빠진다. */
+  const runSeqRef = useRef(0);
   const savedRef = useRef(false);
   const trialsRef = useRef<Ling6Trial[]>([]);
   const outcomesRef = useRef<Ling6TrialOutcome[]>([]);
@@ -179,17 +181,22 @@ export function Ling6SessionScreen() {
     if (!trial) {
       return;
     }
+    // 이 실행의 세대 번호. 「중지」를 취소해 소리를 다시 틀 때, 끊긴 이전
+    // 재생이 abortRef가 false로 돌아간 것을 보고 되살아나 단계를 잘못
+    // 넘기는 것을 막는다. abortRef 하나로는 두 실행을 구분할 수 없다.
+    const seq = ++runSeqRef.current;
+    const aborted = () => abortRef.current || runSeqRef.current !== seq;
     abortRef.current = false;
     setLastError(null);
     setPhase("playing");
     try {
       await playLing6Target(trial.target);
-      if (abortRef.current) {
+      if (aborted()) {
         return;
       }
       setPhase("choose");
     } catch {
-      if (abortRef.current) {
+      if (aborted()) {
         return;
       }
       setLastError("소리를 재생하지 못했어요. 다시 시작해 주세요.");
@@ -283,6 +290,24 @@ export function Ling6SessionScreen() {
   const onEndManual = useCallback(() => {
     void finishSession();
   }, [finishSession]);
+
+  /**
+   * 「중지」 — 소리를 **먼저** 끊고 확인을 묻는다.
+   *
+   * 확인을 먼저 띄우면 대화상자가 떠 있는 내내 재생이 이어져 소리가
+   * 안 멈춘다. 취소하면 고르지 않은 이번 소리를 다시 들려준다.
+   */
+  const onStopPress = useCallback(() => {
+    confirmEndSession(onEndManual, {
+      onOpen: () => {
+        abortRef.current = true;
+        stopLing6Playback();
+      },
+      onCancel: () => {
+        void playCurrent(trialIndex);
+      },
+    });
+  }, [onEndManual, playCurrent, trialIndex]);
 
   if (showStats) {
     return <StatsScreen initialKind="ling6" onBack={closeStats} />;
@@ -493,11 +518,7 @@ export function Ling6SessionScreen() {
           ) : null}
 
           {phase === "playing" || phase === "choose" ? (
-            <ActionButton
-              fill={false}
-              label="중지"
-              onPress={() => confirmEndSession(onEndManual)}
-            />
+            <ActionButton fill={false} label="중지" onPress={onStopPress} />
           ) : null}
         </View>
       </SafeAreaView>

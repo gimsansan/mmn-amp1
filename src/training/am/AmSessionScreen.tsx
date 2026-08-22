@@ -1,5 +1,12 @@
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  BackHandler,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -115,6 +122,8 @@ export function AmSessionScreen({
 }: Readonly<AmSessionScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
+  /** 시행 실행 세대. 새 실행이 시작되면 이전 재생 루프는 스스로 빠진다. */
+  const runSeqRef = useRef(0);
   /** 이번 세션 요약을 이미 저장했는지. 중복 저장 방지(세션 시작 시 리셋). */
   const savedRef = useRef(false);
   /** 이번 세션의 모드(반전 4/8·저장 mode). 세션 시작 시 토글값으로 고정. */
@@ -155,6 +164,12 @@ export function AmSessionScreen({
     if (runModeRef.current === "practice") {
       return;
     }
+    // 푼 문항이 없으면 기록하지 않는다. 저장하면 「연습 횟수」만 1 늘고
+    // 내용은 0이라 기록이 오염된다. 단어 듣기가 쓰는 방식과 같다.
+    if (nextSummary.trialCount <= 0) {
+      setSaveNote("연습이 짧아서 기록에는 안 남겼어요");
+      return;
+    }
     setSaveNote(null);
     void appendAmSessionSummary(nextSummary, "measure")
       .then(() => {
@@ -184,6 +199,11 @@ export function AmSessionScreen({
 
     setLastError(null);
     setResult(null);
+    // 이 실행의 세대 번호. 「중지」를 취소해 시행을 다시 틀 때, 끊긴 이전
+    // 루프가 abortRef가 false로 돌아간 것을 보고 되살아나 소리가 겹치는
+    // 것을 막는다. abortRef 하나로는 두 루프를 구분할 수 없다.
+    const seq = ++runSeqRef.current;
+    const aborted = () => abortRef.current || runSeqRef.current !== seq;
     abortRef.current = false;
 
     const next = createAmAfcTrial({
@@ -195,9 +215,9 @@ export function AmSessionScreen({
 
     try {
       await playAmAfcTrial(next, {
-        shouldAbort: () => abortRef.current,
+        shouldAbort: aborted,
       });
-      if (abortRef.current) {
+      if (aborted()) {
         return;
       }
       setPhase("choose");
@@ -289,6 +309,59 @@ export function AmSessionScreen({
     }
     goSummary(endAmSessionManual(session));
   }, [goSummary, resetToIdle, session]);
+
+  /**
+   * 「중지」 — 소리를 **먼저** 끊고 확인을 묻는다.
+   *
+   * 확인을 먼저 띄우면 대화상자가 떠 있는 내내 시행이 굴러가 소리가
+   * 안 멈춘다. 취소하면 채점되지 않은 시행을 같은 난이도로 다시 낸다.
+   */
+  const onStopPress = useCallback(() => {
+    confirmEndSession(onEndManual, {
+      onOpen: () => {
+        abortRef.current = true;
+        abortAmAfcPlayback();
+      },
+      onCancel: () => {
+        if (!session || session.status !== "active") {
+          return;
+        }
+        void runTrial(session);
+      },
+    });
+  }, [onEndManual, runTrial, session]);
+
+  /**
+   * 시스템 뒤로가기.
+   *
+   * 이게 없던 동안 떨림 탭은 **뒤로가기가 무반응**이었고, 요약 화면에도
+   * idle로 가는 버튼이 없어서(`onBack`이 안 넘어온다) 한 번 시작하면
+   * **「귀풀기/연습」 토글에 다시 닿을 수 없었다.** 앱을 껐다 켜기 전까지
+   * 모드가 잠겼다.
+   *
+   * 연습 중이면 「중지」와 같게 다룬다 — 확인을 묻고 요약으로 보낸다.
+   * 실수로 눌렀을 때 기록이 통째로 사라지지 않게 하기 위해서다.
+   * 요약에서 한 번 더 누르면 idle로 돌아간다.
+   *
+   * 탭이 마운트된 채 남으므로 포커스가 없을 때는 걷어낸다 — 안 그러면
+   * 다른 탭의 뒤로가기를 이 화면이 가로챈다.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (phase === "idle") {
+        return;
+      }
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        if (phase === "summary") {
+          resetToIdle();
+          return true;
+        }
+        onStopPress();
+        return true;
+      });
+      return () => sub.remove();
+    }, [onStopPress, phase, resetToIdle]),
+  );
 
   const choiceDisabled = phase !== "choose";
   const stair = session?.stair;
@@ -568,6 +641,13 @@ export function AmSessionScreen({
                 textScale={idleTextScale}
                 onPress={onStart}
               />
+              {phase === "summary" ? (
+                <ActionButton
+                  label="처음으로"
+                  textScale={idleTextScale}
+                  onPress={resetToIdle}
+                />
+              ) : null}
               {onBack ? (
                 <ActionButton
                   label="뒤로 가기"
@@ -593,11 +673,7 @@ export function AmSessionScreen({
           ) : null}
 
           {phase === "playing" || phase === "choose" ? (
-            <ActionButton
-              icon="stop"
-              label="중지"
-              onPress={() => confirmEndSession(onEndManual)}
-            />
+            <ActionButton icon="stop" label="중지" onPress={onStopPress} />
           ) : null}
         </View>
       </SafeAreaView>
