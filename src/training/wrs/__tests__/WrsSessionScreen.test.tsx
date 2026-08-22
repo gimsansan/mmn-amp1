@@ -19,6 +19,8 @@ jest.mock("expo-router", () => ({
 jest.mock("@/training/wrs/wrsTts", () => ({
   speakWrsWord: jest.fn(async () => undefined),
   stopWrsSpeech: jest.fn(async () => undefined),
+  // 첫 단어 앞의 뜸(실제 0.7초)은 여기서 없앤다 — 테스트마다 붙으면 느려진다.
+  waitFirstWordLeadIn: jest.fn(async () => undefined),
 }));
 
 jest.mock("@/training/wrs/wrsStore", () => ({

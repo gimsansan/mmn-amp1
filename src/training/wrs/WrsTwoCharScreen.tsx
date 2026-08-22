@@ -45,7 +45,11 @@ import {
   wrsResultCopy,
   type WrsSessionSummary,
 } from "@/training/wrs/wrsSession";
-import { speakWrsWord, stopWrsSpeech } from "@/training/wrs/wrsTts";
+import {
+  speakWrsWord,
+  stopWrsSpeech,
+  waitFirstWordLeadIn,
+} from "@/training/wrs/wrsTts";
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
@@ -86,6 +90,11 @@ export function WrsTwoCharScreen({
   const [summary, setSummary] = useState<WrsSessionSummary | null>(null);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  /**
+   * 첫 단어 앞의 뜸 동안 켜진다. 이때도 「듣는 중」이라고 하면 난청 사용자가
+   * 소리를 놓친 줄 안다 — 아직 안 났다는 걸 말로 알린다.
+   */
+  const [leadIn, setLeadIn] = useState(false);
   const [showStats, setShowStats] = useState(false);
   /**
    * 화면이 그리는 값은 ref가 아니라 state로 둔다 — ref는 바꿔도 다시 그리지 않아서
@@ -114,6 +123,7 @@ export function WrsTwoCharScreen({
     setSummary(null);
     setSaveNote(null);
     setLastError(null);
+    setLeadIn(false);
     setPhase("idle");
   }, []);
 
@@ -168,6 +178,15 @@ export function WrsTwoCharScreen({
     abortRef.current = false;
     setLastError(null);
     setPhase("playing");
+    // 첫 단어만 뜸을 들인다 — 두 번째부터는 「고르기 → 다음」 사이가 이미 있다.
+    if (index === 0) {
+      setLeadIn(true);
+      await waitFirstWordLeadIn();
+      setLeadIn(false);
+      if (abortRef.current) {
+        return;
+      }
+    }
     try {
       await speakWrsWord(trial.target);
       if (abortRef.current) {
@@ -383,14 +402,14 @@ export function WrsTwoCharScreen({
               height={24}
               barWidth={4}
               bars={3}
-              playing={phase === "playing"}
+              playing={phase === "playing" && !leadIn}
             />
             <ThemedText
               type="smallBold"
               themeColor="textSecondary"
               style={styles.statusText}
             >
-              {promptCopy(phase, lastCorrect, lastTarget)}
+              {promptCopy(phase, lastCorrect, lastTarget, leadIn)}
             </ThemedText>
           </View>
         ) : null}
@@ -485,7 +504,11 @@ function promptCopy(
   phase: Phase,
   lastCorrect: boolean | undefined,
   lastTarget: string | null,
+  leadIn: boolean,
 ): string | null {
+  if (leadIn) {
+    return "잠시 뒤 들려 드려요";
+  }
   if (phase === "playing") {
     return "듣는 중… 소리가 끝난 뒤 고르세요";
   }

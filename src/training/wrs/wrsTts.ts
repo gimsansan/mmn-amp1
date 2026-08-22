@@ -79,3 +79,18 @@ export async function speakWrsWord(word: string): Promise<void> {
     });
   });
 }
+
+/**
+ * 첫 단어를 읽기 전 뜸(ms). 카드를 누르자마자 소리가 터지면 들을 준비를 할 새가
+ * 없다(사용자 지적, 2026-08-22). 두 번째 단어부터는 「고르기 → 다음」 사이에
+ * 이미 사이가 있어 두지 않는다. 길이를 바꾸려면 여기 한 줄만 고치면 된다.
+ */
+export const WRS_FIRST_WORD_LEAD_MS = 700;
+
+/**
+ * 첫 단어 앞의 뜸. 함수로 빼 둔 이유는 화면 테스트가 이 모듈을 통째로 대신할 때
+ * 이 뜸도 같이 사라지게 하기 위해서다 — 안 그러면 테스트마다 0.7초가 붙는다.
+ */
+export async function waitFirstWordLeadIn(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, WRS_FIRST_WORD_LEAD_MS));
+}
