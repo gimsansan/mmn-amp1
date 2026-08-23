@@ -302,7 +302,7 @@
 | 네이티브·큰 것 | `rive-react-native` · `@shopify/react-native-skia` · `expo-updates` |
 | 나머지 | `expo-image` · `expo-haptics` · `expo-status-bar` · `expo-system-ui` · `expo-device` · `expo-web-browser` |
 
-Rive/Skia는 「결과 화면 연출에 쓸 계획이면 유지」였으나, 실제 구현 결정은 **매번 `react-native-svg`·View 격자를 골랐고**(`impl-log.md:223`·`733`, `handoff2.md:824`) 나무 성장도 **이미지 전환 방식으로 검토** 중이다(`dev-client-setup-context.md:121`). 되살리려면 `npx expo install <이름>` + 재빌드다.
+Rive/Skia는 「결과 화면 연출에 쓸 계획이면 유지」였으나, 실제 구현 결정은 **매번 `react-native-svg`·View 격자를 골랐고**(`impl-log.md:223`·`733`) 나무 성장도 **이미지 전환 방식으로 검토** 중이다(`dev-client-setup-context.md:121`). 되살리려면 `npx expo install <이름>` + 재빌드다.
 
 **지운 파일** — `src/components/external-link.tsx`(참조 0 · `expo-web-browser`의 유일한 사용처) · `assets/images/react-logo{,@2x,@3x}.png` · `assets/images/tabIcons/`(7개) · `assets/images/tutorial-web.png`.
 

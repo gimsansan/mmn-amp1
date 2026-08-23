@@ -1,6 +1,6 @@
 # 상태 관리 지도 — 이 앱에 적용 (#3)
 
-> **지침**: [`analaysys/ask-state-management.md`](../../analaysys/ask-state-management.md) (상태 관리 파악)
+> **지침 원본**: 예전 `analaysys/ask-state-management.md`. 2026-08-24 삭제. 이 파일은 적용 결과만.
 > **표기**: `(상태)@소유자`, `트리거 --설정--> (상태)`
 > **날짜**: 2026-08-21 · `근거` = 파일을 읽고 확인한 것
 

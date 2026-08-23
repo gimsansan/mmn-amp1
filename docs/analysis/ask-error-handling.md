@@ -1,6 +1,6 @@
 # 에러 처리 지도 — 이 앱에 적용 (#4)
 
-> **지침**: [`analaysys/ask-error-handling.md`](../../analaysys/ask-error-handling.md) (에러 처리 파악)
+> **지침 원본**: 예전 `analaysys/ask-error-handling.md`. 2026-08-24 삭제. 이 파일은 적용 결과만.
 > **표기**: 실패는 `!이름!`, 화면 `[ ]`, 데이터 `{ }`, 상태 `( )@소유자`
 > **날짜**: 2026-08-21 · `근거` = 파일을 읽고 확인한 것
 

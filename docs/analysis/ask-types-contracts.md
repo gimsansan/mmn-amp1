@@ -1,6 +1,6 @@
 # 타입·계약 지도 — 이 앱에 적용 (#5)
 
-> **지침**: [`analaysys/ask-types-contracts.md`](../../analaysys/ask-types-contracts.md) (타입·계약 파악)
+> **지침 원본**: 예전 `analaysys/ask-types-contracts.md`. 2026-08-24 삭제. 이 파일은 적용 결과만.
 > **표기**: `이름(입력: 타입) → (출력: 타입)`
 > **날짜**: 2026-08-21 · `근거` = 파일을 읽고 확인한 것
 

@@ -16,7 +16,7 @@
 - 문서 지도(분류·읽는 순서): [`docs/README.md`](./README.md)
 - 구현·결과 로그: [`docs/impl-log_1.md`](./impl-log_1.md)(이어서) · [`docs/impl-log.md`](./impl-log.md)(과거) · 수정 리뷰: [`docs/fix-reviews.md`](./fix-reviews.md)
 - 개선 백로그 + 진행 현황: [`docs/improvement-backlog.md`](./improvement-backlog.md)
-- 인계문: [`docs/handoff.md`](./handoff.md) — 한 파일에 누적(최신이 위). **날짜별 사본은 만들지 않음**(2026-08-07 폐지)
+- 인계문: **폐지**(2026-08-24). 제거 목록: [`공개저장소-제거목록.md`](./공개저장소-제거목록.md). 세션 기록은 `impl-log_1.md`
 - 진입점: `package.json` → `"main": "expo-router/entry"` / 라우팅: `expo-router` (`src/app/`, typed routes)
 - 프로젝트명: `rn-hear-1` (app.json name: "청능 애플리케이션")
 - 워크스페이스 경로: `d:\mnn_1`

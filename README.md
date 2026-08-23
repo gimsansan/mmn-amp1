@@ -8,7 +8,6 @@ React Native / Expo SDK 57 기반 **청능 웰니스·훈련** 앱. 안드로이
 훈련·자극 설계(AMP/MDT·트랙): [`docs/amp-mdt-training-design.md`](./docs/amp-mdt-training-design.md)  
 개선 백로그 + **진행 현황**: [`docs/improvement-backlog.md`](./docs/improvement-backlog.md) · [쉬운 말 버전](./docs/improvement-backlog-easy.md)  
 구현·결과 로그: [`docs/impl-log_1.md`](./docs/impl-log_1.md)(이어서) · [과거](./docs/impl-log.md) · 수정 리뷰: [`docs/fix-reviews.md`](./docs/fix-reviews.md)  
-인계문(최신): [`docs/handoff.md`](./docs/handoff.md)  
 Cursor 규칙 2번 vs 3번: [`docs/cursor-rules-2-vs-3.md`](./docs/cursor-rules-2-vs-3.md)
 
 ## 요구 환경
@@ -49,7 +48,7 @@ npm run doctor
 | `docs/amp-mdt-training-design.md` | 웰니스·훈련 / ①② 트랙·AM 스펙 |
 | `docs/impl-log_1.md` | 구현·결과 날짜별 로그(**이후 정본**) |
 | `docs/impl-log.md` | 구현·결과 로그 과거(2026-08-19 01:04까지) |
-| `docs/handoff.md` | 새 채팅 AI용 인계문(최신) |
+| `docs/공개저장소-제거목록.md` | 공개 정리로 뺀 내부 문서 목록 |
 | `docs/README.md` | **문서 지도** — 분류 규칙·어디에 적을지·읽는 순서 |
 | `docs/improvement-backlog.md` | 개선 백로그 + **진행 현황**(무엇이 고쳐졌고 무엇이 남았는지) |
 | `docs/fix-reviews.md` | 수정 전후 코드·평가·검증 리뷰(누적, 최신이 위) |
