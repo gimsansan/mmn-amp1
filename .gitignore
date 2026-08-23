@@ -44,3 +44,7 @@ example
 
 # JetBrains / Android Studio
 .idea/
+
+# 로컬 AI 도구
+.cursor/
+.claude/
