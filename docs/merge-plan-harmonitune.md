@@ -2,7 +2,7 @@
 
 > **상태**: 계획(2026-08-11). 코드 변경 전 기록.
 > **표기**: `근거` = 파일 실측 · `결정` = 합의 필요 · `추정`/`미검증` = 확인 안 됨.
-> 관련: `docs/amp-mdt-training-design.md` · `docs/impl-log.md` · `.cursor/rules/android-dev-client.mdc`
+> 관련: `docs/amp-mdt-training-design.md` · `.cursor/rules/android-dev-client.mdc`
 
 ## 0. 결론
 
@@ -77,7 +77,7 @@
 6. 연습 탭 = 카드 3개로 재구성. 섹션 라벨 「음고」 2 / 「떨림」 1.
 7. 홈·통계·설정·결과 이식. 지표 카피 §2-1 결정 적용.
 8. `app.json` 이름·slug·패키지·아이콘을 HarmoniTune으로. 온보딩 중복 제거.
-9. 문서 갱신: 설계 §3·§6에 3트랙 반영, `impl-log` 기록, HH의 시작값 50/200 불일치 정정.
+9. 문서 갱신: 설계 §3·§6에 3트랙 반영, HH의 시작값 50/200 불일치 정정.
 
 ## 5. 리빌드 (필수 고지)
 
