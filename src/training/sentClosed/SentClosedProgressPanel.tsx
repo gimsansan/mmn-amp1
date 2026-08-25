@@ -1,28 +1,29 @@
+/**
+ * 문장 듣기 기록 본문 — 한 글자 탭과 같은 구성(맞힌 비율 변화 + 최근 연습).
+ */
+
 import { StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Card } from "@/components/ui/card";
 import { Spacing } from "@/constants/theme";
 import { PercentTrend } from "@/training/PercentTrend";
-import { formatWrsSavedAt } from "@/training/wrs/wrsStore";
 import {
-  canShowWrsTrend,
-  chronologicalWrs,
-  type PercentSessionRecord,
-} from "@/training/wrs/wrsTrend";
+  formatSentClosedSavedAt,
+  type SavedSentClosedRecord,
+} from "@/training/sentClosed/store";
+import { canShowWrsTrend, chronologicalWrs } from "@/training/wrs/wrsTrend";
 
-export function WrsProgressPanel({
+export function SentClosedProgressPanel({
   records,
-}: Readonly<{ records: readonly PercentSessionRecord[] }>) {
+}: Readonly<{ records: readonly SavedSentClosedRecord[] }>) {
   if (records.length === 0) {
     return null;
   }
 
-  const showTrend = canShowWrsTrend(records);
-
   return (
     <View style={styles.stack}>
-      {showTrend ? (
+      {canShowWrsTrend(records) ? (
         <Card style={styles.card}>
           <ThemedText type="smallBold">맞힌 비율 변화</ThemedText>
           <ThemedText type="smallBold" style={styles.howToRead}>
@@ -34,14 +35,14 @@ export function WrsProgressPanel({
           <PercentTrend records={chronologicalWrs(records)} />
         </Card>
       ) : null}
-      <WrsRecentList records={records} />
+      <SentClosedRecentList records={records} />
     </View>
   );
 }
 
-function WrsRecentList({
+function SentClosedRecentList({
   records,
-}: Readonly<{ records: readonly PercentSessionRecord[] }>) {
+}: Readonly<{ records: readonly SavedSentClosedRecord[] }>) {
   const recent = records.slice(0, 8);
   return (
     <Card style={styles.card}>
@@ -49,11 +50,10 @@ function WrsRecentList({
       {recent.map((record) => (
         <View key={record.id} style={styles.historyRow}>
           <ThemedText type="mono" themeColor="textMuted">
-            {formatWrsSavedAt(record.savedAt)}
+            {formatSentClosedSavedAt(record.savedAt)}
           </ThemedText>
           <ThemedText type="smallBold">
-            {record.summary.correctCount}/{record.summary.trialCount} · 약{" "}
-            {record.summary.percent}%
+            {`${record.summary.correctCount}/${record.summary.trialCount} · 약 ${record.summary.percent}%`}
           </ThemedText>
         </View>
       ))}

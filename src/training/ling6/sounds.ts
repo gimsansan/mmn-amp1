@@ -23,37 +23,37 @@ export const LING6_SOUNDS: readonly Ling6Sound[] = [
     id: "m",
     label: "음",
     ipa: "m",
-    image: require("@/assets/ling6/001.png"),
+    image: require("@/assets/ling6/001.webp"),
   },
   {
     id: "u",
     label: "우",
     ipa: "u",
-    image: require("@/assets/ling6/002.png"),
+    image: require("@/assets/ling6/002.webp"),
   },
   {
     id: "a",
     label: "아",
     ipa: "a",
-    image: require("@/assets/ling6/003.png"),
+    image: require("@/assets/ling6/003.webp"),
   },
   {
     id: "i",
     label: "이",
     ipa: "i",
-    image: require("@/assets/ling6/004.png"),
+    image: require("@/assets/ling6/004.webp"),
   },
   {
     id: "sh",
     label: "쉬",
     ipa: "ʃ",
-    image: require("@/assets/ling6/005.png"),
+    image: require("@/assets/ling6/005.webp"),
   },
   {
     id: "s",
     label: "스",
     ipa: "s",
-    image: require("@/assets/ling6/006.png"),
+    image: require("@/assets/ling6/006.webp"),
   },
 ];
 

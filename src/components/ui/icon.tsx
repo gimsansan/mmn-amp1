@@ -27,7 +27,9 @@ export type IconName =
   /** 단어 듣기 — 한 글자. */
   | 'oneChar'
   /** 단어 듣기 — 두 글자. */
-  | 'twoChar';
+  | 'twoChar'
+  /** 문장 듣기 — 그림 세 장. */
+  | 'sentence';
 
 type IconProps = {
   name: IconName;
@@ -155,6 +157,14 @@ export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: Readonly<Ico
         <>
           <Rect x="3" y="5" width="8" height="14" rx="2" {...stroke} />
           <Rect x="13" y="5" width="8" height="14" rx="2" {...stroke} />
+        </>
+      ) : null}
+
+      {name === 'sentence' ? (
+        <>
+          <Rect x="3" y="6" width="5.5" height="12" rx="1" {...stroke} />
+          <Rect x="9.25" y="6" width="5.5" height="12" rx="1" {...stroke} />
+          <Rect x="15.5" y="6" width="5.5" height="12" rx="1" {...stroke} />
         </>
       ) : null}
     </Svg>

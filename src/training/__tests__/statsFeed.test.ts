@@ -111,7 +111,13 @@ function pitch2Record(
   };
 }
 
-const EMPTY: StatsFeed = { ling6: [], sessions: [], wrs1: [], wrs2: [] };
+const EMPTY: StatsFeed = {
+  ling6: [],
+  sessions: [],
+  wrs1: [],
+  wrs2: [],
+  sent: [],
+};
 
 describe("relativeDayCopy", () => {
   it("오늘·어제·N일 전을 구분한다", () => {
@@ -168,6 +174,24 @@ describe("glanceOfKind", () => {
 
     expect(glanceLineCopy(glanceOfKind(feed, "am", NOW))).toBe(
       "어제 · 떨림 -6.5 dB",
+    );
+  });
+
+  it("문장 듣기도 맞힌 수와 비율을 함께 적는다", () => {
+    const feed: StatsFeed = {
+      ...EMPTY,
+      sent: [
+        {
+          id: "sent-1",
+          savedAt: localIso(2026, 8, 21),
+          schemaVersion: 2,
+          summary: { trialCount: 18, correctCount: 15, percent: 83 },
+        },
+      ],
+    };
+
+    expect(glanceLineCopy(glanceOfKind(feed, "sent", NOW))).toBe(
+      "오늘 · 15/18 · 83%",
     );
   });
 

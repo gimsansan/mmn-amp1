@@ -1,11 +1,14 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import type { AmSessionSummary } from '@/training/am/amSession';
-import type { FreqSessionSummary, SessionEndReason } from '@/training/freq/freqSession';
-import type { PitchCompareSummary } from '@/training/pitch2afc/pitchSummary';
+import type { AmSessionSummary } from "@/training/am/amSession";
+import type {
+  FreqSessionSummary,
+  SessionEndReason,
+} from "@/training/freq/freqSession";
+import type { PitchCompareSummary } from "@/training/pitch2afc/pitchSummary";
 
 /** 로컬 연습 기록 키. 스키마 바꾸면 버전 bump. */
-const STORAGE_KEY = 'training.sessionHistory.v1';
+const STORAGE_KEY = "training.sessionHistory.v1";
 
 /**
  * 레코드 스키마 버전.
@@ -22,9 +25,9 @@ export const SESSION_RECORD_VERSION = 1;
  */
 export const MAX_MEASURE_SESSIONS = 50;
 
-export type SessionTrack = 'freq' | 'am' | 'pitch2';
+export type SessionTrack = "freq" | "am" | "pitch2";
 
-const SESSION_TRACKS: readonly SessionTrack[] = ['freq', 'am', 'pitch2'];
+const SESSION_TRACKS: readonly SessionTrack[] = ["freq", "am", "pitch2"];
 
 /**
  * 세션 성격.
@@ -34,11 +37,11 @@ const SESSION_TRACKS: readonly SessionTrack[] = ['freq', 'am', 'pitch2'];
  * `주의`: 구버전 레코드에는 이 필드가 없다(`undefined`). 없으면 **측정으로 간주**해
  * 통계에 포함한다(기존 데이터를 통계에서 빠뜨리지 않기 위해).
  */
-export type SessionMode = 'practice' | 'measure';
+export type SessionMode = "practice" | "measure";
 
 export type SavedFreqSessionRecord = {
   id: string;
-  track: 'freq';
+  track: "freq";
   savedAt: string;
   /** 없으면 1(초기 저장분). */
   schemaVersion?: number;
@@ -49,7 +52,7 @@ export type SavedFreqSessionRecord = {
 
 export type SavedAmSessionRecord = {
   id: string;
-  track: 'am';
+  track: "am";
   savedAt: string;
   /** 없으면 1(초기 저장분). */
   schemaVersion?: number;
@@ -60,7 +63,7 @@ export type SavedAmSessionRecord = {
 
 export type SavedPitch2SessionRecord = {
   id: string;
-  track: 'pitch2';
+  track: "pitch2";
   savedAt: string;
   /** 없으면 1(초기 저장분). */
   schemaVersion?: number;
@@ -82,17 +85,26 @@ function newId(): string {
 // 저장소 내용은 앱이 썼더라도 **믿을 수 없는 입력**으로 다룬다(구버전·중단된 쓰기·
 // 수동 조작). 형태가 어긋난 레코드는 읽는 시점에 버려서 화면이 넘어지지 않게 한다.
 
-const END_REASONS: ReadonlySet<string> = new Set(['reversals', 'max_trials', 'manual']);
+const END_REASONS: ReadonlySet<string> = new Set([
+  "reversals",
+  "max_trials",
+  "manual",
+]);
 
-const SESSION_MODES: ReadonlySet<string> = new Set(['practice', 'measure']);
+const SESSION_MODES: ReadonlySet<string> = new Set(["practice", "measure"]);
 
 /** mode는 선택 필드 — 없으면(undefined) 허용, 있으면 아는 값이어야 한다. */
-function isSessionModeOrAbsent(value: unknown): value is SessionMode | undefined {
-  return value === undefined || (typeof value === 'string' && SESSION_MODES.has(value));
+function isSessionModeOrAbsent(
+  value: unknown,
+): value is SessionMode | undefined {
+  return (
+    value === undefined ||
+    (typeof value === "string" && SESSION_MODES.has(value))
+  );
 }
 
 function isFiniteNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
+  return typeof value === "number" && Number.isFinite(value);
 }
 
 /** 요약의 수치 항목은 「값 없음」이 정상이라 null을 허용한다. */
@@ -101,11 +113,13 @@ function isFiniteNumberOrNull(value: unknown): value is number | null {
 }
 
 function isEndReasonOrNull(value: unknown): value is SessionEndReason | null {
-  return value === null || (typeof value === 'string' && END_REASONS.has(value));
+  return (
+    value === null || (typeof value === "string" && END_REASONS.has(value))
+  );
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** 트랙과 무관하게 요약이 갖춰야 할 항목. */
@@ -122,10 +136,10 @@ function isValidRecord(value: unknown): value is SavedSessionRecord {
   if (!isPlainObject(value)) {
     return false;
   }
-  if (typeof value.id !== 'string' || value.id === '') {
+  if (typeof value.id !== "string" || value.id === "") {
     return false;
   }
-  if (typeof value.savedAt !== 'string' || value.savedAt === '') {
+  if (typeof value.savedAt !== "string" || value.savedAt === "") {
     return false;
   }
   if (!isPlainObject(value.summary) || !hasValidSummaryBase(value.summary)) {
@@ -136,21 +150,21 @@ function isValidRecord(value: unknown): value is SavedSessionRecord {
   }
 
   const summary = value.summary;
-  if (value.track === 'freq') {
+  if (value.track === "freq") {
     return (
       isFiniteNumberOrNull(summary.meanReversalDeltaCents) &&
       isFiniteNumberOrNull(summary.easiestDeltaCents) &&
       isFiniteNumberOrNull(summary.hardestDeltaCents)
     );
   }
-  if (value.track === 'am') {
+  if (value.track === "am") {
     return (
       isFiniteNumberOrNull(summary.meanReversalDepthDb) &&
       isFiniteNumberOrNull(summary.easiestDepthDb) &&
       isFiniteNumberOrNull(summary.hardestDepthDb)
     );
   }
-  if (value.track === 'pitch2') {
+  if (value.track === "pitch2") {
     return (
       isFiniteNumberOrNull(summary.meanReversalCents) &&
       isFiniteNumberOrNull(summary.easiestCents) &&
@@ -166,8 +180,7 @@ function isValidRecord(value: unknown): value is SavedSessionRecord {
  * 스키마를 바꿀 때: `SESSION_RECORD_VERSION`을 올리고 여기에 버전별 분기를 넣는다.
  * 지금은 v1뿐이라 **형태 검증만** 하고 변환은 없다.
  *
- * `주의`: 검증은 **형태 기준**이다. 미래 버전(v2 등)이라도 v1 필드를 그대로 갖고
- * 있으면 통과시킨다 — 상위 호환 데이터를 함부로 버리지 않기 위해서다.
+ * `주의`: 검증은 **형태 기준**이다.
  */
 function migrateRecord(value: unknown): SavedSessionRecord | null {
   if (!isValidRecord(value)) {
@@ -193,7 +206,7 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
   // 큐 꼬리에는 실패를 흘리지 않는다(처리는 호출자 몫).
   tail = run.then(
     () => undefined,
-    () => undefined
+    () => undefined,
   );
   return run;
 }
@@ -205,7 +218,7 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
  */
 async function readAllRaw(): Promise<SavedSessionRecord[]> {
   const raw = await AsyncStorage.getItem(STORAGE_KEY);
-  if (raw == null || raw === '') {
+  if (raw == null || raw === "") {
     return [];
   }
 
@@ -241,7 +254,7 @@ async function writeAllRaw(records: SavedSessionRecord[]): Promise<void> {
  * 귀풀기(`practice`)는 남기지 않는다. 원래 순서는 유지.
  */
 function capByMode(
-  merged: readonly SavedSessionRecord[]
+  merged: readonly SavedSessionRecord[],
 ): SavedSessionRecord[] {
   const keep = new Set<string>();
   for (const track of SESSION_TRACKS) {
@@ -258,10 +271,12 @@ function capByMode(
  * 레코드 1건 추가(최신이 앞). 연습(측정)만 트랙별 상한. 귀풀기는 쓰지 않음.
  * `build`는 큐 안에서 실행되므로 `savedAt`·`id`가 **실제 기록 순서와 일치**한다.
  */
-function appendRecord<R extends SavedSessionRecord>(build: () => R): Promise<R> {
+function appendRecord<R extends SavedSessionRecord>(
+  build: () => R,
+): Promise<R> {
   return enqueue(async () => {
     const record = build();
-    if (record.mode === 'practice') {
+    if (record.mode === "practice") {
       return record;
     }
     const next = capByMode([
@@ -279,11 +294,11 @@ function appendRecord<R extends SavedSessionRecord>(build: () => R): Promise<R> 
  */
 export function appendFreqSessionSummary(
   summary: FreqSessionSummary,
-  mode: SessionMode = 'measure'
+  mode: SessionMode = "measure",
 ): Promise<SavedFreqSessionRecord> {
   return appendRecord<SavedFreqSessionRecord>(() => ({
     id: newId(),
-    track: 'freq',
+    track: "freq",
     savedAt: new Date().toISOString(),
     schemaVersion: SESSION_RECORD_VERSION,
     mode,
@@ -293,11 +308,11 @@ export function appendFreqSessionSummary(
 
 export function appendAmSessionSummary(
   summary: AmSessionSummary,
-  mode: SessionMode = 'measure'
+  mode: SessionMode = "measure",
 ): Promise<SavedAmSessionRecord> {
   return appendRecord<SavedAmSessionRecord>(() => ({
     id: newId(),
-    track: 'am',
+    track: "am",
     savedAt: new Date().toISOString(),
     schemaVersion: SESSION_RECORD_VERSION,
     mode,
@@ -308,11 +323,11 @@ export function appendAmSessionSummary(
 /** 「높낮이 비교」 세션 종료 요약 저장. 진단·역치 아님. 실패 시 throw. */
 export function appendPitch2SessionSummary(
   summary: PitchCompareSummary,
-  mode: SessionMode = 'measure'
+  mode: SessionMode = "measure",
 ): Promise<SavedPitch2SessionRecord> {
   return appendRecord<SavedPitch2SessionRecord>(() => ({
     id: newId(),
-    track: 'pitch2',
+    track: "pitch2",
     savedAt: new Date().toISOString(),
     schemaVersion: SESSION_RECORD_VERSION,
     mode,
@@ -325,7 +340,7 @@ export function appendPitch2SessionSummary(
  * 귀풀기(`practice`)만 제외한다. `mode`가 없는 구버전 레코드는 포함(측정으로 간주).
  */
 export function isCountedInStats(record: SavedSessionRecord): boolean {
-  return record.mode !== 'practice';
+  return record.mode !== "practice";
 }
 
 /** 대기 중인 저장이 있으면 그것들이 끝난 뒤의 목록을 돌려준다. */

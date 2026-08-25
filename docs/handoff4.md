@@ -27,6 +27,70 @@
 - 성능 영향 없음.
 
 ---
+## 인계 — 2026-08-25 16:58
+
+새 채팅 AI용. **문장 듣기 기록 v1 걷어냄 + 통계 문서 맞춤.** 아래 14:51 블록(「% 없음」「18개 연습」)은 그때 기록. 고치지 않음.
+
+### 한 일
+
+- 저장 요약은 맞힌 수·비율 필수(`SentClosedSummary`). v1·반쪽은 `list`에서만 빠짐. 다음 `append`가 걸러진 목록을 덮어씀. 키·`schemaVersion` 2 유지.
+- 통계 행·근황은 한 글자와 같이 `n/18 · %`. `hasSentClosedPercent`·`missingTrendCopy` 삭제. 세션 끝 문구는 그대로 「문장 18개를 들었어요」(`sentClosedResultCopy`).
+- `training-stats-recommendation.md`에 문장 듣기 탭·`kind=sent`·칩 7·그룹 5·저장소 5 반영.
+
+### 핵심 경로
+
+- `src/training/sentClosed/store.ts` · `SentClosedProgressPanel.tsx` · `statsFeed.ts` · `__tests__/store.test.ts`
+- `docs/training-stats-recommendation.md`
+
+### 단정 금지
+
+- `미검증`: 실기기에 남은 v1 키가 있으면 목록에서 안 보이다가, 새 18회 저장 때 디스크에서 빠짐. 리빌드 불필요.
+
+---
+## 인계 — 2026-08-25 16:41
+
+새 채팅 AI용. **문장 듣기 store 테스트 보강.** `store.ts`는 사용자 정리본 유지.
+
+### 한 일
+
+- append 뒤에도 v1(들은 횟수만)이 남는지, 맞힌 수/비율 한쪽만 있으면 목록에서 버리는지 테스트 추가. 8 passed.
+- `store.ts` 로직은 변경 없음.
+
+### 핵심 경로
+
+- `src/training/sentClosed/__tests__/store.test.ts`
+
+### 단정 금지
+
+- `미검증`: 실기기 v1 기록 유무. 리빌드 불필요.
+
+---
+## 인계 — 2026-08-25 14:51
+
+새 채팅 AI용. **문장 듣기 Closed 3-AFC 1차 구현.**
+
+### 한 일
+
+- 하단 5탭. 맨 오른쪽 **문장 듣기** (`src/app/sent.tsx`, Trigger `sent`).
+- 장면 9 = 그림 `assets/9_img/` + 임시 TTS `assets/9_sent/*.wav`(Heami, 모노 22kHz). 문장 해요체 고정.
+- 문항 18 = A형(같은 사람 3장) + B형(같은 행동 3장). 음원 9개 재사용. 칸 위치는 세션마다 섞음.
+- 듣기 → 그림 3장 탭 → 맞았어요/아쉬워요. 요약은 「18개 들었어요」. % 없음. 18개 완료만 `training.sentClosedSessions.v1`에 저장(50상한).
+- 통계 `kind=sent` / 그룹 `sent`. 근황 「18개 연습」.
+
+### 핵심 경로
+
+- `src/training/sentClosed/scenes.ts` · `trials.ts` · `play.ts` · `store.ts` · `SentClosedSessionScreen.tsx`
+- `src/components/app-tabs.tsx` · `src/app/sent.tsx`
+- `src/training/statsFeed.ts` · `StatsScreen.tsx`
+- `scripts/gen-sent-closed-tts.ps1` · `scripts/sent-closed-tts.json`
+
+### 단정 금지
+
+- `주의`: wav는 **임시 TTS**. 사람 녹음으로 갈 것. `playSentClosedScene`은 파일만 갈아끼우면 됨.
+- `미검증`: 실기기 5탭·재생·이미지 픽셀 내용.
+- 리빌드 불필요(JS+에셋. `expo-audio` 기존 의존성).
+
+---
 ## 인계 — 2026-08-21 11:08
 
 새 채팅 AI용. **이번 세션 = 문서만. 학습 노트 3개 + docs 지도 정정. 코드 변경 0.**
@@ -57,6 +121,7 @@
 - `미검증`: 없음. 노트에 적힌 동작 근거는 앞 세션 수정과 `npx jest` 실측에서 옴.
 
 ---
+
 ## 인계 — 2026-08-21 08:39
 
 새 채팅 AI용. **이번 세션 = 단어 통계 표 + 음고 지우기 안내 삭제. 키 합치기는 뒤.**

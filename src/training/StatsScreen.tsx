@@ -1,5 +1,5 @@
 /**
- * 통합 연습 기록 화면 — 네 탭 어디서 열어도 같은 화면.
+ * 통합 연습 기록 화면 — 어느 탭에서 열어도 같은 화면.
  * 헤더 차트 버튼 한 번에 그 탭 통계가 뜨고(탭이 그 종목으로 열림), 다른 종목은
  * 탭 하나로 건너뛴다. 아래 「다른 연습」 줄은 눌러 보지 않아도 근황이 보이게 한다.
  *
@@ -49,6 +49,7 @@ import {
   type StatsGroup,
   type StatsKind,
 } from "@/training/statsFeed";
+import { SentClosedProgressPanel } from "@/training/sentClosed/SentClosedProgressPanel";
 import { WrsProgressPanel } from "@/training/wrs/WrsProgressPanel";
 
 type StatsScreenProps = {
@@ -65,6 +66,7 @@ const KIND_ICON: Record<StatsKind, IconName> = {
   wrs1: "oneChar",
   wrs2: "twoChar",
   am: "vibrate",
+  sent: "sentence",
 };
 
 /** 본문이 밀려 들어오는 시간(ms). 넘기는 느낌만 주고 기다리게 하지 않는다. */
@@ -84,6 +86,9 @@ function KindPanel({
   if (kind === "wrs2") {
     return <WrsProgressPanel records={feed.wrs2} />;
   }
+  if (kind === "sent") {
+    return <SentClosedProgressPanel records={feed.sent} />;
+  }
   if (!isSessionTrack(kind)) {
     return null;
   }
@@ -97,7 +102,7 @@ type TabView = { kind: StatsKind; forward: boolean };
 
 /**
  * 종목 탭 줄. 고른 것만 파란 면 + 꼬리로 아래 본문과 이어 보이게 한다.
- * 여섯 개라 한 화면에 다 들어오지 않으므로, 고른 탭이 잘리면 가운데로 굴려 준다
+ * 일곱 개라 한 화면에 다 들어오지 않으므로, 고른 탭이 잘리면 가운데로 굴려 준다
  * (헤더 차트 버튼으로 들어오면 그 종목이 줄 끝에 있을 수 있다).
  */
 function KindTabs({

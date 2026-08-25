@@ -1,4 +1,4 @@
-/** 맞힌 % 추이. 한 글자·두 글자 기록이 같은 모양. */
+/** 맞힌 % 추이. 한 글자·두 글자·문장 듣기 기록이 같은 모양. */
 export type PercentSessionRecord = {
   id: string;
   savedAt: string;

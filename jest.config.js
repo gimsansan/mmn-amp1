@@ -10,6 +10,7 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/jest/setup.js'],
   moduleNameMapper: {
     '\\.css$': '<rootDir>/jest/styleMock.js',
+    '^@/assets/(.*\\.wav)$': '<rootDir>/jest/assetMock.js',
     '^@/assets/(.*)$': '<rootDir>/assets/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
