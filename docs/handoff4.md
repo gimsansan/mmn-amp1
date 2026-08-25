@@ -4,6 +4,29 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-25 23:36
+
+새 채팅 AI용. **이번 세션 = 로컬 `main`만 `doc_update`로 되돌림. 원격 `origin/main`은 권한 없어 못 돌림.**
+
+### 한 일
+
+- `계획안생성`(`b3cd71e`)은 `main`이 아니라 `new-content` 작업으로 봄.
+- 로컬 `main`을 `2b614d6`(`doc_update`)로 `reset --hard`.
+- `origin/main` force-push 시도 → **403** (`gimsansan/mmn-amp1`에 `kss25746-cpu` 쓰기 권한 없음). 원격은 아직 `b3cd71e`.
+- `나중계획안.md`는 `origin/new-content`(`ae7df58`)에 남아 있음.
+
+### 핵심 경로
+
+- 로컬 `main` = `2b614d6`
+- `origin/main` = `b3cd71e` (미변경)
+- `origin/new-content` = `ae7df58`
+
+### 단정 금지
+
+- `주의`: 지금 `git pull` 하면 로컬 `main`이 다시 `계획안생성`으로 올라감. 원격은 `gimsansan` 계정으로 `git push --force-with-lease origin main` 필요.
+- 성능 영향 없음.
+
+---
 ## 인계 — 2026-08-21 11:08
 
 새 채팅 AI용. **이번 세션 = 문서만. 학습 노트 3개 + docs 지도 정정. 코드 변경 0.**
