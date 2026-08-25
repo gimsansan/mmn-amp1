@@ -4,6 +4,31 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-25 23:56
+
+새 채팅 AI용. **이번 세션 = `new-content`를 로컬 `main`(인계) 위에 rebase. 충돌은 `handoff4.md`만.**
+
+### 한 일
+
+- `git rebase main` 중 `문장추가이미지수정중`이 `docs/handoff4.md`에서 충돌. 23:36(git 되돌림) 블록을 위, 16:58(문장 듣기) 이하를 그 아래에 두고 해결.
+- rebase 완료. 로컬 `new-content`: `bc0011a` → `e6fe98c`(계획안생성) → `fe09267`(문장추가이미지수정중).
+- 커밋 해시가 바뀜. `origin/new-content`는 옛 해시. force-push 아직 안 함.
+- `origin/main`은 여전히 옛 `계획안생성`(`b3cd71e`). `gimsansan` force-push 대기.
+
+### 핵심 경로
+
+- `docs/handoff4.md`
+- 로컬 `main` = `bc0011a`
+- 로컬 `new-content` = `fe09267`
+- `origin/main` = `b3cd71e`
+- `origin/new-content` = 옛 `ae7df58`(behind)
+
+### 단정 금지
+
+- `주의`: `new-content`는 `git push --force-with-lease origin new-content`. `main`은 `gimsansan`으로 `git push --force-with-lease origin main`. 둘 다 아직 원격 미반영.
+- 성능 영향 없음.
+
+---
 ## 인계 — 2026-08-25 23:36
 
 새 채팅 AI용. **이번 세션 = 로컬 `main`만 `doc_update`로 되돌림. 원격 `origin/main`은 권한 없어 못 돌림.**
