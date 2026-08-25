@@ -18,35 +18,35 @@ import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
-import {
-  MaxContentWidth,
-  Radius,
-  Shadows,
-  Spacing,
-} from "@/constants/theme";
+import { MaxContentWidth, Radius, Shadows, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
-import { SessionProgressBar } from "@/training/SessionProgressBar";
-import { StatsScreen } from "@/training/StatsScreen";
 import {
   playSentClosedScene,
   stopSentClosedPlayback,
   waitSentClosedLeadIn,
 } from "@/training/sentClosed/play";
-import { SCENES, sceneOf, type Scene, type SceneId } from "@/training/sentClosed/scenes";
+import {
+  SCENES,
+  sceneOf,
+  type Scene,
+  type SceneId,
+} from "@/training/sentClosed/scenes";
 import {
   appendSentClosedSummary,
   listSentClosedRecords,
 } from "@/training/sentClosed/store";
 import {
+  SENT_CLOSED_TRIAL_COUNT,
   createSentClosedTrials,
   scoreSentClosedChoice,
   sentClosedResultCopy,
   summarizeSentClosed,
-  SENT_CLOSED_TRIAL_COUNT,
   type ClosedSentOutcome,
   type ClosedSentTrial,
 } from "@/training/sentClosed/trials";
+import { SessionProgressBar } from "@/training/SessionProgressBar";
+import { StatsScreen } from "@/training/StatsScreen";
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
@@ -458,6 +458,10 @@ export function SentClosedSessionScreen() {
   );
 }
 
+/** 미리보기·고르기 칸: 정사각 에셋의 좌우 여백을 잘라 인물만 조금 키운다. */
+const PREVIEW_FIGURE_SCALE = 1.4;
+const CHOICE_FIGURE_SCALE = 1.4;
+
 function PreviewCell({ scene }: Readonly<{ scene: Scene }>) {
   const theme = useTheme();
   return (
@@ -467,11 +471,13 @@ function PreviewCell({ scene }: Readonly<{ scene: Scene }>) {
         { backgroundColor: theme.surface, borderColor: theme.border },
       ]}
     >
-      <Image
-        source={scene.image}
-        style={styles.previewImage}
-        resizeMode="contain"
-      />
+      <View style={styles.previewClip}>
+        <Image
+          source={scene.image}
+          style={styles.previewImage}
+          resizeMode="contain"
+        />
+      </View>
     </View>
   );
 }
@@ -514,11 +520,13 @@ function ChoiceCell({
         disabled && styles.disabled,
       ]}
     >
-      <Image
-        source={scene.image}
-        style={styles.choiceImage}
-        resizeMode="contain"
-      />
+      <View style={styles.choiceClip}>
+        <Image
+          source={scene.image}
+          style={styles.choiceImage}
+          resizeMode="contain"
+        />
+      </View>
     </Pressable>
   );
 }
@@ -558,12 +566,18 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     borderWidth: 1,
     borderRadius: Radius.large - 4,
-    padding: Spacing.one,
+    overflow: "hidden",
+  },
+  previewClip: {
+    height: 100,
+    overflow: "hidden",
     alignItems: "center",
+    justifyContent: "center",
   },
   previewImage: {
     width: "100%",
-    height: 72,
+    height: 100,
+    transform: [{ scale: PREVIEW_FIGURE_SCALE }],
   },
   summaryContent: {
     gap: Spacing.three,
@@ -612,13 +626,18 @@ const styles = StyleSheet.create({
     width: "31.5%",
     borderWidth: 1.5,
     borderRadius: Radius.large - 4,
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.one,
+    overflow: "hidden",
+  },
+  choiceClip: {
+    height: 180,
+    overflow: "hidden",
     alignItems: "center",
+    justifyContent: "center",
   },
   choiceImage: {
     width: "100%",
-    height: 120,
+    height: 180,
+    transform: [{ scale: CHOICE_FIGURE_SCALE }],
   },
   actions: {
     marginTop: "auto",

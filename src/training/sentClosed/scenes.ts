@@ -93,7 +93,7 @@ export const SCENES: readonly Scene[] = [
     subject: "postman",
     action: "umbrella",
     sentence: "집배원이 우산 써요",
-    image: require("@/assets/9_img/post-umb.webp"),
+    image: require("@/assets/9_img/post-umb_1.png"),
     audio: require("@/assets/9_sent/post-umb.wav"),
   },
 ];

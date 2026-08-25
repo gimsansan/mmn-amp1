@@ -4,6 +4,60 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-26 02:35
+
+새 채팅 AI용. **이번 세션 = 문장 듣기 미리보기·고르기 확대 수치 상향.**
+
+### 한 일
+
+- scale 1.2→1.4 (`PREVIEW_FIGURE_SCALE`, `CHOICE_FIGURE_SCALE`).
+- 미리보기 높이 88→100, 고르기 높이 160→180. 가로 3칸 유지.
+
+### 핵심 경로
+
+- `src/training/sentClosed/SentClosedSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 1.4 잘림, 작은 폰 고르기 스크롤.
+
+---
+## 인계 — 2026-08-26 02:31
+
+새 채팅 AI용. **이번 세션 = 문장 듣기 고르기 3칸 인물 확대(가로 3칸 유지).**
+
+### 한 일
+
+- `ChoiceCell`: 클립 + `CHOICE_FIGURE_SCALE` 1.2, 이미지 높이 160, padding 제거.
+- `PREVIEW_FIGURE_SCALE`는 사용자가 둔 1.2 유지.
+
+### 핵심 경로
+
+- `src/training/sentClosed/SentClosedSessionScreen.tsx` — `CHOICE_FIGURE_SCALE`
+
+### 단정 금지
+
+- `미검증`: 작은 폰에서 스크롤 여부. 실기기 우산·발 잘림.
+
+---
+## 인계 — 2026-08-26 02:21
+
+새 채팅 AI용. **이번 세션 = 문장 듣기 idle 3x3 인물 확대.**
+
+### 한 일
+
+- `SentClosedSessionScreen` `PreviewCell`: 클립 + scale 1.65. 에셋 파일은 안 자름.
+- 고르기 칸(`ChoiceCell`)은 그대로 `contain`.
+
+### 핵심 경로
+
+- `src/training/sentClosed/SentClosedSessionScreen.tsx` — `PREVIEW_FIGURE_SCALE`
+
+### 단정 금지
+
+- `미검증`: 실기기에서 우산·발 잘림. 배율은 상수만 바꾸면 됨.
+
+---
 ## 인계 — 2026-08-26 00:08
 
 새 채팅 AI용. **이번 세션 = `main`을 `doc_update`로 한 칸 되돌림. 잔가지는 그대로.**
