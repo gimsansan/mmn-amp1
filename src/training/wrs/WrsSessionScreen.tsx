@@ -463,10 +463,6 @@ export function WrsSessionScreen({
             />
           ) : null}
 
-          {phase === "summary" ? (
-            <ActionButton fill={false} label="처음으로" onPress={resetRun} />
-          ) : null}
-
           {(phase === "idle" || phase === "summary") && onBack ? (
             <ActionButton fill={false} label="뒤로 가기" onPress={onBack} />
           ) : null}

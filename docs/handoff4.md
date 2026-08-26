@@ -4,6 +4,94 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-26 16:30
+
+새 채팅 AI용. **이번 세션 = 빙고 요약 「다시 하기」 제거(코드 변경).**
+
+### 한 일
+
+- 요약 전용 「다시 하기」 행 삭제. idle·요약 버튼이 같아짐: 비슷한 소리 / 쉬운 판 / 뒤로 가기.
+- `lastDifficulty` 상태 삭제(그 버튼만 쓰던 값).
+
+### 핵심 경로
+
+- `src/training/wrs/WrsBingoScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 요약→난이도 버튼으로 재시작.
+- `주의`: 같은 난이도 한 탭 재시작은 없음. 방금 쓰던 쪽 버튼을 다시 누르면 됨. `jest` 통과, 리빌드 불필요.
+
+---
+
+## 인계 — 2026-08-26 16:17
+
+새 채팅 AI용. **이번 세션 = 빙고 난이도를 목록 카드로 옮김(코드 변경).**
+
+### 한 일
+
+- 단어 듣기 목록: `단어 빙고` 한 장 → `빙고 · 쉬운 판` / `빙고 · 비슷한 소리` 두 장. 카드 탭이면 바로 시작(한·두 글자와 같은 `autoStart`).
+- `WrsBingoScreen`: `autoStart`·`initialDifficulty`. 음성 안내 재시도는 `pendingDifficulty`로 같은 판 유지.
+- idle은 중지 후 `resetRun`용으로 유지. 요약의 난이도·다시 하기는 그대로.
+
+### 핵심 경로
+
+- `src/training/wrs/WrsTabScreen.tsx`
+- `src/training/wrs/WrsBingoScreen.tsx`
+- `src/training/wrs/__tests__/WrsBingoScreen.test.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기에서 목록 카드→바로 낭독.
+- `주의`: `autoStart`는 마운트 `useEffect`(제스처 밖). 첫 페인트 idle 한 프레임 가능(한·두 글자와 동일). `tsc` 통과, 리빌드 불필요.
+
+---
+
+## 인계 — 2026-08-26 16:02
+
+새 채팅 AI용. **이번 세션 = 떨림 요약 버튼 정리(코드 변경).**
+
+### 한 일
+
+- `AmSessionScreen` 요약 액션: primary를 idle=「연습 시작」/summary=「처음으로」로 분기. 요약의 「다시 연습」 제거.
+- 이유: 떨림은 `onBack` 없음 → idle 복귀 길이 「처음으로」뿐. 「다시 연습」은 즉시 새 세션이라 소리가 곧장 남. 하나만 남기면 「처음으로」가 나음(사용자 결정).
+- `onStart`은 idle에서 계속 사용. `resetToIdle`을 요약 primary로 승격.
+
+### 핵심 경로
+
+- `src/training/am/AmSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 요약→「처음으로」→idle 흐름.
+- `주의`: 요약에서 바로 재시작하려면 「처음으로」→「연습 시작」 두 번(한 번 재시작 없앤 트레이드오프). `tsc` 통과, 리빌드 불필요.
+
+---
+
+## 인계 — 2026-08-26 15:52
+
+새 채팅 AI용. **이번 세션 = 단어 듣기 라우팅 정리(코드 변경).**
+
+### 한 일
+
+- `WrsSessionScreen`(한 글자)·`WrsTwoCharScreen`(두 글자): 요약의 「처음으로」 버튼 삭제. 목록에서 `autoStart`로 idle을 건너뛰는데 「처음으로」가 다시 idle로 보내 목록엔 없던 안내 화면이 뜨던 문제. `resetRun`은 중지 확인에서 계속 사용.
+- `WrsTabScreen`(목록): 헤더에 `StatsEntryButton` 추가. `showStats` 상태 + `StatsScreen(initialKind="wrs1")` + BackHandler 분기.
+- 교차검증 정정: idle 재진입은 한 글자·**두 글자 둘 다** 해당(첫 판단 「두 글자엔 없다」는 오독이었음). `PitchCompareScreen`·`FreqSessionScreen`엔 「처음으로」 없음. am(떨림)·wrs1·wrs2에 있었음.
+
+### 핵심 경로
+
+- `src/training/wrs/WrsSessionScreen.tsx`
+- `src/training/wrs/WrsTwoCharScreen.tsx`
+- `src/training/wrs/WrsTabScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기에서 목록 통계 버튼·「다시 연습」 흐름.
+- `주의`: 목록 통계는 `wrs1`로 열림. 두 글자는 `StatsScreen` 안 탭 전환으로 봐야 함.
+- `주의`: 빙고 idle(난이도)·파일 라우트 승격은 안 함. `tsc` 통과, 리빌드 불필요.
+
+---
+
 ## 인계 — 2026-08-26 14:10
 
 새 채팅 AI용. **이번 세션 = 토큰 절약 문서의 범용판 신설(문서만, 코드 0).**

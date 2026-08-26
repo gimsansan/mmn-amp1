@@ -13,6 +13,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Card } from "@/components/ui/card";
 import { ScreenHeader } from "@/components/ui/screen-header";
+import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import { Icon, type IconName } from "@/components/ui/icon";
 import {
   MaxContentWidth,
@@ -20,7 +21,9 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { StatsScreen } from "@/training/StatsScreen";
 import { WrsBingoScreen } from "@/training/wrs/WrsBingoScreen";
+import type { WrsDifficulty } from "@/training/wrs/wrsDistractors";
 import { hasKoreanVoice } from "@/training/wrs/wrsTts";
 import { WrsSessionScreen } from "@/training/wrs/WrsSessionScreen";
 import { WrsTwoCharScreen } from "@/training/wrs/WrsTwoCharScreen";
@@ -30,75 +33,108 @@ type Track = "picker" | "one" | "two" | "bingo" | "voiceGuide";
 
 type TrainingTrack = "one" | "two" | "bingo";
 
-const TRACK_FACE: Record<TrainingTrack, { icon: IconName; title: string }> = {
-  one: { icon: "oneChar", title: "한 글자" },
-  two: { icon: "twoChar", title: "두 글자" },
-  bingo: { icon: "bingoLine", title: "단어 빙고" },
+type TrackOption = {
+  track: TrainingTrack;
+  difficulty?: WrsDifficulty;
+  icon: IconName;
+  title: string;
+  description: string;
 };
 
-const TRACK_OPTIONS: readonly {
-  track: TrainingTrack;
-  description: string;
-}[] = [
+const TRACK_OPTIONS: readonly TrackOption[] = [
   {
     track: "one",
+    icon: "oneChar",
+    title: "한 글자",
     description: "한 글자 단어를 듣고 보기에서 고르는 연습",
   },
   {
     track: "two",
+    icon: "twoChar",
+    title: "두 글자",
     description: "두 글자 단어를 듣고 보기에서 고르는 연습",
   },
   {
     track: "bingo",
-    description: "들은 단어를 판에서 눌러 줄을 만드는 연습",
+    difficulty: "easy",
+    icon: "bingoLine",
+    title: "빙고 · 쉬운 판",
+    description: "소리가 덜 비슷한 단어로 줄을 만드는 연습",
+  },
+  {
+    track: "bingo",
+    difficulty: "hard",
+    icon: "bingoLine",
+    title: "빙고 · 비슷한 소리",
+    description: "소리가 비슷한 단어로 줄을 만드는 연습",
   },
 ];
 
 /**
- * 단어 듣기 탭 — 한 글자·두 글자·빙고 선택.
- * 카드에서 바로 시작(빙고는 난이도를 고르는 idle 유지).
+ * 단어 듣기 탭 — 한 글자·두 글자·빙고(쉬운 판/비슷한 소리) 선택.
+ * 카드에서 바로 시작.
  */
 export function WrsTabScreen() {
   const theme = useTheme();
   const [track, setTrack] = useState<Track>("picker");
   const [autoStart, setAutoStart] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [bingoDifficulty, setBingoDifficulty] =
+    useState<WrsDifficulty>("easy");
 
   const [pendingTrack, setPendingTrack] = useState<TrainingTrack | null>(null);
+  const [pendingDifficulty, setPendingDifficulty] =
+    useState<WrsDifficulty | null>(null);
   const [checking, setChecking] = useState(false);
+
+  const closeStats = useCallback(() => {
+    setShowStats(false);
+  }, []);
 
   const backToPicker = useCallback(() => {
     setTrack("picker");
     setAutoStart(false);
     setPendingTrack(null);
+    setPendingDifficulty(null);
   }, []);
 
   /**
    * 세 연습 모두 한국어 TTS로 단어를 읽어 준다. 음성이 없으면 무음으로 진행돼
    * 찍기가 되므로, 시작 전에 확인하고 없으면 안내 화면으로 보낸다.
    */
-  const openTrack = useCallback((next: TrainingTrack) => {
-    setChecking(true);
-    void hasKoreanVoice()
-      .then((ok) => {
-        if (ok) {
-          setPendingTrack(null);
-          setAutoStart(next !== "bingo");
-          setTrack(next);
-          return;
-        }
-        setPendingTrack(next);
-        setTrack("voiceGuide");
-      })
-      .finally(() => {
-        setChecking(false);
-      });
-  }, []);
+  const openTrack = useCallback(
+    (next: TrainingTrack, difficulty?: WrsDifficulty) => {
+      const nextDifficulty =
+        next === "bingo" ? (difficulty ?? "easy") : null;
+      setChecking(true);
+      void hasKoreanVoice()
+        .then((ok) => {
+          if (ok) {
+            setPendingTrack(null);
+            setPendingDifficulty(null);
+            if (nextDifficulty) {
+              setBingoDifficulty(nextDifficulty);
+            }
+            setAutoStart(true);
+            setTrack(next);
+            return;
+          }
+          setPendingTrack(next);
+          setPendingDifficulty(nextDifficulty);
+          setTrack("voiceGuide");
+        })
+        .finally(() => {
+          setChecking(false);
+        });
+    },
+    [],
+  );
 
   const retryVoice = useCallback(() => {
     if (pendingTrack) {
-      openTrack(pendingTrack);
+      openTrack(pendingTrack, pendingDifficulty ?? undefined);
     }
-  }, [openTrack, pendingTrack]);
+  }, [openTrack, pendingTrack, pendingDifficulty]);
 
   const consumeAutoStart = useCallback(() => {
     setAutoStart(false);
@@ -106,6 +142,13 @@ export function WrsTabScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      if (showStats) {
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+          closeStats();
+          return true;
+        });
+        return () => sub.remove();
+      }
       if (track === "picker") {
         return;
       }
@@ -114,8 +157,12 @@ export function WrsTabScreen() {
         return true;
       });
       return () => sub.remove();
-    }, [track, backToPicker]),
+    }, [track, showStats, backToPicker, closeStats]),
   );
+
+  if (showStats) {
+    return <StatsScreen initialKind="wrs1" onBack={closeStats} />;
+  }
 
   if (track === "one") {
     return (
@@ -138,7 +185,14 @@ export function WrsTabScreen() {
   }
 
   if (track === "bingo") {
-    return <WrsBingoScreen onBack={backToPicker} />;
+    return (
+      <WrsBingoScreen
+        onBack={backToPicker}
+        autoStart={autoStart}
+        onAutoStartConsumed={consumeAutoStart}
+        initialDifficulty={bingoDifficulty}
+      />
+    );
   }
 
   if (track === "voiceGuide") {
@@ -163,19 +217,24 @@ export function WrsTabScreen() {
             <ScreenHeader
               title="단어 듣기"
               caption="들은 단어를 보기에서 고르는 연습 · 병원 검사가 아니에요"
+              action={<StatsEntryButton onPress={() => setShowStats(true)} />}
             />
 
             <View style={styles.list}>
               {TRACK_OPTIONS.map((option) => {
-                const face = TRACK_FACE[option.track];
+                const optionKey = option.difficulty
+                  ? `${option.track}-${option.difficulty}`
+                  : option.track;
                 return (
                   <Pressable
-                    key={option.track}
+                    key={optionKey}
                     accessibilityRole="button"
-                    accessibilityLabel={`${face.title} — ${option.description}`}
+                    accessibilityLabel={`${option.title} — ${option.description}`}
                     accessibilityState={{ disabled: checking }}
                     disabled={checking}
-                    onPress={() => openTrack(option.track)}
+                    onPress={() =>
+                      openTrack(option.track, option.difficulty)
+                    }
                     style={({ pressed }) => [
                       styles.cardPress,
                       pressed && !checking && styles.pressed,
@@ -189,14 +248,14 @@ export function WrsTabScreen() {
                         ]}
                       >
                         <Icon
-                          name={face.icon}
+                          name={option.icon}
                           size={22}
                           color={theme.accent}
                         />
                       </View>
                       <View style={styles.cardText}>
                         <ThemedText type="smallBold" style={styles.cardTitle}>
-                          {face.title}
+                          {option.title}
                         </ThemedText>
                         <ThemedText
                           themeColor="textSecondary"

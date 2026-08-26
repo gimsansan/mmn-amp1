@@ -642,19 +642,21 @@ export function AmSessionScreen({
         >
           {phase === "idle" || phase === "summary" ? (
             <>
-              <ActionButton
-                variant="primary"
-                label={phase === "summary" ? "다시 연습" : "연습 시작"}
-                textScale={idleTextScale}
-                onPress={onStart}
-              />
-              {phase === "summary" ? (
+              {phase === "idle" ? (
                 <ActionButton
+                  variant="primary"
+                  label="연습 시작"
+                  textScale={idleTextScale}
+                  onPress={onStart}
+                />
+              ) : (
+                <ActionButton
+                  variant="primary"
                   label="처음으로"
                   textScale={idleTextScale}
                   onPress={resetToIdle}
                 />
-              ) : null}
+              )}
               {onBack ? (
                 <ActionButton
                   label="뒤로 가기"

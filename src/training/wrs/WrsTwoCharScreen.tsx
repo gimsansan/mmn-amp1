@@ -482,10 +482,6 @@ export function WrsTwoCharScreen({
             />
           ) : null}
 
-          {phase === "summary" ? (
-            <ActionButton fill={false} label="처음으로" onPress={resetRun} />
-          ) : null}
-
           {phase === "idle" || phase === "summary" ? (
             <ActionButton fill={false} label="뒤로 가기" onPress={onBack} />
           ) : null}

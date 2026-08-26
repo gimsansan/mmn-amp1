@@ -44,9 +44,18 @@ type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
 type WrsBingoScreenProps = {
   onBack: () => void;
+  /** 목록에서 막 들어왔을 때 바로 시작. */
+  autoStart?: boolean;
+  onAutoStartConsumed?: () => void;
+  initialDifficulty?: WrsDifficulty;
 };
 
-export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
+export function WrsBingoScreen({
+  onBack,
+  autoStart = false,
+  onAutoStartConsumed,
+  initialDifficulty = "easy",
+}: Readonly<WrsBingoScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
   /** 낭독 실행 세대. 새 실행이 시작되면 이전 낭독은 스스로 빠진다. */
@@ -67,9 +76,6 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
   const [cueUsed, setCueUsed] = useState(0);
   const [summary, setSummary] = useState<BingoSummary | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
-  const [lastDifficulty, setLastDifficulty] = useState<WrsDifficulty | null>(
-    null,
-  );
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
@@ -228,7 +234,6 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
   const onStart = useCallback(
     (difficulty: WrsDifficulty) => {
       abortRef.current = false;
-      setLastDifficulty(difficulty);
       const nextBoard = createBingoBoard(difficulty);
       boardRef.current = nextBoard;
       markedRef.current = emptyMarked();
@@ -246,6 +251,16 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
     },
     [playCue],
   );
+
+  const autoStartOnceRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || autoStartOnceRef.current) {
+      return;
+    }
+    autoStartOnceRef.current = true;
+    onStart(initialDifficulty);
+    onAutoStartConsumed?.();
+  }, [autoStart, initialDifficulty, onAutoStartConsumed, onStart]);
 
   const onTap = useCallback(
     (choice: string, index: number) => {
@@ -439,16 +454,6 @@ export function WrsBingoScreen({ onBack }: Readonly<WrsBingoScreenProps>) {
         ) : null}
 
         <View style={styles.actions}>
-          {phase === "summary" && lastDifficulty ? (
-            <View style={styles.actionRow}>
-              <ActionButton
-                label="다시 하기"
-                accessibilityLabel="방금 난이도로 다시 하기"
-                onPress={() => onStart(lastDifficulty)}
-              />
-            </View>
-          ) : null}
-
           {phase === "idle" || phase === "summary" ? (
             <View style={styles.actionRow}>
               <ActionButton
