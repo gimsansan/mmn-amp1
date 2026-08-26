@@ -59,7 +59,7 @@ const TRACK_OPTIONS: readonly TrackOption[] = [
     difficulty: "easy",
     icon: "bingoLine",
     title: "빙고 · 쉬운 판",
-    description: "소리가 덜 비슷한 단어로 줄을 만드는 연습",
+    description: "소리가 많이 다른 단어로 줄을 만드는 연습",
   },
   {
     track: "bingo",

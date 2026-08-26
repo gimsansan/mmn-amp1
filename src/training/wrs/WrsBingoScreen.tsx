@@ -76,6 +76,8 @@ export function WrsBingoScreen({
   const [cueUsed, setCueUsed] = useState(0);
   const [summary, setSummary] = useState<BingoSummary | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [lastDifficulty, setLastDifficulty] =
+    useState<WrsDifficulty>(initialDifficulty);
 
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
@@ -234,6 +236,7 @@ export function WrsBingoScreen({
   const onStart = useCallback(
     (difficulty: WrsDifficulty) => {
       abortRef.current = false;
+      setLastDifficulty(difficulty);
       const nextBoard = createBingoBoard(difficulty);
       boardRef.current = nextBoard;
       markedRef.current = emptyMarked();
@@ -393,10 +396,36 @@ export function WrsBingoScreen({
               </View>
             ) : null}
             {summary ? (
-              <View style={styles.resultRow}>
-                <StatChip value={String(summary.lineCount)} label="완성한 줄" />
-                <StatChip value={String(summary.markedCount)} label="표시한 칸" />
-                <StatChip value={String(summary.cueCount)} label="들은 단어" />
+              <View
+                style={[
+                  styles.statRow,
+                  { backgroundColor: theme.accentTint },
+                ]}
+              >
+                <StatFact
+                  value={String(summary.lineCount)}
+                  label="완성한 줄"
+                />
+                <View
+                  style={[
+                    styles.statDivider,
+                    { backgroundColor: theme.accentBorder },
+                  ]}
+                />
+                <StatFact
+                  value={String(summary.markedCount)}
+                  label="표시한 칸"
+                />
+                <View
+                  style={[
+                    styles.statDivider,
+                    { backgroundColor: theme.accentBorder },
+                  ]}
+                />
+                <StatFact
+                  value={String(summary.cueCount)}
+                  label="들은 단어"
+                />
               </View>
             ) : null}
           </ScrollView>
@@ -454,10 +483,10 @@ export function WrsBingoScreen({
         ) : null}
 
         <View style={styles.actions}>
-          {phase === "idle" || phase === "summary" ? (
+          {phase === "idle" ? (
             <View style={styles.actionRow}>
               <ActionButton
-                variant={phase === "idle" ? "primary" : "secondary"}
+                variant="primary"
                 label="비슷한 소리"
                 accessibilityLabel="비슷한 소리 판"
                 onPress={() => onStart("hard")}
@@ -465,6 +494,29 @@ export function WrsBingoScreen({
               <ActionButton label="쉬운 판" onPress={() => onStart("easy")} />
               <ActionButton label="뒤로 가기" onPress={leaveToA} />
             </View>
+          ) : null}
+
+          {phase === "summary" ? (
+            <>
+              <View style={styles.actionRow}>
+                <ActionButton
+                  variant="primary"
+                  label={difficultyLabel(lastDifficulty)}
+                  accessibilityLabel={difficultyA11y(lastDifficulty)}
+                  onPress={() => onStart(lastDifficulty)}
+                />
+              </View>
+              <View style={styles.actionRow}>
+                <ActionButton
+                  label={difficultyLabel(otherDifficulty(lastDifficulty))}
+                  accessibilityLabel={difficultyA11y(
+                    otherDifficulty(lastDifficulty),
+                  )}
+                  onPress={() => onStart(otherDifficulty(lastDifficulty))}
+                />
+                <ActionButton label="뒤로 가기" onPress={leaveToA} />
+              </View>
+            </>
           ) : null}
 
           {phase === "feedback" ? (
@@ -492,6 +544,18 @@ function emptyMarked(): boolean[] {
   return Array.from({ length: BINGO_CELL_COUNT }, () => false);
 }
 
+function otherDifficulty(d: WrsDifficulty): WrsDifficulty {
+  return d === "hard" ? "easy" : "hard";
+}
+
+function difficultyLabel(d: WrsDifficulty): string {
+  return d === "hard" ? "비슷한 소리" : "쉬운 판";
+}
+
+function difficultyA11y(d: WrsDifficulty): string {
+  return d === "hard" ? "비슷한 소리 판" : "쉬운 판";
+}
+
 function promptCopy(
   phase: Phase,
   lastCorrect: boolean | undefined,
@@ -511,21 +575,21 @@ function promptCopy(
   return "아쉬워요 · 그 칸이 아니에요";
 }
 
-/** 결과 화면의 사실 기술 칩. 점수·등급 아님 — "몇 줄/몇 칸/몇 단어"만. */
-function StatChip({
+/** 결과 화면의 사실 숫자. 점수·등급 아님 — "몇 줄/몇 칸/몇 단어"만. */
+function StatFact({
   value,
   label,
 }: Readonly<{ value: string; label: string }>) {
   const theme = useTheme();
   return (
-    <Card style={styles.statChip}>
+    <View style={styles.statFact}>
       <ThemedText style={[styles.statValue, { color: theme.accent }]}>
         {value}
       </ThemedText>
-      <ThemedText type="caption" themeColor="textSecondary">
+      <ThemedText type="caption" style={{ color: theme.text }}>
         {label}
       </ThemedText>
-    </Card>
+    </View>
   );
 }
 
@@ -654,7 +718,7 @@ function BingoBoard({
                 word={word}
                 marked={isMarked}
                 inLine={inLine}
-                dimmed={isSummary && !inLine}
+                dimmed={isSummary && !isMarked && !inLine}
                 animate={animate}
                 delay={delay}
                 disabled={disabled || isMarked}
@@ -714,7 +778,9 @@ function BingoTile({
     textColor = theme.onAccent;
     tileShadow = Shadows.accent;
   } else if (dimmed) {
-    textColor = theme.textMuted;
+    // accentTint 위 글자는 text·accent만 AA. textMuted는 미달.
+    backgroundColor = theme.accentTint;
+    textColor = theme.text;
     tileShadow = styles.flat;
   }
 
@@ -730,6 +796,7 @@ function BingoTile({
           styles.tile,
           { backgroundColor },
           tileShadow,
+          dimmed && { borderWidth: 1, borderColor: theme.accentBorder },
           inLine && { borderWidth: 3, borderColor: theme.accentBorder },
           pressed && !disabled && styles.tilePressed,
         ]}
@@ -850,15 +917,21 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 32,
   },
-  resultRow: {
+  statRow: {
     flexDirection: "row",
-    gap: Spacing.two,
+    alignItems: "center",
+    borderRadius: Radius.large - 2,
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.two,
   },
-  statChip: {
+  statFact: {
     flex: 1,
     alignItems: "center",
     gap: Spacing.half,
-    paddingVertical: Spacing.three,
+  },
+  statDivider: {
+    width: 1,
+    alignSelf: "stretch",
   },
   statValue: {
     fontSize: 26,
