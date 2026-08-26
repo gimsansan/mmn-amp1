@@ -22,9 +22,9 @@
 |---------|------|------|
 | **① 설계·기준** | 무엇을 왜 만드는가 | `amp-mdt-training-design.md`, `training-stats-recommendation.md` |
 | **② 환경·실행** | 어떻게 빌드·실행하는가 | `dev-client-setup-context.md`, `dev-client-connection-guide.md`, `cursor-rules-2-vs-3.md` |
-| **⑥ 읽기·질문** | 코드를 어떻게 물어보나 | `ask-file-behavior.md`(범용), `ask-app-behavior.md`(이 앱), `analysis/`(7축을 이 앱에 **적용한 결과**) |
+| **⑥ 읽기·질문** | 코드를 어떻게 물어보나 | `ask-file-behavior.md`(범용), `ask-app-behavior.md`(이 앱), `ask-token-budget.md`(비용), `analysis/`(7축을 이 앱에 **적용한 결과**) |
 | **③ 할 일·상태** | 무엇이 문제이고 지금 어디까지 왔나 | `improvement-backlog.md` (+ `-easy`) |
-| **④ 기록** | 무엇을 했나 / 어떻게 고쳤나 | `impl-log_1.md`(이어서), `impl-log.md`(과거), `fix-reviews.md` |
+| **④ 기록** | 무엇을 했나 / 어떻게 고쳤나 | `impl-log_2.md`(정본), `impl-log_1.md`·`impl-log.md`(과거), `fix-reviews.md` |
 | **⑤ 인계** | 새로 오는 사람에게 넘길 맥락 | `handoff4.md`(정본) — `handoff.md`~`handoff3.md`는 과거 |
 | **⑦ 학습 노트** | 이 코드가 왜 이렇게 생겼나(기초 개념) | `testing-guide.md`, `as-const-리터럴타입-노트.md`, `animated-value-초기화-노트.md`, `ref-vs-state-노트.md` |
 
@@ -40,6 +40,7 @@
 | `training-stats-recommendation.md` | 갱신 | 탭별 기록 **수집·표시** 추천(봉투·kind 필터). 코드 미적용 | **기록을 어떻게 넣고 꺼내 보여주는가** |
 | `ask-file-behavior.md` | 갱신 | React 등 **범용** 질문 요령(역할 먼저, `[화면] --동작-->`) | **스택 무관하게 어떻게 물어보나** |
 | `ask-app-behavior.md` | 갱신 | 위 요령의 **이 앱** 예(탭·Store·차트 경로) | **이 저장소 파일을 어떻게 물어보나** |
+| `ask-token-budget.md` | 갱신 | AI와 일할 때의 토큰 비용(읽기 좁히기, 세션 끊기, 문서 긴 줄) | **같은 답을 더 싸게 얻는 방법** |
 | `analysis/` (7개 + README) | 갱신 | `analaysys/`의 7축 질문 요령을 이 앱 주요 파일에 **적용한 결과**(화면·데이터·상태·에러·타입·성능·테스트) | **이 앱이 각 축에서 실제로 어떻게 생겼나** |
 | `merge-host-decision.md` | 갱신 | HarmoniTune×mnn 병합 시 **호스트 선택** 개념·저장·기록 방침 | **어느 저장소를 살리는가**(제품 이름과 별개) |
 | `merge-plan-harmonitune.md` | 갱신 | HarmoniTune×mnn 병합 **절차·이식 매핑·순서** | **무엇을 어디로 옮기나**(저장 방침은 host-decision §4.1 링크) |
@@ -47,7 +48,8 @@
 | `dev-client-connection-guide.md` | 갱신 | USB/WiFi/ADB·Metro URL·실기기 연결 | **실기기에 어떻게 붙는가** |
 | `improvement-backlog.md` | 갱신 | 개선 후보 P0~P3 + 맨 위 **진행 현황 표** | **무엇이 문제인가 · 지금 상태가 어떤가** |
 | `improvement-backlog-easy.md` | 갱신 | 위 문서를 비유로 푼 것 | 없음(설명 전용 — **상태·근거를 여기서 관리하지 않음**) |
-| `impl-log_1.md` | 누적 | 날짜별 작업 1건 = 표 1개(근거·결정·결과·확인·단정 금지). **이후 정본** | **무엇을 언제 했나** |
+| `impl-log_2.md` | 누적 | 날짜별 작업 1건 = 표 1개(근거·결정·결과·확인·단정 금지). **현재 정본** | **무엇을 언제 했나** |
+| `impl-log_1.md` | 누적 | 위와 같음. **과거**(2026-08-26 12:45까지). 새 항목 금지 | 과거 작업 기록 |
 | `impl-log.md` | 누적 | 위와 같음. **과거**(2026-08-19 01:04까지). 새 항목 금지 | 과거 작업 기록 |
 | `fix-reviews.md` | 누적 | 수정 전후 코드·대안 검토·평가·검증 | **어떻게 고쳤나 · 왜 그 방법인가** |
 | `handoff4.md` | 누적 | 새 채팅 AI용 인계 블록(시각 포함). **현재 정본** | **지금 넘길 맥락** |
@@ -57,8 +59,9 @@
 | `animated-value-초기화-노트.md` | 갱신 | `useRef(new Animated.Value()).current`를 버리고 지연 초기화 `useState`로 간 이유 | **애니메이션 값을 어떻게 만드나** |
 | `ref-vs-state-노트.md` | 갱신 | 렌더에서 ref를 읽으면 생기는 버그, ref+state 짝 패턴 | **ref냐 state냐** |
 
-> `impl-log_1.md`와 `fix-reviews.md`의 관계: **impl-log가 정본(짧게), fix-reviews가 부록(상세).**
-> 코드를 바꿨으면 **impl-log_1은 반드시** 쓰고, 설명할 게 많을 때만 fix-reviews에 상세를 더한다. **`impl-log.md`에는 넣지 않음.**
+> `impl-log_2.md`와 `fix-reviews.md`의 관계: **impl-log가 정본(짧게), fix-reviews가 부록(상세).**
+> 코드를 바꿨으면 **impl-log_2는 반드시** 쓰고, 설명할 게 많을 때만 fix-reviews에 상세를 더한다.
+> **`impl-log.md`·`impl-log_1.md`에는 넣지 않음.**
 
 ---
 
@@ -73,6 +76,7 @@
 | 설계·과제 방식을 바꾸기로 합의 | **설계 문서** 갱신 | impl-log에 한 줄 |
 | 통계 수집·표시 방식을 바꾸기로 함 | **`training-stats-recommendation.md`** | 자극 설계 문서에 통계 UX를 섞지 않음 |
 | 코드를 어떻게 물어볼지 | **`ask-file-behavior.md`**(범용) · **`ask-app-behavior.md`**(이 앱) | 인계·설계에 질문 복붙을 흩뿌리지 않음 |
+| 요청·탐색이 토큰을 너무 먹음 | **`ask-token-budget.md`** | 앱 런타임 성능은 `analysis/ask-performance.md`(다른 문제) |
 | 빌드·실행 방법이 바뀜 | **셋업 문서** 갱신 | impl-log에 한 줄 |
 | 자극 스펙 숫자 | **코드 상수가 정본** + 설계 문서에 의미 | 문서에 숫자를 복사해 두지 말 것 |
 | 기초 개념을 몰라 막혔던 것(왜 이 문법·이 훅인가) | **학습 노트**(⑦) 새 파일 또는 기존 노트에 절 추가 | impl-log에 한 줄. **여러 파일에서 반복될 때만** 만들 것 — 한 곳뿐이면 코드 주석 |
@@ -105,7 +109,7 @@
 
 ### 「이건 왜 이렇게 고쳐졌지?」
 
-1. [`impl-log_1.md`](./impl-log_1.md)(이후) 또는 [`impl-log.md`](./impl-log.md)(과거)에서 **날짜로** 해당 작업 찾기 → 근거·결정·단정 금지
+1. [`impl-log_2.md`](./impl-log_2.md)(정본) → 없으면 [`impl-log_1.md`](./impl-log_1.md) → [`impl-log.md`](./impl-log.md) 순으로 **날짜로** 찾기 → 근거·결정·단정 금지
 2. 더 알고 싶으면 [`fix-reviews.md`](./fix-reviews.md)에서 **같은 항목 ID**(P0-1 등) 블록
 
 ### 「이 파일 동작을 빨리 파악하려면?」
@@ -117,7 +121,7 @@
 
 1. 코드 주석(자극 스펙 상수에는 근거가 주석으로 붙어 있음)
 2. [`amp-mdt-training-design.md`](./amp-mdt-training-design.md) 해당 절
-3. [`impl-log_1.md`](./impl-log_1.md) → 없으면 [`impl-log.md`](./impl-log.md) 날짜 역순으로 훑기
+3. [`impl-log_2.md`](./impl-log_2.md) → 없으면 [`impl-log_1.md`](./impl-log_1.md) → [`impl-log.md`](./impl-log.md) 날짜 역순으로 훑기
 
 ### 새 채팅 AI에게 넘길 때
 
@@ -156,14 +160,16 @@ docs/
 ├─ training-stats-recommendation.md ① 설계(통계 수집·표시) [갱신형] 코드 미적용
 ├─ ask-file-behavior.md            ⑥ 읽기·질문(범용)   [갱신형]
 ├─ ask-app-behavior.md             ⑥ 읽기·질문(이 앱)  [갱신형]
+├─ ask-token-budget.md            ⑥ 읽기·질문(비용)   [갱신형]
 ├─ merge-host-decision.md          ① 설계(병합 호스트) [갱신형]
 ├─ merge-plan-harmonitune.md       ① 설계(병합 절차)   [갱신형]
 ├─ dev-client-setup-context.md     ② 환경·실행        [갱신형]
 ├─ cursor-rules-2-vs-3.md          ② 환경(규칙 비교)  [갱신형]
 ├─ improvement-backlog.md          ③ 할 일 + 진행 현황 [갱신형] ★상태 정본
 ├─ improvement-backlog-easy.md     ③ 위의 쉬운 말 버전 [갱신형]
-├─ impl-log_1.md                   ④ 무엇을 했나       [누적형] ★작업 정본(이어서)
-├─ impl-log.md                     ④ 무엇을 했나       [누적형] 과거(01:04까지)
+├─ impl-log_2.md                   ④ 무엇을 했나       [누적형] ★작업 정본
+├─ impl-log_1.md                   ④ 무엇을 했나       [누적형] 과거(08-26 12:45까지)
+├─ impl-log.md                     ④ 무엇을 했나       [누적형] 과거(08-19 01:04까지)
 ├─ fix-reviews.md                  ④ 어떻게 고쳤나     [누적형]
 ├─ handoff4.md                     ⑤ 인계(최신이 위)   [누적형] ★인계 정본
 ├─ handoff.md / handoff2 / handoff3 ⑤ 인계 과거분      [누적형] 새 블록 금지

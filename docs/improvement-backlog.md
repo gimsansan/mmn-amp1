@@ -10,7 +10,7 @@
 
 ## 진행 현황 (2026-08-22 갱신)
 
-> 이 표가 **진행 상태의 정본**입니다. 수정 상세는 [`fix-reviews.md`](./fix-reviews.md), 날짜별 작업 기록은 [`impl-log_1.md`](./impl-log_1.md)(이어서) · [`impl-log.md`](./impl-log.md)(과거).
+> 이 표가 **진행 상태의 정본**입니다. 수정 상세는 [`fix-reviews.md`](./fix-reviews.md), 날짜별 작업 기록은 [`impl-log_2.md`](./impl-log_2.md)(정본) · [`impl-log_1.md`](./impl-log_1.md) · [`impl-log.md`](./impl-log.md)(과거).
 
 | 항목 | 상태 | 검증 |
 |------|------|------|

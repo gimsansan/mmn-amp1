@@ -7,7 +7,7 @@ React Native / Expo SDK 57 기반 **청능 웰니스·훈련** 앱. 안드로이
 상세 컨텍스트: [`docs/dev-client-setup-context.md`](./docs/dev-client-setup-context.md)  
 훈련·자극 설계(AMP/MDT·트랙): [`docs/amp-mdt-training-design.md`](./docs/amp-mdt-training-design.md)  
 개선 백로그 + **진행 현황**: [`docs/improvement-backlog.md`](./docs/improvement-backlog.md) · [쉬운 말 버전](./docs/improvement-backlog-easy.md)  
-구현·결과 로그: [`docs/impl-log_1.md`](./docs/impl-log_1.md)(이어서) · [과거](./docs/impl-log.md) · 수정 리뷰: [`docs/fix-reviews.md`](./docs/fix-reviews.md)  
+구현·결과 로그: [`docs/impl-log_2.md`](./docs/impl-log_2.md)(정본) · [과거 2](./docs/impl-log_1.md) · [과거](./docs/impl-log.md) · 수정 리뷰: [`docs/fix-reviews.md`](./docs/fix-reviews.md)  
 인계문(최신): [`docs/handoff.md`](./docs/handoff.md)  
 Cursor 규칙 2번 vs 3번: [`docs/cursor-rules-2-vs-3.md`](./docs/cursor-rules-2-vs-3.md)
 
@@ -47,7 +47,7 @@ npm run doctor
 | `patches/` | metro / metro-runtime Bundle Mode 패치 |
 | `docs/dev-client-setup-context.md` | 스택·설정·경량화 방침 |
 | `docs/amp-mdt-training-design.md` | 웰니스·훈련 / ①② 트랙·AM 스펙 |
-| `docs/impl-log_1.md` | 구현·결과 날짜별 로그(**이후 정본**) |
+| `docs/impl-log_2.md` | 구현·결과 날짜별 로그(**현재 정본**) |
 | `docs/impl-log.md` | 구현·결과 로그 과거(2026-08-19 01:04까지) |
 | `docs/handoff.md` | 새 채팅 AI용 인계문(최신) |
 | `docs/README.md` | **문서 지도** — 분류 규칙·어디에 적을지·읽는 순서 |

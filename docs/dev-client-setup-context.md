@@ -2,7 +2,7 @@
 
 > **목적**: 이 RN 안드로이드 프로젝트를 `dev-client` 모드로 이어받는 AI 어시스턴트·개발자를 위한 컨텍스트.
 > **근거**: 워크스페이스 실제 파일 확인 (`package.json` / `app.json` / `metro.config.js` 등, 2026-08 기준).
-> **표기 원칙**: 파일로 직접 확인한 사실(**확실한 쪽**)과 **⚠ 미확인·추정·가설·미검증·주의(단정 금지)** 를 구분해 표시함. 구현 로그 형식: [`docs/impl-log_1.md`](./impl-log_1.md).
+> **표기 원칙**: 파일로 직접 확인한 사실(**확실한 쪽**)과 **⚠ 미확인·추정·가설·미검증·주의(단정 금지)** 를 구분해 표시함. 구현 로그 형식: [`docs/impl-log_2.md`](./impl-log_2.md).
 > **AI 규칙**: 짧은 always-apply 규칙은 `.cursor/rules/android-dev-client.mdc` 참고.
 
 ---
@@ -14,7 +14,7 @@
 - 앱 성격: 청능 **웰니스·훈련** 앱(진단·스크리닝 주장 지양). **오디오 실시간 합성 기반**. **중사양 기준**(측정 화면만 가볍게).
 - 훈련·자극 설계(① AM/포락선 · ② 주파수, 엔진·계단식): [`docs/amp-mdt-training-design.md`](./amp-mdt-training-design.md)
 - 문서 지도(분류·읽는 순서): [`docs/README.md`](./README.md)
-- 구현·결과 로그: [`docs/impl-log_1.md`](./impl-log_1.md)(이어서) · [`docs/impl-log.md`](./impl-log.md)(과거) · 수정 리뷰: [`docs/fix-reviews.md`](./fix-reviews.md)
+- 구현·결과 로그: [`docs/impl-log_2.md`](./impl-log_2.md)(정본) · [`impl-log_1.md`](./impl-log_1.md) · [`impl-log.md`](./impl-log.md)(과거) · 수정 리뷰: [`docs/fix-reviews.md`](./fix-reviews.md)
 - 개선 백로그 + 진행 현황: [`docs/improvement-backlog.md`](./improvement-backlog.md)
 - 인계문: [`docs/handoff.md`](./handoff.md) — 한 파일에 누적(최신이 위). **날짜별 사본은 만들지 않음**(2026-08-07 폐지)
 - 진입점: `package.json` → `"main": "expo-router/entry"` / 라우팅: `expo-router` (`src/app/`, typed routes)

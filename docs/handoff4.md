@@ -126,6 +126,98 @@
 - 성능 영향 없음.
 
 ---
+## 인계 — 2026-08-26 13:00
+
+새 채팅 AI용. **기록 줄 길이 200자 규칙 확정.** 앞 12:55 블록의 미결정을 닫음. 코드 변경 0.
+
+### 한 일
+
+- `.cursor/rules/android-dev-client.mdc` 기록 원칙 아래 「줄 길이」 한 줄 — `impl-log_2.md`·`handoff4.md`는 **한 줄 200자 이내**.
+- 표 한 칸에 문단 금지. 길면 **같은 칸 이름으로 행을 나눈다**.
+- `impl-log_2.md` §기록 형식에 「줄 길이 (필수)」 절 신설 — 이유·사례·규칙 파일 위치.
+- 사용자가 말한 「`impl-log_1.md` §기록 형식」은 그 파일이 직전에 닫혔으므로 `impl-log_2.md`에 적용.
+
+### 핵심 경로
+
+- `.cursor/rules/android-dev-client.mdc` · `docs/impl-log_2.md`
+
+### 단정 금지
+
+- `추정`: 200자는 편의 기준. 측정으로 나온 최적값이 아니다.
+- `주의`: 과거 파일(`impl-log_1.md` 등)의 긴 줄은 고치지 않았다. 누적형 원칙.
+- 앞 12:55·12:45 블록의 미결정 2건은 **모두 해소**됐다.
+
+---
+## 인계 — 2026-08-26 12:55
+
+새 채팅 AI용. **impl-log 정본이 `impl-log_2.md`로 바뀜.** 코드 변경 0.
+
+### 한 일
+
+- `docs/impl-log_2.md` 신설 = **현재 정본**. `impl-log_1.md`는 「과거 2」로 닫음(2026-08-26 12:45까지). 로그 내용은 복사하지 않음.
+- 이유: `impl-log_1.md` 126.6 KB로 닫힌 `impl-log.md`(135.3 KB)와 거의 같아짐. `Read` 비용이 파일 크기에 비례.
+- 규칙 파일 3곳 갱신 — 기록 대상이 `impl-log_2.md`. 금지 목록에 `impl-log_1.md` 추가.
+- 갱신형 문서 6개 포인터 수정: 루트 `README.md`, `docs/README.md`, `dev-client-setup-context.md`, `amp-mdt-training-design.md`, `improvement-backlog.md`, `fix-reviews.md`.
+- 기록 형식 템플릿에 「한 칸이 길면 같은 칸 이름으로 행을 나눠라」 안내 한 줄. **강제 규칙은 아님.**
+
+### 핵심 경로
+
+- `docs/impl-log_2.md`(신) · `docs/impl-log_1.md`(닫음) · `.cursor/rules/android-dev-client.mdc`
+
+### 단정 금지
+
+- `주의`: 새 항목은 **`impl-log_2.md`에만**. `impl-log_1.md`·`impl-log.md`는 추가 금지.
+- 과거 누적형 문서(`handoff2/3`, `impl-log.md`, `fix-reviews` 블록 안)의 `impl-log_1` 언급은 **그때 기록이라 고치지 않았다**.
+- **미결정 1건** — 규칙 파일·템플릿에 「한 줄 200자」를 강제로 넣을지. 사용자가 이번엔 로테이션만 지시.
+
+---
+## 인계 — 2026-08-26 12:45
+
+새 채팅 AI용. **토큰 비용 가이드 신설. 코드 변경 0.** 앞 11:20 블록(링 6 음원 교체)이 이번 세션의 코드 작업.
+
+### 한 일
+
+- `docs/ask-token-budget.md` 신설. `ask-*` 계열(⑥ 읽기·질문). 앱 런타임 성능 문서와 분리.
+- 실측 근거: 앞 세션 최대 소비는 `node_modules` 타입 정의 **691줄 전체 읽기**. 테스트 실행은 저렴(출력을 잘라 받음).
+- 문서 크기 실측을 문서에 박음. `impl-log_1.md` 127 KB, 최장 줄 **1298자**(표 한 칸에 문단).
+- `docs/README.md` 4곳에 등록. impl-log 항목을 **짧은 줄**로 작성해 새 형식 시연.
+
+### 핵심 경로
+
+- `docs/ask-token-budget.md`(신) · `docs/README.md` · `docs/impl-log_1.md`
+
+### 단정 금지
+
+- `추정`: 비용 순위는 줄 수·바이트 기준. 과금 토큰 계측 아님.
+- `미검증`: 프롬프트 캐시 효과. 크면 「세션 길이」 항목의 무게가 줄어든다.
+- **미결정 2건** — 규칙 파일·impl-log 템플릿에 「한 줄 200자」를 넣을지, `impl-log_2.md`로 넘길지. 사용자가 장단점만 물어본 상태로 결정 안 함.
+
+---
+## 인계 — 2026-08-26 11:20
+
+새 채팅 AI용. **링 6 자극을 합성에서 녹음 wav 재생으로 교체.** 구 `ling6Synth.ts` 삭제.
+
+### 한 일
+
+- `playLing6Target`을 `expo-audio` 파일 재생으로. 구조는 `sentClosed/play.ts`와 같음. `LING6_DURATION_SEC` 0.8→1.0이고 **무음 시행도 같은 1.0초** — 다르면 길이만으로 「못 들었어요」가 골라짐.
+- `scripts/prep-ling6-wav.mjs`가 원본을 모노·1.0초·RMS -20 dBFS로 맞춰 `assets/ling6/001~006.wav` 생성. 44.1 kHz 유지(리샘플 안 함). ffmpeg 없어서 Node로 16bit PCM 직접 다룸.
+- 첫 시행 뜸 700 ms + 「곧 들어요…」. 단어·문장 듣기와 같은 방식.
+- `sounds.ts`에 `audio` + `ling6SoundOf()`. `ling6Synth.ts`(324줄) 삭제.
+- 한국어 TTS 임시안은 **폐기** — 「스」·「쉬」·「음」에 모음이 붙어 고립 마찰음·비음이 안 되고, Heami는 22050 Hz라 `/s/` 고역이 잘림.
+
+### 핵심 경로
+
+- `src/training/ling6/ling6Play.ts`(신) · `__tests__/ling6Play.test.ts`(신) · `sounds.ts` · `Ling6SessionScreen.tsx`
+- `scripts/prep-ling6-wav.mjs`(신) · `assets/ling6/001~006.wav`(신)
+
+### 단정 금지
+
+- `주의`: 현 음원은 lingsixsoundscheck.com에서 받은 **개인 확인용** 임시본. 배포 전 직접 녹음 필요(라이선스 미확인). 원본 `{mm,oo,ah,ee,sh,s}.wav`는 재가공용으로 남겨 둠(참조 0).
+- `미검증`: 실기기 청취. `/s`·`ʃ`·`m` 식별, 무음이 길이로 티나는지, 중지 경로가 `pause()` 뒤 상태 갱신으로 resolve되는지(문장 듣기 기존 패턴).
+- `추정`: RMS 정규화는 스펙트럼이 다른 여섯 소리의 체감 크기를 완전히 맞추지 못함. 구 합성의 `/m/` 0.7 감쇠는 옮기지 않음.
+- 확인: `tsc` 통과, `jest` 250 통과, `expo lint` 오류 0. **리빌드 불필요.**
+
+---
 ## 인계 — 2026-08-25 16:58
 
 새 채팅 AI용. **문장 듣기 기록 v1 걷어냄 + 통계 문서 맞춤.** 아래 14:51 블록(「% 없음」「18개 연습」)은 그때 기록. 고치지 않음.

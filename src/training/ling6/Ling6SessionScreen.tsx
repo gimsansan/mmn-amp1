@@ -51,7 +51,8 @@ import {
 import {
   playLing6Target,
   stopLing6Playback,
-} from "@/training/ling6/ling6Synth";
+  waitLing6LeadIn,
+} from "@/training/ling6/ling6Play";
 import {
   LING6_SOUNDS,
   type Ling6Choice,
@@ -88,6 +89,7 @@ export function Ling6SessionScreen() {
   const [highFreqLine, setHighFreqLine] = useState<string | null>(null);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [leadIn, setLeadIn] = useState(false);
   const [history, setHistory] = useState<SavedLing6Record[]>([]);
   const [showStats, setShowStats] = useState(false);
   /**
@@ -189,6 +191,15 @@ export function Ling6SessionScreen() {
     abortRef.current = false;
     setLastError(null);
     setPhase("playing");
+    // 첫 소리만 뜸을 들인다 — 두 번째부터는 「고르기 → 다음」 사이가 이미 있다.
+    if (index === 0) {
+      setLeadIn(true);
+      await waitLing6LeadIn();
+      setLeadIn(false);
+      if (aborted()) {
+        return;
+      }
+    }
     try {
       await playLing6Target(trial.target);
       if (aborted()) {
@@ -418,14 +429,15 @@ export function Ling6SessionScreen() {
                 height={24}
                 barWidth={4}
                 bars={3}
-                playing={phase === "playing"}
+                playing={phase === "playing" && !leadIn}
               />
               <ThemedText
                 type="smallBold"
                 themeColor="textSecondary"
                 style={styles.statusText}
               >
-                {phase === "playing"
+                {leadIn ? "곧 들어요…" : null}
+                {!leadIn && phase === "playing"
                   ? "듣는 중… 소리가 끝난 뒤 고르세요"
                   : null}
                 {phase === "choose" ? "들은 소리를 고르세요" : null}
