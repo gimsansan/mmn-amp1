@@ -3,7 +3,7 @@
 > **역할**: 탭별 연습 기록을 **어떻게 넣고, 어떻게 꺼내 보여줄지**의 추천. 웰니스·훈련. 진단·점수 UI 아님.  
 > **상태**: §5 1·2 + 입구 + 음고·떨림 회차별 카드 제거 + 링6 격자 제거·약점 1줄 + 음고·떨림 추이 읽는 법 + 귀풀기 미저장 + 링6·단어 높을수록 + 한 글자·두 글자 표시 표. **통합 통계 화면**(칩 6개 + 「다른 연습」 3줄) + 읽기 창구 `statsFeed`. 표시 뼈대 통일까지 적용. **저장 키 통합은 여전히 뒤.**  
 > **표기**: `근거`(파일) · `관례` · `추정` · `미검증` · `주의`. 단정 금지는 §8.  
-> 관련: [`amp-mdt-training-design.md`](./amp-mdt-training-design.md)(왜 이 훈련인가) · 저장 구현은 `src/training/*Store.ts`.
+> 관련: [`amp-mdt-training-design.md`](./amp-mdt-training-design.md)(왜 이 훈련인가) · [`ui-sizes.md`](./ui-sizes.md)(글자·컨트롤 dp) · 저장 구현은 `src/training/*Store.ts`.
 
 ---
 
