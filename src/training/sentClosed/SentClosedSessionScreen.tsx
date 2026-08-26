@@ -459,8 +459,8 @@ export function SentClosedSessionScreen() {
 }
 
 /** 미리보기·고르기 칸: 정사각 에셋의 좌우 여백을 잘라 인물만 조금 키운다. */
-const PREVIEW_FIGURE_SCALE = 1.4;
-const CHOICE_FIGURE_SCALE = 1.4;
+const PREVIEW_FIGURE_SCALE = 1.3;
+const CHOICE_FIGURE_SCALE = 1.3;
 
 function PreviewCell({ scene }: Readonly<{ scene: Scene }>) {
   const theme = useTheme();

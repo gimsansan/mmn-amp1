@@ -22,7 +22,7 @@
 |---------|------|------|
 | **① 설계·기준** | 무엇을 왜 만드는가 | `amp-mdt-training-design.md`, `training-stats-recommendation.md` |
 | **② 환경·실행** | 어떻게 빌드·실행하는가 | `dev-client-setup-context.md`, `dev-client-connection-guide.md`, `cursor-rules-2-vs-3.md` |
-| **⑥ 읽기·질문** | 코드를 어떻게 물어보나 | `ask-file-behavior.md`(범용), `ask-app-behavior.md`(이 앱), `ask-token-budget.md`(비용), `analysis/`(7축을 이 앱에 **적용한 결과**) |
+| **⑥ 읽기·질문** | 코드를 어떻게 물어보나 | `ask-file-behavior.md`(범용), `ask-app-behavior.md`(이 앱), `ask-token-budge-universal.md`(비용·범용), `ask-token-budget.md`(비용·이 앱), `analysis/`(7축을 이 앱에 **적용한 결과**) |
 | **③ 할 일·상태** | 무엇이 문제이고 지금 어디까지 왔나 | `improvement-backlog.md` (+ `-easy`) |
 | **④ 기록** | 무엇을 했나 / 어떻게 고쳤나 | `impl-log_2.md`(정본), `impl-log_1.md`·`impl-log.md`(과거), `fix-reviews.md` |
 | **⑤ 인계** | 새로 오는 사람에게 넘길 맥락 | `handoff4.md`(정본) — `handoff.md`~`handoff3.md`는 과거 |
@@ -40,7 +40,8 @@
 | `training-stats-recommendation.md` | 갱신 | 탭별 기록 **수집·표시** 추천(봉투·kind 필터). 코드 미적용 | **기록을 어떻게 넣고 꺼내 보여주는가** |
 | `ask-file-behavior.md` | 갱신 | React 등 **범용** 질문 요령(역할 먼저, `[화면] --동작-->`) | **스택 무관하게 어떻게 물어보나** |
 | `ask-app-behavior.md` | 갱신 | 위 요령의 **이 앱** 예(탭·Store·차트 경로) | **이 저장소 파일을 어떻게 물어보나** |
-| `ask-token-budget.md` | 갱신 | AI와 일할 때의 토큰 비용(읽기 좁히기, 세션 끊기, 문서 긴 줄) | **같은 답을 더 싸게 얻는 방법** |
+| `ask-token-budge-universal.md` | 갱신 | 스택 무관 **범용** 비용 절약(탐색 계단, 상황별 처방, 세션 운영) | **어떤 저장소에서도 같은 답을 더 싸게** |
+| `ask-token-budget.md` | 갱신 | 위의 **이 앱** 실측(2026-08-26 세션 숫자, `docs/` 파일 크기) | **이 저장소에서 실제로 무엇이 비쌌나** |
 | `analysis/` (7개 + README) | 갱신 | `analaysys/`의 7축 질문 요령을 이 앱 주요 파일에 **적용한 결과**(화면·데이터·상태·에러·타입·성능·테스트) | **이 앱이 각 축에서 실제로 어떻게 생겼나** |
 | `merge-host-decision.md` | 갱신 | HarmoniTune×mnn 병합 시 **호스트 선택** 개념·저장·기록 방침 | **어느 저장소를 살리는가**(제품 이름과 별개) |
 | `merge-plan-harmonitune.md` | 갱신 | HarmoniTune×mnn 병합 **절차·이식 매핑·순서** | **무엇을 어디로 옮기나**(저장 방침은 host-decision §4.1 링크) |
@@ -76,7 +77,7 @@
 | 설계·과제 방식을 바꾸기로 합의 | **설계 문서** 갱신 | impl-log에 한 줄 |
 | 통계 수집·표시 방식을 바꾸기로 함 | **`training-stats-recommendation.md`** | 자극 설계 문서에 통계 UX를 섞지 않음 |
 | 코드를 어떻게 물어볼지 | **`ask-file-behavior.md`**(범용) · **`ask-app-behavior.md`**(이 앱) | 인계·설계에 질문 복붙을 흩뿌리지 않음 |
-| 요청·탐색이 토큰을 너무 먹음 | **`ask-token-budget.md`** | 앱 런타임 성능은 `analysis/ask-performance.md`(다른 문제) |
+| 요청·탐색이 토큰을 너무 먹음 | **`ask-token-budge-universal.md`**(방법) · **`ask-token-budget.md`**(이 앱 실측) | 앱 런타임 성능은 `analysis/ask-performance.md`(다른 문제) |
 | 빌드·실행 방법이 바뀜 | **셋업 문서** 갱신 | impl-log에 한 줄 |
 | 자극 스펙 숫자 | **코드 상수가 정본** + 설계 문서에 의미 | 문서에 숫자를 복사해 두지 말 것 |
 | 기초 개념을 몰라 막혔던 것(왜 이 문법·이 훅인가) | **학습 노트**(⑦) 새 파일 또는 기존 노트에 절 추가 | impl-log에 한 줄. **여러 파일에서 반복될 때만** 만들 것 — 한 곳뿐이면 코드 주석 |
@@ -160,7 +161,8 @@ docs/
 ├─ training-stats-recommendation.md ① 설계(통계 수집·표시) [갱신형] 코드 미적용
 ├─ ask-file-behavior.md            ⑥ 읽기·질문(범용)   [갱신형]
 ├─ ask-app-behavior.md             ⑥ 읽기·질문(이 앱)  [갱신형]
-├─ ask-token-budget.md            ⑥ 읽기·질문(비용)   [갱신형]
+├─ ask-token-budge-universal.md    ⑥ 읽기·질문(비용·범용) [갱신형]
+├─ ask-token-budget.md            ⑥ 읽기·질문(비용·이 앱) [갱신형]
 ├─ merge-host-decision.md          ① 설계(병합 호스트) [갱신형]
 ├─ merge-plan-harmonitune.md       ① 설계(병합 절차)   [갱신형]
 ├─ dev-client-setup-context.md     ② 환경·실행        [갱신형]

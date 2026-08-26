@@ -1,7 +1,7 @@
 /**
  * 통합 연습 기록 화면 — 어느 탭에서 열어도 같은 화면.
  * 헤더 차트 버튼 한 번에 그 탭 통계가 뜨고(탭이 그 종목으로 열림), 다른 종목은
- * 탭 하나로 건너뛴다. 아래 「다른 연습」 줄은 눌러 보지 않아도 근황이 보이게 한다.
+ * 칩으로 건너뛴다. 본문은 고른 칩만 — 다른 종목 근황 줄은 없다.
  *
  * 한 번에 하나만 그린다 — 네 그래프를 세로로 쌓지 않는다.
  * 저장소는 열 때 한 번만 읽고(`loadStatsFeed`), 탭 전환은 메모리로 처리한다.
@@ -22,7 +22,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ActionButton } from "@/components/ui/action-button";
-import { Card } from "@/components/ui/card";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
@@ -31,22 +30,14 @@ import { SessionTrendPanel } from "@/training/SessionTrendPanel";
 import { Ling6ProgressPanel } from "@/training/ling6/Ling6ProgressPanel";
 import {
   clearStatsKind,
-  countOfGroup,
   countOfKind,
   EMPTY_STATS_FEED,
-  glanceLineCopy,
-  glanceOfGroup,
-  GROUP_LABEL,
-  GROUP_OF_KIND,
   isSessionTrack,
   KIND_LABEL,
-  KINDS_OF_GROUP,
   loadStatsFeed,
   sessionRowsOfKind,
-  STATS_GROUPS,
   STATS_KINDS,
   type StatsFeed,
-  type StatsGroup,
   type StatsKind,
 } from "@/training/statsFeed";
 import { SentClosedProgressPanel } from "@/training/sentClosed/SentClosedProgressPanel";
@@ -224,58 +215,6 @@ function PanelHeading({
   );
 }
 
-/**
- * 지금 보고 있는 탭을 뺀 나머지 근황. 그래프 없이 한 줄씩.
- * 누르면 화면을 옮기지 않고 위 탭만 바꾼다.
- */
-function OtherTrainingCard({
-  feed,
-  currentGroup,
-  onPick,
-}: Readonly<{
-  feed: StatsFeed;
-  currentGroup: StatsGroup;
-  onPick: (kind: StatsKind) => void;
-}>) {
-  const others = STATS_GROUPS.filter((group) => group !== currentGroup);
-
-  return (
-    <Card style={styles.otherCard}>
-      <ThemedText type="smallBold">다른 연습</ThemedText>
-      {others.map((group) => {
-        const glance = glanceOfGroup(feed, group);
-        // 기록이 없으면 그 탭의 첫 종목으로 보낸다(빈 화면 안내가 뜬다).
-        const target = glance?.kind ?? KINDS_OF_GROUP[group][0];
-        const empty = countOfGroup(feed, group) === 0;
-        return (
-          <Pressable
-            key={group}
-            accessibilityRole="button"
-            accessibilityLabel={`${GROUP_LABEL[group]} 기록 보기`}
-            onPress={() => onPick(target)}
-            style={({ pressed }) => [
-              styles.otherRow,
-              pressed && styles.otherRowPressed,
-            ]}
-          >
-            <ThemedText type="smallBold" style={styles.otherLabel}>
-              {GROUP_LABEL[group]}
-            </ThemedText>
-            <ThemedText
-              themeColor={empty ? "textMuted" : "textSecondary"}
-              type="small"
-              style={styles.otherValue}
-              numberOfLines={1}
-            >
-              {glanceLineCopy(glance)}
-            </ThemedText>
-          </Pressable>
-        );
-      })}
-    </Card>
-  );
-}
-
 function ClearKindButton({
   kind,
   clearing,
@@ -391,7 +330,6 @@ export function StatsScreen({
 
   const count = countOfKind(feed, kind);
   const hasRecords = count > 0;
-  const currentGroup = GROUP_OF_KIND[kind];
   const entering = (view.forward ? FadeInRight : FadeInLeft).duration(ENTER_MS);
 
   return (
@@ -432,7 +370,7 @@ export function StatsScreen({
 
           {/*
            * `key`가 종목이라 탭을 바꾸면 이 덩어리째 새로 그려지고, 그때 등장
-           * 애니메이션이 돈다 — 제목줄·그래프·「다른 연습」이 한 화면처럼 같이 들어온다.
+           * 애니메이션이 돈다 — 제목줄·그래프가 한 화면처럼 같이 들어온다.
            * 기록을 지워 `feed`만 바뀔 때는 key가 그대로라 움직이지 않는다.
            */}
           {!loading && !error ? (
@@ -454,12 +392,6 @@ export function StatsScreen({
                   아직 {KIND_LABEL[kind]} 기록이 없어요
                 </ThemedText>
               )}
-
-              <OtherTrainingCard
-                feed={feed}
-                currentGroup={currentGroup}
-                onPick={pickKind}
-              />
 
               {/*
                * 기록 지우기는 본문 맨 아래. 되돌릴 수 없는 동작이라 화면 하단에
@@ -585,28 +517,6 @@ const styles = StyleSheet.create({
   notice: {
     textAlign: "center",
     paddingVertical: Spacing.three,
-  },
-  otherCard: {
-    gap: Spacing.two,
-  },
-  otherRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: Spacing.two,
-    minHeight: 40,
-  },
-  otherRowPressed: {
-    opacity: 0.7,
-  },
-  otherLabel: {
-    flexShrink: 0,
-  },
-  otherValue: {
-    flexShrink: 1,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: "right",
   },
   footer: {
     flexDirection: "row",
