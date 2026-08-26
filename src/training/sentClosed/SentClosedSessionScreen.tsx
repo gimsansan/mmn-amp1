@@ -94,7 +94,7 @@ export function SentClosedSessionScreen() {
     phase === "playing" || phase === "choose" || phase === "feedback";
   const choiceDisabled = phase !== "choose";
   const currentTrial = trials[trialIndex];
-  const showIdlePreview = phase === "idle" && historyLen === 0;
+  const showIdlePreview = phase === "idle";
   const previewScenes = useMemo(
     () => (showIdlePreview ? pickPreviewScenes(SCENES) : []),
     [showIdlePreview],

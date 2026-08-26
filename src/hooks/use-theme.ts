@@ -8,7 +8,7 @@ import { Colors, type ThemeColor } from '@/constants/theme';
  * 여기서만 갈라주면 된다.
  *
  * 반환 타입을 `string`으로 넓히는 건 `Colors`의 `as const` 때문이다. 그대로 두면
- * `let c = theme.text`가 `"#10233A"` 리터럴로 좁혀져 다른 색을 재대입할 수 없다.
+ * `let c = theme.text`가 `"#1B2B3D"` 리터럴로 좁혀져 다른 색을 재대입할 수 없다.
  * 색의 16진값을 타입으로 알아야 할 곳은 없고, `themeColor` prop 자동완성은
  * 값이 아니라 키(`ThemeColor`)에서 나오므로 잃는 것이 없다.
  */

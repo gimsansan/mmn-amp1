@@ -4,6 +4,38 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-27 04:40
+
+새 채팅 AI용. **이번 세션 = 팔레트 1순위 교체 + 테스트 환경 복구.** 다음은 **2순위**.
+
+### 한 일
+
+- `theme.ts`의 `Colors.light`·`Shadows`를 "Softer Blue"로 교체. 컨셉(Clean Clinical·라이트 전용) 유지, 배치 무변경.
+  `accent` `#1668E3`→`#2C6BB8`, `highlight` `#F36C1C`→`#DA7333`, 배경 `#F6F9FD`→`#F7F9FB`. 그림자 opacity 0.08→0.05 / 0.35→0.2.
+- 주석에 박힌 대비비 수치를 새 값으로 전부 재계산해 갱신.
+- 대비 규칙(AA 4.5:1 · `accentTint` 위 글자 · `highlight` 3:1) 앱 전체 감사 → **위반 0건**. 하드코딩 색 0건.
+- 안 돌던 `npm test` 복구: `jest-expo`·`@types/jest`·`.bin/jest` 누락(설치 중단 흔적)이 원인. `npm install`로 해결.
+  **27 suites / 238 tests 전부 통과, `tsc` 에러 0건.**
+- `docs/session-2026-08-27-팔레트-jest.md` 신규 작성(비유 포함 상세 요약). `answer.md`에 Jest 설명 블록 추가.
+
+### 핵심 경로
+
+- `src/constants/theme.ts` — 이번 변경 전부
+- `app.json` 17·34행 — **스플래시/아이콘이 아직 옛 색** `#EAF2FE`/`#F6F9FD`. 2순위 대상
+- `src/components/app-tabs.tsx`, `src/components/ui/icon.tsx` — 2순위 나머지
+- `docs/session-2026-08-27-팔레트-jest.md` — 상세 배경
+
+### 단정 금지
+
+- **리빌드 필요 여부 미확인.** `app.json`은 네이티브라 색을 바꾸면 `npm run android` 재빌드가 필요할 수 있으나 이번 세션에서 검증 안 함.
+- **실기기 화면 확인 안 함.** 팔레트는 수치(대비비)로만 검증했고 눈으로 본 적 없다.
+- `src/training/sentClosed/SentClosedSessionScreen.tsx`의 미커밋 변경은 **이번 세션 것이 아니다.**
+  `showIdlePreview`를 첫 세션 한정→항상으로 바꾼 로직 변경. 의도 확인 필요.
+- `accentTint` 면 위 글자는 `accent`·`text`만 AA. `textMuted`(4.41)·`textSecondary`(4.18)·`positive`(4.01)는 미달 — 2순위에서 면을 바꾸면 글자색도 같이 봐야 한다.
+- npm 취약점 17건(moderate 11 / high 6) 미조사.
+
+---
+
 ## 인계 — 2026-08-26 17:15
 
 새 채팅 AI용. **이번 세션 = 빙고 쉬운 판 설명 문구(코드 변경).**

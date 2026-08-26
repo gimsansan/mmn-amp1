@@ -17,53 +17,53 @@ import { Platform } from 'react-native';
  */
 export const Colors = {
   light: {
-    text: '#10233A',
-    background: '#F6F9FD',
+    text: '#1B2B3D',
+    background: '#F7F9FB',
     /** 카드·버튼 면. 레거시 호출부와 이름을 맞추려고 유지(= surface). */
     backgroundElement: '#FFFFFF',
     /** 선택 강조 면(= accentTint). 이 면 위 글자색 규칙은 accentTint 주석을 볼 것. */
-    backgroundSelected: '#EAF2FE',
-    /** 2차 본문. 흰 카드 4.78:1 · 배경 4.52:1 — WCAG AA. */
-    textSecondary: '#667484',
+    backgroundSelected: '#EAF1F9',
+    /** 2차 본문. 흰 카드 4.76:1 · 배경 4.51:1 — WCAG AA. */
+    textSecondary: '#64748B',
     /** 카드 면. */
     surface: '#FFFFFF',
-    border: '#E4EBF3',
+    border: '#E6EBF0',
     /** 카드 안쪽 구분선(테두리보다 더 옅음). */
-    borderSubtle: '#EEF3F8',
+    borderSubtle: '#F0F4F8',
     /**
      * 라벨·타임스탬프 등 3차 텍스트.
-     * 흰 카드 4.82:1 · 배경 4.56:1 — 이전 `#8A9BAD`는 2.85:1로 AA 미달이었다.
+     * 흰 카드 5.02:1 · 배경 4.76:1 — WCAG AA.
      * 여기 쓰이는 문구에 「청력 검사·진단 결과가 아니에요」 고지가 들어간다 — 흐리게 두지 말 것.
      */
-    textMuted: '#607489',
-    accent: '#1668E3',
+    textMuted: '#5E7186',
+    accent: '#2C6BB8',
     /**
      * 옅은 파란 면 — 아이콘 타일 · 선택된 세그먼트 · 탭 인디케이터.
      *
-     * **이 면 위에 얹을 수 있는 글자색은 `accent`(4.52:1)와 `text`(14.08:1)뿐이다.**
+     * **이 면 위에 얹을 수 있는 글자색은 `accent`(4.73:1)와 `text`(12.64:1)뿐이다.**
      * 흰 카드에서 AA를 통과하던 나머지는 여기서 미달한다 —
-     * `textMuted` 4.28 · `textSecondary` 4.24 · `positive` 4.05.
+     * `textMuted` 4.41 · `textSecondary` 4.18 · `positive` 4.01.
      * 흰 면 기준으로 고른 글자색을 이 면으로 그대로 옮기면 깨진다. 면을 바꾸면 글자색도 바꿀 것.
      */
-    accentTint: '#EAF2FE',
-    accentBorder: '#CFE0F7',
+    accentTint: '#EAF1F9',
+    accentBorder: '#CDDDF0',
     onAccent: '#FFFFFF',
     /**
      * 추이 그래프 최근 점 강조(따뜻한 대비색). 점수·역치 색 아님.
-     * 흰 면 3.01:1 — 비텍스트 요소 기준(3:1)을 맞춘 값. **글자색으로 쓰지 말 것**
-     * (본문 4.5:1을 맞추려면 벽돌색이 되어 「따뜻한 대비색」이라는 의도가 죽는다).
+     * 흰 면 3.24:1 · 배경 3.07:1 — 비텍스트 요소 기준(3:1)을 두 면 모두에서 맞춘 값.
+     * **글자색으로 쓰지 말 것** (본문 4.5:1을 맞추려면 벽돌색이 되어 「따뜻한 대비색」이라는
+     * 의도가 죽는다).
      */
-    highlight: '#F36C1C',
+    highlight: '#DA7333',
     /**
      * 그래프·막대에서 **강조 대상이 아닌** 표시(링 6 아쉬움 막대). 비텍스트 전용.
-     * 트랙(`borderSubtle`) 대비 2.21:1 — 이전 하드코딩 값 `#D5DDE6`는 1.23:1이라
-     * 막대 높이를 서로 견줄 수가 없었다. `highlight`(트랙 대비 2.70:1)보다는 낮게 두어
-     * 주황이 계속 먼저 눈에 들어오게 한다.
+     * 트랙(`borderSubtle`) 대비 2.23:1 — 막대 높이를 서로 견줄 수 있는 최소선이다.
+     * `highlight`(트랙 대비 2.93:1)보다는 낮게 두어 주황이 계속 먼저 눈에 들어오게 한다.
      */
     chartMuted: '#94A7BB',
     /** 통계 아이콘 막대 등 긍정 표시. 흰 면 4.56:1 — 14px 굵은 글자색으로도 쓰인다. */
     positive: '#1A865B',
-    /** 파괴적 행동 글자(전체 삭제 등). 흰 면 유지, 채도 낮은 빨강. */
+    /** 파괴적 행동 글자(전체 삭제 등). 흰 면 6.81:1, 채도 낮은 빨강. */
     danger: '#9B3B3B',
   },
 } as const;
@@ -125,19 +125,19 @@ export const Radius = {
  */
 export const Shadows = {
   card: {
-    shadowColor: '#10233A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 2,
+    shadowColor: '#1B2B3D',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 1,
   },
   /** 파란 주 버튼 — 색이 있는 그림자. */
   accent: {
-    shadowColor: '#1668E3',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowColor: '#2C6BB8',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+    elevation: 3,
   },
 } as const;
 
