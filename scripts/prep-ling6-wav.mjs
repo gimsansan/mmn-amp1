@@ -15,14 +15,19 @@ import { fileURLToPath } from "node:url";
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const DIR = join(ROOT, "assets", "ling6");
 
-/** 그림 번호 ↔ 원본 파일. `sounds.ts`의 순서와 같다. */
+/**
+ * 그림 번호 ↔ 원본 파일. `sounds.ts`의 순서와 같다.
+ * `gainScale`은 RMS 정규화 뒤에 한 번 더 곱하는 소리별 배율(기본 1).
+ * 마찰음(/ʃ/·/s/)은 자연 발화가 모음보다 작다 — RMS로 억지로 키우면
+ * 배경 잡음까지 커지고 귀에 과하게 들린다. 그래서 005·006만 낮춘다.
+ */
 const SOURCES = [
-  { out: "001.wav", src: "mm.wav", id: "m" },
-  { out: "002.wav", src: "oo.wav", id: "u" },
-  { out: "003.wav", src: "ah.wav", id: "a" },
-  { out: "004.wav", src: "ee.wav", id: "i" },
-  { out: "005.wav", src: "sh.wav", id: "sh" },
-  { out: "006.wav", src: "s.wav", id: "s" },
+  { out: "001.wav", src: "mm.wav", id: "m", gainScale: 1 },
+  { out: "002.wav", src: "oo.wav", id: "u", gainScale: 1 },
+  { out: "003.wav", src: "ah.wav", id: "a", gainScale: 1 },
+  { out: "004.wav", src: "ee.wav", id: "i", gainScale: 1 },
+  { out: "005.wav", src: "sh.wav", id: "sh", gainScale: 0.5 },
+  { out: "006.wav", src: "s.wav", id: "s", gainScale: 0.5 },
 ];
 
 /** 여섯 개 공통 길이(초). 표준 링 6는 발화 길이를 같게 하라고 한다. */
@@ -114,13 +119,13 @@ function shapeToFixedLength(samples, sampleRate) {
   return out;
 }
 
-function normalize(samples) {
+function normalize(samples, gainScale = 1) {
   let sum = 0;
   for (const v of samples) {
     sum += v * v;
   }
   const rms = Math.sqrt(sum / samples.length);
-  let gain = rms > 0 ? TARGET_RMS / rms : 1;
+  let gain = (rms > 0 ? TARGET_RMS / rms : 1) * gainScale;
 
   let peak = 0;
   for (const v of samples) {
@@ -160,10 +165,10 @@ function writeMonoWav(samples, sampleRate) {
   return buf;
 }
 
-for (const { out, src, id } of SOURCES) {
+for (const { out, src, id, gainScale } of SOURCES) {
   const { mono, sampleRate } = toMonoFloat(readFileSync(join(DIR, src)));
   const shaped = shapeToFixedLength(mono, sampleRate);
-  const { out: leveled, gain } = normalize(shaped);
+  const { out: leveled, gain } = normalize(shaped, gainScale);
   writeFileSync(join(DIR, out), writeMonoWav(leveled, sampleRate));
 
   let peak = 0;
