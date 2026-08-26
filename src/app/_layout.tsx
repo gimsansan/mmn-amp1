@@ -23,7 +23,7 @@ export default function RootLayout() {
 
   return (
     // 라이트 고정 — 다크 모드 구현 안 함(use-theme.ts 참고).
-    // 하단 5탭: 링 6 · PTA(음고) · 단어 듣기 · 떨림 · 문장 듣기. 통계는 각 탭 헤더에서 스와프.
+    // 하단 5탭: 소리 구분 · PTA(음고) · 단어 듣기 · 떨림 · 문장 듣기. 통계는 각 탭 헤더에서 스와프.
     <ThemeProvider value={DefaultTheme}>
       <AppTabs />
     </ThemeProvider>

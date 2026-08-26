@@ -1,5 +1,5 @@
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackHandler,
   Image,
@@ -50,6 +50,23 @@ import { StatsScreen } from "@/training/StatsScreen";
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
+const PREVIEW_COUNT = 6;
+
+function pickPreviewScenes(scenes: readonly Scene[]): Scene[] {
+  const next = [...scenes];
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const current = next[i];
+    const swap = next[j];
+    if (current === undefined || swap === undefined) {
+      continue;
+    }
+    next[i] = swap;
+    next[j] = current;
+  }
+  return next.slice(0, PREVIEW_COUNT);
+}
+
 export function SentClosedSessionScreen() {
   const theme = useTheme();
   const abortRef = useRef(false);
@@ -77,6 +94,11 @@ export function SentClosedSessionScreen() {
     phase === "playing" || phase === "choose" || phase === "feedback";
   const choiceDisabled = phase !== "choose";
   const currentTrial = trials[trialIndex];
+  const showIdlePreview = phase === "idle" && historyLen === 0;
+  const previewScenes = useMemo(
+    () => (showIdlePreview ? pickPreviewScenes(SCENES) : []),
+    [showIdlePreview],
+  );
 
   const resetRun = useCallback(() => {
     abortRef.current = true;
@@ -316,9 +338,9 @@ export function SentClosedSessionScreen() {
                 고르면 됩니다. 점수를 매기는 검사가 아니에요.
               </ThemedText>
             </Card>
-            {historyLen === 0 ? (
+            {showIdlePreview ? (
               <View style={styles.previewGrid}>
-                {SCENES.map((scene) => (
+                {previewScenes.map((scene) => (
                   <PreviewCell key={scene.id} scene={scene} />
                 ))}
               </View>
@@ -459,7 +481,7 @@ export function SentClosedSessionScreen() {
 }
 
 /** 미리보기·고르기 칸: 정사각 에셋의 좌우 여백을 잘라 인물만 조금 키운다. */
-const PREVIEW_FIGURE_SCALE = 1.3;
+const PREVIEW_FIGURE_SCALE = 1.5;
 const CHOICE_FIGURE_SCALE = 1.3;
 
 function PreviewCell({ scene }: Readonly<{ scene: Scene }>) {
@@ -569,14 +591,14 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   previewClip: {
-    height: 100,
+    height: 150,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
   },
   previewImage: {
     width: "100%",
-    height: 100,
+    height: 150,
     transform: [{ scale: PREVIEW_FIGURE_SCALE }],
   },
   summaryContent: {

@@ -328,7 +328,7 @@ export function Ling6SessionScreen() {
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
         <ScreenHeader
-          title="링 6"
+          title="소리 구분"
           caption="들은 소리를 그림에서 고르는 연습 · 병원 검사가 아니에요"
           action={
             phase === "idle" || phase === "summary" ? (

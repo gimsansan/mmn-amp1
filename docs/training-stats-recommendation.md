@@ -21,7 +21,7 @@
 
 | 탭 | 과제 (`kind`) | 지금 저장 (`근거`) |
 |----|---------------|-------------------|
-| 링 6 | `ling6` | `training.ling6Daily.v1` — **하루 1건** 덮어쓰기 |
+| 소리 구분 | `ling6` | `training.ling6Daily.v1` — **하루 1건** 덮어쓰기 |
 | 소리 높낮이 | `pitch2` · `freq` | `training.sessionHistory.v1` — 세션 append |
 | 단어 듣기 | `wrs1` · `wrs2` | `wrsSessions.v1` / `twoCharSessions.v1` — 완료 세션만 |
 | 떨림 | `am` | **음고와 같은 상자** `sessionHistory.v1` |
@@ -81,7 +81,7 @@
 **그 탭의 종목이 선택된 채로** 열린다. 다른 종목은 칩 하나로 건너뛴다.
 
 ```
-링 6        → kind=ling6           → 약점 1줄(최근 7건) + 맞힌 개수 선(전체)
+소리 구분   → kind=ling6           → 약점 1줄(최근 7건) + 맞힌 개수 선(전체)
 높낮이 비교 → kind=pitch2          → 음고 선만
 다른 음 찾기→ kind=freq            → 음고 선만
 한 글자     → kind=wrs1            → 맞힌 % 선(2회+) + 최근 8회

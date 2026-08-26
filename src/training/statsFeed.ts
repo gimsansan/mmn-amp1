@@ -45,7 +45,7 @@ export type StatsKind =
   | "am"
   | "sent";
 
-/** 칩 순서 = 하단 탭 순서(링 6 · 소리 높낮이 · 단어 듣기 · 떨림 · 문장 듣기). */
+/** 칩 순서 = 하단 탭 순서(소리 구분 · 소리 높낮이 · 단어 듣기 · 떨림 · 문장 듣기). */
 export const STATS_KINDS: readonly StatsKind[] = [
   "ling6",
   "pitch2",
@@ -58,7 +58,7 @@ export const STATS_KINDS: readonly StatsKind[] = [
 
 /** 칩·지우기 버튼에 쓰는 종목 이름. */
 export const KIND_LABEL: Record<StatsKind, string> = {
-  ling6: "링 6",
+  ling6: "소리 구분",
   pitch2: "높낮이 비교",
   freq: "다른 음 찾기",
   wrs1: "한 글자",
