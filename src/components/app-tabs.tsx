@@ -20,7 +20,7 @@ export default function AppTabs() {
         selected: { color: colors.accent },
       }}
     >
-      <NativeTabs.Trigger name="ling6">
+      <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>소리 구분</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="waveform" md="mic" />
       </NativeTabs.Trigger>
@@ -35,7 +35,7 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Icon sf="text.bubble" md="chat" />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="index">
+      <NativeTabs.Trigger name="am">
         <NativeTabs.Trigger.Label>떨림</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf="iphone.radiowaves.left.and.right"

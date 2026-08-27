@@ -52,6 +52,9 @@ import { StatsScreen } from "@/training/StatsScreen";
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
+/** idle(연습 선택) 화면 텍스트만 균일하게 살짝 키우는 배율(사용자 요청). */
+const TEXT_SCALE = 1.2;
+
 const PREVIEW_COUNT = 6;
 
 function pickPreviewScenes(scenes: readonly Scene[]): Scene[] {
@@ -96,6 +99,8 @@ export function SentClosedSessionScreen() {
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
   const choiceDisabled = phase !== "choose";
+  // idle 안내 화면에서만 버튼 글자를 키운다(summary·진행 중은 기본 크기).
+  const idleTextScale = phase === "idle" ? TEXT_SCALE : 1;
   const currentTrial = trials[trialIndex];
   const showIdlePreview = phase === "idle";
   const previewScenes = useMemo(
@@ -468,6 +473,7 @@ export function SentClosedSessionScreen() {
               variant="primary"
               fill={false}
               label={phase === "summary" ? "다시 연습" : "시작"}
+              textScale={idleTextScale}
               onPress={onStart}
             />
           ) : null}

@@ -15,6 +15,8 @@ import { ActionButton } from "@/components/ui/action-button";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { ListeningCheckEntryButton } from "@/components/ui/listening-check-entry-button";
+import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   MaxContentWidth,
   Radius,
@@ -91,6 +93,10 @@ function progressCaption(
 type FreqSessionScreenProps = {
   /** 연습 목록으로 돌아가기(idle·요약에서만 노출). */
   onBack?: () => void;
+  /** idle·요약 헤더에서 통계 화면. 진행 중에는 숨김. */
+  onOpenStats?: () => void;
+  /** idle·요약 헤더에서 듣기 준비. 진행 중에는 숨김. */
+  onOpenListeningCheck?: () => void;
   /** 듣기 준비를 막 통과했을 때 세션을 바로 시작. */
   autoStart?: boolean;
   onAutoStartConsumed?: () => void;
@@ -105,6 +111,8 @@ type FreqSessionScreenProps = {
  */
 export function FreqSessionScreen({
   onBack,
+  onOpenStats,
+  onOpenListeningCheck,
   autoStart = false,
   onAutoStartConsumed,
   initialMode = DEFAULT_SESSION_MODE,
@@ -388,6 +396,17 @@ export function FreqSessionScreen({
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
+        {(onOpenStats || onOpenListeningCheck) &&
+        (phase === "idle" || phase === "summary") ? (
+          <View style={styles.statsRow}>
+            {onOpenListeningCheck ? (
+              <ListeningCheckEntryButton onPress={onOpenListeningCheck} />
+            ) : null}
+            {onOpenStats ? (
+              <StatsEntryButton onPress={onOpenStats} />
+            ) : null}
+          </View>
+        ) : null}
         {phase === "idle" ? (
           /*
             idle도 스크롤한다. 시스템 글씨 크기 120%부터 안내문이 「연습 시작」
@@ -668,6 +687,11 @@ const styles = StyleSheet.create({
     paddingBottom: 26,
     alignItems: "stretch",
     gap: Spacing.two + 2,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: Spacing.two,
   },
   /**
    * idle 히어로를 감싸는 스크롤 껍데기. `flex: 1`이라 버튼이 바닥에 남는다.

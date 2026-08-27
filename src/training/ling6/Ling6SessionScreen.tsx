@@ -6,6 +6,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -64,6 +65,9 @@ import { SessionProgressBar } from "@/training/SessionProgressBar";
 
 type Phase = "idle" | "playing" | "choose" | "feedback" | "summary";
 
+/** idle(연습 선택) 화면 텍스트만 균일하게 살짝 키우는 배율(사용자 요청). */
+const TEXT_SCALE = 1.2;
+
 function soundLabel(choice: Ling6Choice): string {
   if (choice === "silence") {
     return "못 들었어요";
@@ -73,6 +77,7 @@ function soundLabel(choice: Ling6Choice): string {
 
 export function Ling6SessionScreen() {
   const theme = useTheme();
+  const { height: windowHeight } = useWindowDimensions();
   const abortRef = useRef(false);
   /** 재생 실행 세대. 새 실행이 시작되면 이전 재생은 스스로 빠진다. */
   const runSeqRef = useRef(0);
@@ -105,6 +110,8 @@ export function Ling6SessionScreen() {
   const running =
     phase === "playing" || phase === "choose" || phase === "feedback";
   const choiceDisabled = phase !== "choose";
+  // idle 안내 화면에서만 버튼 글자를 키운다(summary·진행 중은 기본 크기).
+  const idleTextScale = phase === "idle" ? TEXT_SCALE : 1;
 
   const resetRun = useCallback(() => {
     abortRef.current = true;
@@ -386,13 +393,11 @@ export function Ling6SessionScreen() {
                 「못 들었어요」를 누르세요.
               </ThemedText>
             </Card>
-            {history.length === 0 ? (
-              <View style={styles.previewGrid}>
-                {LING6_SOUNDS.map((sound) => (
-                  <PreviewCell key={sound.id} sound={sound} />
-                ))}
-              </View>
-            ) : null}
+            <Image
+              source={require("@/assets/ling6/ling6_back.webp")}
+              style={[styles.idleImage, { height: windowHeight * 0.45 }]}
+              resizeMode="cover"
+            />
           </ScrollView>
         ) : null}
 
@@ -532,6 +537,7 @@ export function Ling6SessionScreen() {
               variant="primary"
               fill={false}
               label={phase === "summary" ? "다시 연습" : "시작"}
+              textScale={idleTextScale}
               onPress={onStart}
             />
           ) : null}
@@ -562,27 +568,6 @@ export function Ling6SessionScreen() {
         </View>
       </SafeAreaView>
     </ThemedView>
-  );
-}
-
-function PreviewCell({ sound }: Readonly<{ sound: Ling6Sound }>) {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        styles.previewCell,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-      ]}
-    >
-      <Image
-        source={sound.image}
-        style={styles.previewImage}
-        resizeMode="contain"
-      />
-      <ThemedText type="smallBold" style={styles.previewLabel}>
-        {sound.label}
-      </ThemedText>
-    </View>
   );
 }
 
@@ -662,26 +647,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  previewGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.two,
-  },
-  previewCell: {
-    width: "31.5%",
-    flexGrow: 1,
-    borderWidth: 1,
+  idleImage: {
+    width: "90%",
+    alignSelf: "center",
     borderRadius: Radius.large - 4,
-    padding: Spacing.one,
-    alignItems: "center",
-    gap: 2,
-  },
-  previewImage: {
-    width: "100%",
-    height: 72,
-  },
-  previewLabel: {
-    fontSize: 14,
   },
   summaryContent: {
     gap: Spacing.three,

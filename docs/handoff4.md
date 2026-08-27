@@ -4,6 +4,70 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-27 16:08
+
+새 채팅 AI용. **이번 세션 = 소리 구분 idle 이미지 반응형 + 소리 높낮이 연습 화면에 헤더 버튼.**
+
+### 한 일
+
+- 소리 구분 idle `ling6_back.webp`: 고정 350·`contain` → 화면 높이 45%·`cover`.
+- 소리 높낮이: 선택 화면에만 있던 듣기 준비·기록 버튼을 높낮이 비교·다른 음 찾기 idle·요약에도.
+- 패턴은 떨림 `statsRow`. 기록 종목은 비교=pitch2, 다른 음=freq. 진행 중에는 숨김.
+
+### 핵심 경로
+
+- `src/training/ling6/Ling6SessionScreen.tsx`
+- `src/training/pta/PtaSessionScreen.tsx`
+- `src/training/pitch2afc/PitchCompareScreen.tsx`
+- `src/training/freq/FreqSessionScreen.tsx`
+
+### 단정 금지
+
+- `주의`: `cover`라 안내 이미지 가장자리 잘림 가능.
+- `미검증`: 실기기에서 히어로와 헤더 버튼 겹침.
+
+---
+
+## 인계 — 2026-08-27 14:54
+
+새 채팅 AI용. **이번 세션 = 앱 시작 탭을 떨림 → 소리 구분.**
+
+### 한 일
+
+- 원인: expo-router `index` = 떨림이라 콜드 스타트가 항상 떨림.
+- `index.tsx` → 소리 구분. 떨림 → `am.tsx`. `ling6.tsx` 삭제.
+- `app-tabs.tsx` 트리거: `index`=소리 구분, `am`=떨림. 하단 탭 순서는 그대로.
+
+### 핵심 경로
+
+- `src/app/index.tsx` · `src/app/am.tsx` · `src/components/app-tabs.tsx`
+
+### 단정 금지
+
+- `미검증`: 백그라운드 복귀 시 마지막 탭 유지(OS).
+
+---
+
+## 인계 — 2026-08-27 14:49
+
+새 채팅 AI용. **이번 세션 = 소리 구분·문장 듣기 idle 「시작」 글자 크기 맞춤.**
+
+### 한 일
+
+- 원인: 두 탭만 `textScale` 미전달 → 기본 14px. 떨림·음고 idle은 1.2배.
+- idle 「시작」만 1.2배. 요약·진행 중·단어 듣기는 그대로.
+
+### 핵심 경로
+
+- `src/training/ling6/Ling6SessionScreen.tsx`
+- `src/training/sentClosed/SentClosedSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 육안.
+
+---
+
 ## 인계 — 2026-08-27 14:45
 
 새 채팅 AI용. **이번 세션 = 다른 음 찾기 idle 웰니스 고지 한 줄 삭제.**

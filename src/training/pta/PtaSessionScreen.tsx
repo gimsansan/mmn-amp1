@@ -64,6 +64,8 @@ export function PtaSessionScreen() {
   const [mode, setMode] = useState<SessionMode>(DEFAULT_SESSION_MODE);
   const [showStats, setShowStats] = useState(false);
   const [showCheck, setShowCheck] = useState(false);
+  /** 연습 기록 화면이 열릴 종목. 선택 화면·높낮이 비교는 pitch2, 다른 음 찾기는 freq. */
+  const [statsKind, setStatsKind] = useState<"pitch2" | "freq">("pitch2");
 
   const backToPicker = useCallback(() => {
     setTrack("picker");
@@ -81,6 +83,20 @@ export function PtaSessionScreen() {
 
   const closeCheck = useCallback(() => {
     setShowCheck(false);
+  }, []);
+
+  const openCheck = useCallback(() => {
+    setShowCheck(true);
+  }, []);
+
+  const openStatsPitch = useCallback(() => {
+    setStatsKind("pitch2");
+    setShowStats(true);
+  }, []);
+
+  const openStatsFreq = useCallback(() => {
+    setStatsKind("freq");
+    setShowStats(true);
   }, []);
 
   useFocusEffect(
@@ -111,7 +127,7 @@ export function PtaSessionScreen() {
   );
 
   if (showStats) {
-    return <StatsScreen initialKind="pitch2" onBack={closeStats} />;
+    return <StatsScreen initialKind={statsKind} onBack={closeStats} />;
   }
 
   if (showCheck) {
@@ -126,6 +142,8 @@ export function PtaSessionScreen() {
         onBack={backToPicker}
         initialMode={mode}
         onModeChange={setMode}
+        onOpenStats={openStatsPitch}
+        onOpenListeningCheck={openCheck}
       />
     );
   }
@@ -136,6 +154,8 @@ export function PtaSessionScreen() {
         onBack={backToPicker}
         initialMode={mode}
         onModeChange={setMode}
+        onOpenStats={openStatsFreq}
+        onOpenListeningCheck={openCheck}
       />
     );
   }
@@ -154,10 +174,8 @@ export function PtaSessionScreen() {
               caption="웰니스·훈련 · 병원 검사·진단을 대신하지 않아요"
               action={
                 <View style={styles.headerActions}>
-                  <ListeningCheckEntryButton
-                    onPress={() => setShowCheck(true)}
-                  />
-                  <StatsEntryButton onPress={() => setShowStats(true)} />
+                  <ListeningCheckEntryButton onPress={openCheck} />
+                  <StatsEntryButton onPress={openStatsPitch} />
                 </View>
               }
             />
