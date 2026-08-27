@@ -71,7 +71,7 @@ function phaseCaption(phase: Phase, correct: boolean | undefined): string {
     case "summary":
       return "오늘 연습이 끝났어요";
     default:
-      return "시작을 누르면 난이도가 맞춰지는 연습이 이어집니다";
+      return "시작을 누르면 들리는 정도에 맞춰 연습이 이어집니다";
   }
 }
 

@@ -99,7 +99,7 @@ function phaseCaption(phase: Phase, correct: boolean | undefined): string {
     case "summary":
       return "오늘 연습이 끝났어요";
     default:
-      return "시작을 누르면 난이도가 맞춰지는 연습이 이어집니다";
+      return "시작을 누르면 들리는 정도에 맞춰 연습이 이어집니다";
   }
 }
 
@@ -207,13 +207,6 @@ function SessionHeader({
         </View>
         <ThemedText type="heading" style={styles.heroHeading}>
           높낮이 비교
-        </ThemedText>
-        <ThemedText
-          themeColor="textSecondary"
-          type="small"
-          style={[styles.caption, styles.heroCaption]}
-        >
-          웰니스 연습 · 병원 검사·진단을 대신하지 않아요
         </ThemedText>
         <SessionModeToggle
           value={mode}
@@ -767,11 +760,6 @@ const styles = StyleSheet.create({
   heroHeading: {
     fontSize: 26 * TEXT_SCALE,
     lineHeight: 34 * TEXT_SCALE,
-  },
-  /** small(14/20) × TEXT_SCALE. */
-  heroCaption: {
-    fontSize: 14 * TEXT_SCALE,
-    lineHeight: 20 * TEXT_SCALE,
   },
   /** heroPrompt(12.5/19) × TEXT_SCALE. */
   heroPromptScaled: {
