@@ -30,6 +30,7 @@ import {
   DEFAULT_SESSION_MODE,
   type SessionMode,
 } from "@/training/sessionMode";
+import { SessionModeToggle } from "@/training/SessionModeToggle";
 
 type Track = "picker" | "pitch2" | "freq";
 
@@ -66,15 +67,24 @@ export function PtaSessionScreen() {
   const [showCheck, setShowCheck] = useState(false);
   /** 연습 기록 화면이 열릴 종목. 선택 화면·높낮이 비교는 pitch2, 다른 음 찾기는 freq. */
   const [statsKind, setStatsKind] = useState<"pitch2" | "freq">("pitch2");
+  /** 카드 터치로 종목에 들어갈 때 idle을 건너뛰고 바로 시작할지. */
+  const [autoStart, setAutoStart] = useState(false);
 
   const backToPicker = useCallback(() => {
     setTrack("picker");
     setShowStats(false);
     setShowCheck(false);
+    setAutoStart(false);
   }, []);
 
+  /** 카드 터치 = 즉시 시작. 공용 토글에서 고른 `mode`가 그대로 세션에 넘어간다. */
   const openTrack = useCallback((next: TrainingTrack) => {
+    setAutoStart(true);
     setTrack(next);
+  }, []);
+
+  const consumeAutoStart = useCallback(() => {
+    setAutoStart(false);
   }, []);
 
   const closeStats = useCallback(() => {
@@ -140,6 +150,8 @@ export function PtaSessionScreen() {
     return (
       <PitchCompareScreen
         onBack={backToPicker}
+        autoStart={autoStart}
+        onAutoStartConsumed={consumeAutoStart}
         initialMode={mode}
         onModeChange={setMode}
         onOpenStats={openStatsPitch}
@@ -152,6 +164,8 @@ export function PtaSessionScreen() {
     return (
       <FreqSessionScreen
         onBack={backToPicker}
+        autoStart={autoStart}
+        onAutoStartConsumed={consumeAutoStart}
         initialMode={mode}
         onModeChange={setMode}
         onOpenStats={openStatsFreq}
@@ -175,10 +189,30 @@ export function PtaSessionScreen() {
               action={
                 <View style={styles.headerActions}>
                   <ListeningCheckEntryButton onPress={openCheck} />
-                  <StatsEntryButton onPress={openStatsPitch} />
+                  <StatsEntryButton
+                    accessibilityLabel="높낮이 비교 연습 통계 보기"
+                    onPress={openStatsPitch}
+                  />
+                  <StatsEntryButton
+                    accessibilityLabel="다른 음 찾기 연습 통계 보기"
+                    onPress={openStatsFreq}
+                  />
                 </View>
               }
             />
+
+            <SessionModeToggle
+              value={mode}
+              onChange={setMode}
+              style={styles.modeToggle}
+            />
+            <ThemedText
+              themeColor="textSecondary"
+              type="small"
+              style={styles.guide}
+            >
+              카드를 누르면 들리는 정도에 맞춰 연습이 이어집니다
+            </ThemedText>
 
             <View style={styles.list}>
               {TRACK_OPTIONS.map((option) => {
@@ -254,6 +288,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
+  },
+  modeToggle: {
+    marginTop: Spacing.three,
+  },
+  guide: {
+    marginTop: Spacing.two,
+    textAlign: "center",
   },
   list: {
     marginTop: Spacing.three,

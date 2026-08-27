@@ -6,15 +6,20 @@ import { useTheme } from "@/hooks/use-theme";
 
 type StatsEntryButtonProps = {
   onPress: () => void;
+  /** 통계 버튼이 한 화면에 여럿일 때 종목을 구분하는 라벨(기본 "연습 통계 보기"). */
+  accessibilityLabel?: string;
 };
 
 /** 헤더 우측 — 측정 통계 화면 진입. 탭마다 같은 그림. */
-export function StatsEntryButton({ onPress }: Readonly<StatsEntryButtonProps>) {
+export function StatsEntryButton({
+  onPress,
+  accessibilityLabel = "연습 통계 보기",
+}: Readonly<StatsEntryButtonProps>) {
   const theme = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="연습 통계 보기"
+      accessibilityLabel={accessibilityLabel}
       onPress={onPress}
       hitSlop={8}
       style={({ pressed }) => [

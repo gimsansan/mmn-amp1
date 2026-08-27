@@ -4,6 +4,49 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-27 17:05
+
+새 채팅 AI용. **이번 세션 = 소리 높낮이 선택 화면에 공용 토글·안내문 통합 + 카드 터치 즉시 시작.**
+
+### 한 일
+
+- `PtaSessionScreen` picker에 공용 `SessionModeToggle`(기존 `mode` state 재사용) + 공용 안내문 1개 추가. 두 종목이 토글 공유.
+- 카드 터치 = 즉시 시작: `openTrack`에서 `autoStart` state를 켜고 종목 화면에 `autoStart`/`onAutoStartConsumed` 전달 → idle 건너뜀. `backToPicker`에서 리셋.
+- 통계는 종목별 분리(B안): 헤더에 통계 버튼 2개(pitch2·freq). `StatsEntryButton`에 `accessibilityLabel` prop(기본값 유지) 추가로 라벨 중복 방지.
+
+### 핵심 경로
+
+- `src/training/pta/PtaSessionScreen.tsx`
+- `src/components/ui/stats-entry-button.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기에서 카드 터치 → 즉시 재생·토글 반영·통계 2개 진입.
+- `주의`: 헤더 버튼 3개(듣기준비+통계2)라 좁은 폭에서 넘칠 수 있음(미확인).
+- `주의`: 종목 화면 idle 분기는 이 경로에서 미사용(죽은 분기). 요약 「다시 연습」은 종목 화면 내부에서 동작.
+
+---
+
+## 인계 — 2026-08-27 16:41
+
+새 채팅 AI용. **이번 세션 = 단어 빙고 오답 시 이전 정답 칸 재팝 버그 수정.**
+
+### 한 일
+
+- `BingoTile` 팝(0.5→1 spring)은 정답 칸·완성 줄에서만이 의도. 그런데 오답 `feedback`에서 이전 정답 칸이 다시 팝했다.
+- 원인: 정답 때 `lastMarked`가 그 칸에 남고 오답은 안 바꿔서, `isMarked && index === lastMarked`가 계속 참.
+- 수정: tile 조건에 `lastCorrect === true` 추가. `BingoBoard`에 `lastCorrect` prop 전달(running=`lastCorrect`, summary=`undefined`).
+
+### 핵심 경로
+
+- `src/training/wrs/WrsBingoScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기에서 정답 팝 유지·오답 미발화 확인 안 함.
+
+---
+
 ## 인계 — 2026-08-27 16:08
 
 새 채팅 AI용. **이번 세션 = 소리 구분 idle 이미지 반응형 + 소리 높낮이 연습 화면에 헤더 버튼.**

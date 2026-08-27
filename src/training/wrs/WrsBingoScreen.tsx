@@ -390,6 +390,7 @@ export function WrsBingoScreen({
                   line={line}
                   phase={phase}
                   lastMarked={lastMarked}
+                  lastCorrect={undefined}
                   disabled
                   onPress={() => undefined}
                 />
@@ -469,6 +470,7 @@ export function WrsBingoScreen({
                 line={line}
                 phase={phase}
                 lastMarked={lastMarked}
+                lastCorrect={lastCorrect}
                 disabled={tapDisabled}
                 onPress={onTap}
               />
@@ -677,6 +679,7 @@ function BingoBoard({
   line,
   phase,
   lastMarked,
+  lastCorrect,
   disabled,
   onPress,
 }: Readonly<{
@@ -685,6 +688,7 @@ function BingoBoard({
   line: readonly number[] | null;
   phase: Phase;
   lastMarked: number | null;
+  lastCorrect: boolean | undefined;
   disabled: boolean;
   onPress: (word: string, index: number) => void;
 }>) {
@@ -703,13 +707,20 @@ function BingoBoard({
             }
             const isMarked = marked[index] === true;
             const inLine = line?.includes(index) === true;
-            // 연출은 맞음/완성에서만: 방금 찍힌 칸 팝, 완성 줄 순차 팝.
+            // 연출은 맞음/완성에서만: 방금 맞힌 칸 팝, 완성 줄 순차 팝.
+            // 오답 feedback에서는 lastMarked가 이전 정답 칸에 남아 있어
+            // lastCorrect === true로 좁혀 그 칸이 다시 팝하지 않게 한다.
             let animate = false;
             let delay = 0;
             if (inLine && isSummary) {
               animate = true;
               delay = (line?.indexOf(index) ?? 0) * 120;
-            } else if (isMarked && phase === "feedback" && index === lastMarked) {
+            } else if (
+              isMarked &&
+              phase === "feedback" &&
+              lastCorrect === true &&
+              index === lastMarked
+            ) {
               animate = true;
             }
             return (
