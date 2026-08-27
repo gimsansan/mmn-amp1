@@ -16,11 +16,13 @@ import { ActionButton } from "@/components/ui/action-button";
 import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
+import { ListeningCheckEntryButton } from "@/components/ui/listening-check-entry-button";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import { MaxContentWidth, Radius, Shadows, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
+import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import {
   playSentClosedScene,
   stopSentClosedPlayback,
@@ -86,6 +88,7 @@ export function SentClosedSessionScreen() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [leadIn, setLeadIn] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showCheck, setShowCheck] = useState(false);
   const [trials, setTrials] = useState<ClosedSentTrial[]>([]);
   const [outcomeCount, setOutcomeCount] = useState(0);
   const [historyLen, setHistoryLen] = useState(0);
@@ -154,11 +157,26 @@ export function SentClosedSessionScreen() {
     setShowStats(false);
   }, []);
 
+  const openCheck = useCallback(() => {
+    setShowCheck(true);
+  }, []);
+
+  const closeCheck = useCallback(() => {
+    setShowCheck(false);
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       if (showStats) {
         const sub = BackHandler.addEventListener("hardwareBackPress", () => {
           closeStats();
+          return true;
+        });
+        return () => sub.remove();
+      }
+      if (showCheck) {
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+          closeCheck();
           return true;
         });
         return () => sub.remove();
@@ -171,7 +189,7 @@ export function SentClosedSessionScreen() {
         return true;
       });
       return () => sub.remove();
-    }, [closeStats, phase, resetRun, showStats]),
+    }, [closeCheck, closeStats, phase, resetRun, showCheck, showStats]),
   );
 
   const playCurrent = useCallback(async (index: number) => {
@@ -301,6 +319,12 @@ export function SentClosedSessionScreen() {
     return <StatsScreen initialKind="sent" onBack={closeStats} />;
   }
 
+  if (showCheck) {
+    return (
+      <ListeningCheckScreen trackIcon="headphones" onBack={closeCheck} />
+    );
+  }
+
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
@@ -309,7 +333,10 @@ export function SentClosedSessionScreen() {
           caption="들은 문장을 그림에서 고르는 연습 · 병원 검사가 아니에요"
           action={
             phase === "idle" || phase === "summary" ? (
-              <StatsEntryButton onPress={openStats} />
+              <View style={styles.headerActions}>
+                <ListeningCheckEntryButton onPress={openCheck} />
+                <StatsEntryButton onPress={openStats} />
+              </View>
             ) : null
           }
         />
@@ -566,6 +593,11 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: Spacing.four,
     gap: Spacing.three,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
   },
   idleContent: {
     gap: Spacing.three,

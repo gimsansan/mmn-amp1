@@ -2,7 +2,6 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { BackHandler } from "react-native";
 
-import { DEFAULT_CARRIER_HZ } from "@/audio/amTone";
 import { AmSessionScreen } from "@/training/am/AmSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { StatsScreen } from "@/training/StatsScreen";
@@ -59,11 +58,7 @@ export function AmTabScreen() {
 
   if (showCheck) {
     return (
-      <ListeningCheckScreen
-        trackIcon="headphones"
-        sampleHz={DEFAULT_CARRIER_HZ}
-        onBack={closeCheck}
-      />
+      <ListeningCheckScreen trackIcon="headphones" onBack={closeCheck} />
     );
   }
 

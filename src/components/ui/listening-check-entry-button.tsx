@@ -8,7 +8,7 @@ type ListeningCheckEntryButtonProps = {
   onPress: () => void;
 };
 
-/** 헤더 우측 — 듣기 준비(볼륨 안내·샘플음). 통계 버튼과 같은 크기. */
+/** 헤더 우측 — 소리 점검(재생 확인). 통계 버튼과 같은 크기. */
 export function ListeningCheckEntryButton({
   onPress,
 }: Readonly<ListeningCheckEntryButtonProps>) {
@@ -16,7 +16,7 @@ export function ListeningCheckEntryButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="듣기 준비"
+      accessibilityLabel="소리 점검"
       onPress={onPress}
       hitSlop={8}
       style={({ pressed }) => [

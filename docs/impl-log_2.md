@@ -56,6 +56,44 @@
 
 ## 로그
 
+### 2026-08-27 — 소리 구분·문장 듣기에 소리 점검 헤더
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 소리 구분 / 문장 듣기 |
+| 근거·결정 | 점검은 볼륨 맞춤이 아니라 재생 유무. 두 탭만 버튼이 없으면 일관성이 깨짐. |
+| 변경 요약 | idle/요약 헤더에 `ListeningCheckEntryButton` + `ListeningCheckScreen`(A4). |
+| 변경 요약 | 뒤로가기: 점검 화면이면 닫기. 접근성 라벨 「듣기 준비」→「소리 점검」. |
+| 주요 경로 | `src/training/ling6/Ling6SessionScreen.tsx` |
+| 주요 경로 | `src/training/sentClosed/SentClosedSessionScreen.tsx` |
+| 주요 경로 | `src/components/ui/listening-check-entry-button.tsx` |
+| 주요 경로 | `docs/listening-check-volume-by-tab.md` |
+| 결과 | WRS와 같은 헤더 배치. 퀴즈 음원(wav)은 그대로. |
+| 확인 | 화면 코드 대조. 실기기 미확인. |
+| 단정 금지 | `미검증`: 실기기에서 두 탭 헤더·뒤로가기·점검음. |
+| 단정 금지 | `주의`: 빙고는 여전히 점검 버튼 없음(이번 범위 밖). |
+| 성능·주의 | 헤더 버튼 1개. 누르면 순음 재생 가능. 리빌드 불필요. |
+
+### 2026-08-27 — 듣기 준비 → 「소리 점검」 재정의 (볼륨 맞추기 폐기)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 / 문서 |
+| 근거·결정 | 절대 음압 모름·OS가 최종 볼륨. 순음 샘플로 맞춘 값이 퀴즈(TTS·wav·순음)로 안 이어짐. |
+| 근거·결정 | 특히 단어 듣기: 샘플=순음 vs 퀴즈=`Speech.speak`(volume 없음) → 「맞춤」 명분이 약했음. |
+| 근거·결정 | 홈·설정 화면 부재 확인(`_layout.tsx`→`AppTabs` 5탭이 전부). 신규 화면 없이 기존 헤더 버튼 유지. |
+| 변경 요약 | `ListeningCheckScreen`에서 `sampleHz` prop 제거, A4(440Hz) 순음 고정(`CHECK_TONE_HZ`). |
+| 변경 요약 | 화면 문구를 「볼륨 맞추기」→「소리가 잘 들리는지 확인」(제목 "소리 점검", 버튼 "소리 확인하기"). |
+| 변경 요약 | 호출부 5곳에서 `sampleHz`와 미사용 import(`DEFAULT_REFERENCE_HZ`/`DEFAULT_CARRIER_HZ`) 제거. |
+| 주요 경로 | `src/training/ListeningCheckScreen.tsx` |
+| 주요 경로 | `src/training/pta/PtaSessionScreen.tsx`, `src/training/am/AmTabScreen.tsx` |
+| 주요 경로 | `src/training/wrs/{WrsSessionScreen,WrsTwoCharScreen,WrsTabScreen}.tsx` |
+| 주요 경로 | `docs/listening-check-volume-by-tab.md` (헤더·공통표·한눈에 표 갱신) |
+| 결과 | 코드 수정 완료. 타입·미사용 import 오류 없음. |
+| 확인 | `ReadLints` 6파일 — 신규 오류 없음. 기존 경고(Wrs 두 화면 Cognitive Complexity)는 무관·잔존. |
+| 단정 금지 | `미검증`: 실기기에서 점검음이 이어폰·좌우·볼륨0을 실제로 잘 드러내는지 미측정. |
+| 성능·주의 | 없음. 재생 경로(`playPureTone`) 그대로, 넘기는 주파수만 탭별→고정. 부하 변화 없음. |
+
 ### 2026-08-27 — 듣기 준비 현황: 링6 녹음 vs 문장 TTS 분리
 
 | 항목 | 내용 |

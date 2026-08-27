@@ -16,6 +16,7 @@ import { ActionButton } from "@/components/ui/action-button";
 import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
+import { ListeningCheckEntryButton } from "@/components/ui/listening-check-entry-button";
 import { Pill } from "@/components/ui/pill";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
@@ -27,6 +28,7 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
+import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { StatsScreen } from "@/training/StatsScreen";
 import {
   collectPhonemeResults,
@@ -92,6 +94,7 @@ export function Ling6SessionScreen() {
   const [leadIn, setLeadIn] = useState(false);
   const [history, setHistory] = useState<SavedLing6Record[]>([]);
   const [showStats, setShowStats] = useState(false);
+  const [showCheck, setShowCheck] = useState(false);
   /**
    * 진행 막대가 그리는 값은 ref가 아니라 state로 둔다 — ref는 바꿔도 다시 그리지
    * 않아서 옆에 있는 `setPhase` 덕에 우연히 맞게 보일 뿐이다. ref는 비동기
@@ -156,6 +159,14 @@ export function Ling6SessionScreen() {
     setShowStats(false);
   }, []);
 
+  const openCheck = useCallback(() => {
+    setShowCheck(true);
+  }, []);
+
+  const closeCheck = useCallback(() => {
+    setShowCheck(false);
+  }, []);
+
   // 탭이 마운트된 채 남으므로 포커스가 없을 때는 걷어낸다 — 안 그러면 다른 탭의
   // 뒤로가기를 이 화면이 가로챈다(`BackHandler`는 등록 역순으로 먼저 true를 문다).
   useFocusEffect(
@@ -163,6 +174,13 @@ export function Ling6SessionScreen() {
       if (showStats) {
         const sub = BackHandler.addEventListener("hardwareBackPress", () => {
           closeStats();
+          return true;
+        });
+        return () => sub.remove();
+      }
+      if (showCheck) {
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+          closeCheck();
           return true;
         });
         return () => sub.remove();
@@ -175,7 +193,7 @@ export function Ling6SessionScreen() {
         return true;
       });
       return () => sub.remove();
-    }, [closeStats, phase, resetRun, showStats]),
+    }, [closeCheck, closeStats, phase, resetRun, showCheck, showStats]),
   );
 
   const playCurrent = useCallback(async (index: number) => {
@@ -324,6 +342,12 @@ export function Ling6SessionScreen() {
     return <StatsScreen initialKind="ling6" onBack={closeStats} />;
   }
 
+  if (showCheck) {
+    return (
+      <ListeningCheckScreen trackIcon="headphones" onBack={closeCheck} />
+    );
+  }
+
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
@@ -332,7 +356,10 @@ export function Ling6SessionScreen() {
           caption="들은 소리를 그림에서 고르는 연습 · 병원 검사가 아니에요"
           action={
             phase === "idle" || phase === "summary" ? (
-              <StatsEntryButton onPress={openStats} />
+              <View style={styles.headerActions}>
+                <ListeningCheckEntryButton onPress={openCheck} />
+                <StatsEntryButton onPress={openStats} />
+              </View>
             ) : null
           }
         />
@@ -618,6 +645,11 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: Spacing.four,
     gap: Spacing.three,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
   },
   idleContent: {
     gap: Spacing.three,

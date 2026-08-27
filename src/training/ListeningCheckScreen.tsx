@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { playPureTone, stopPureTone } from "@/audio/pureTone";
+import { DEFAULT_REFERENCE_HZ, playPureTone, stopPureTone } from "@/audio/pureTone";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ActionButton } from "@/components/ui/action-button";
@@ -17,8 +17,15 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
-/** 샘플음 길이(초). 볼륨을 맞출 만큼만. 훈련 자극(0.5초)과 별개. */
+/** 점검음 길이(초). 소리가 나는지 확인할 만큼만. 훈련 자극(0.5초)과 별개. */
 const SAMPLE_DURATION_SEC = 1.5;
+
+/**
+ * 점검음 주파수(Hz). **볼륨 캘리브레이션이 아니라 재생 점검(sound check)** 이므로
+ * 탭마다 실제 자극 주파수를 맞출 필요가 없다 — 사람 귀에 편한 중역대 순음(A4) 하나로 고정.
+ * `주의`: 이 값이 퀴즈 크기와 이어지지 않는다. 퀴즈는 각자 고정 게인/파일/TTS로 재생된다.
+ */
+const CHECK_TONE_HZ = DEFAULT_REFERENCE_HZ;
 
 /** idle 안내 화면 텍스트만 균일하게 살짝 키우는 배율(사용자 요청). */
 const TEXT_SCALE = 1.2;
@@ -29,11 +36,6 @@ type ListeningCheckScreenProps = {
    * 제목을 읽기 전에 어디 안내인지 알아볼 수 있게 한다.
    */
   trackIcon: IconName;
-  /**
-   * 샘플음 주파수(Hz). **그 탭에서 실제로 듣게 될 음**을 쓴다.
-   * ② 다른 음 찾기 = 기준음, ① 떨림 찾기 = 반송파.
-   */
-  sampleHz: number;
   onBack: () => void;
 };
 
@@ -58,15 +60,15 @@ function GuideHeader({
 }
 
 /**
- * 청취 조건 안내(정적). 시작 관문이 아니라 헤더 아이콘으로 연다(통계와 같음).
+ * 청취 조건 안내(정적) + 재생 점검(sound check). 시작 관문이 아니라 헤더 아이콘으로 연다(통계와 같음).
  *
- * 목적: 스피커/이어폰·기기 볼륨에 따라 자극이 달라져 **세션끼리 비교하기 어려워지는 것**을 줄인다.
- * `주의`: 이 화면은 **보정(calibration)이 아니다.** 앱은 절대 음압을 알지 못하므로
- * dB 수치·권장 레벨을 제시하지 않고, 볼륨을 대신 바꾸지도 않는다(OS 볼륨 존중).
+ * 목적: 이어폰 연결·좌우·무음/볼륨0 여부를 **연습 전에** 확인하고, 편안한 볼륨을 찾게 한다.
+ * `주의`: 이 화면은 **보정(calibration)도, 볼륨 맞추기도 아니다.** 여기서 낸 순음 크기는
+ * 퀴즈로 이어지지 않는다(퀴즈는 각자 고정 게인/파일/TTS). 앱은 절대 음압을 모르며
+ * OS 볼륨을 대신 바꾸지 않는다. 그래서 탭마다 주파수를 맞추지 않고 A4 순음 하나로 점검만 한다.
  */
 export function ListeningCheckScreen({
   trackIcon,
-  sampleHz,
   onBack,
 }: Readonly<ListeningCheckScreenProps>) {
   const theme = useTheme();
@@ -90,7 +92,7 @@ export function ListeningCheckScreen({
     abortRef.current = false;
 
     void playPureTone({
-      frequencyHz: sampleHz,
+      frequencyHz: CHECK_TONE_HZ,
       durationSec: SAMPLE_DURATION_SEC,
     })
       .catch(() => {
@@ -103,7 +105,7 @@ export function ListeningCheckScreen({
           setPlaying(false);
         }
       });
-  }, [playing, sampleHz]);
+  }, [playing]);
 
   const leave = useCallback(() => {
     abortRef.current = true;
@@ -133,7 +135,7 @@ export function ListeningCheckScreen({
               type="screenTitle"
               style={[styles.centered, styles.title]}
             >
-              듣기 준비
+              소리 점검
             </ThemedText>
           </View>
 
@@ -155,15 +157,15 @@ export function ListeningCheckScreen({
           <Card style={styles.box}>
             <GuideHeader
               icon="speaker"
-              title="소리 크기를 편안하게 맞춰 주세요"
+              title="소리가 잘 들리는지 확인해 주세요"
             />
             <ThemedText
               themeColor="textSecondary"
               type="small"
               style={styles.body}
             >
-              아래 소리를 들으며 기기 볼륨을 조절하세요. 또렷하게 들리되 크게
-              느껴지지 않는 정도가 좋아요
+              아래 소리로 이어폰 연결과 좌우·볼륨을 확인하세요. 소리 크기는 기기
+              볼륨으로 편안하게 맞추면 돼요
             </ThemedText>
             <Pressable
               accessibilityRole="button"
@@ -185,7 +187,7 @@ export function ListeningCheckScreen({
                 type="smallBold"
                 style={[{ color: theme.onAccent }, styles.sampleButtonText]}
               >
-                {playing ? "재생 중…" : "소리 들어보기"}
+                {playing ? "재생 중…" : "소리 확인하기"}
               </ThemedText>
             </Pressable>
           </Card>

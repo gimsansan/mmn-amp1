@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { DEFAULT_REFERENCE_HZ } from "@/audio/pureTone";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Card } from "@/components/ui/card";
@@ -117,11 +116,7 @@ export function PtaSessionScreen() {
 
   if (showCheck) {
     return (
-      <ListeningCheckScreen
-        trackIcon="headphones"
-        sampleHz={DEFAULT_REFERENCE_HZ}
-        onBack={closeCheck}
-      />
+      <ListeningCheckScreen trackIcon="headphones" onBack={closeCheck} />
     );
   }
 

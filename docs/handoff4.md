@@ -4,6 +4,30 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-27 14:30
+
+새 채팅 AI용. **이번 세션 = 소리 점검을 5탭 헤더로 맞춤(링6·문장 추가).**
+
+### 한 일
+
+- 듣기 준비(볼륨 맞추기)를 소리 점검(A4 순음)으로 재정의. `sampleHz` 제거.
+- 소리 구분·문장 듣기 idle/요약 헤더에도 같은 점검 버튼.
+- 접근성 라벨 「소리 점검」. 홈·설정 화면은 없음(5탭이 전부).
+
+### 핵심 경로
+
+- `src/training/ListeningCheckScreen.tsx` — `CHECK_TONE_HZ` 440 고정
+- `src/training/ling6/Ling6SessionScreen.tsx`
+- `src/training/sentClosed/SentClosedSessionScreen.tsx`
+- `docs/listening-check-volume-by-tab.md`
+
+### 단정 금지
+
+- `미검증`: 실기기 점검음·두 탭 뒤로가기.
+- `주의`: 빙고는 점검 버튼 없음.
+
+---
+
 ## 인계 — 2026-08-27 13:28
 
 새 채팅 AI용. **이번 세션 = 듣기 준비 현황에 링6 녹음 vs 문장 TTS 분리.**
