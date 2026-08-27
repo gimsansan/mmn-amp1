@@ -91,26 +91,32 @@ export function SessionModeToggle({
             onPress={() => onChange(opt.key)}
             style={[
               styles.segment,
-              active && {
-                backgroundColor: theme.accentTint,
-                borderColor: theme.accent,
-              },
+              active
+                ? {
+                    backgroundColor: theme.accentTint,
+                    borderColor: theme.accent,
+                  }
+                : {
+                    // ActionButton secondary · Pill surface와 같게 — 흰 면+테두리 = 누를 수 있음.
+                    backgroundColor: theme.surface,
+                    borderColor: theme.border,
+                  },
             ]}
           >
             <ThemedText
               type="smallBold"
               style={[
-                { color: active ? theme.accent : theme.textSecondary },
+                { color: active ? theme.accent : theme.text },
                 scaledLabel,
               ]}
             >
               {opt.label}
             </ThemedText>
-            {/* 활성이면 바닥이 accentTint라 textMuted는 4.28:1로 AA 미달 → 라벨과 같은 accent. */}
+            {/* 활성이면 바닥이 accentTint라 textMuted·textSecondary는 AA 미달 → 라벨과 같은 accent. */}
             <ThemedText
               type="small"
               style={[
-                { color: active ? theme.accent : theme.textMuted },
+                { color: active ? theme.accent : theme.textSecondary },
                 scaledHint,
               ]}
             >
@@ -136,7 +142,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    // 선택 시에만 테두리를 켜면 글자가 밀리므로, 기본은 투명 테두리로 자리를 잡아둔다.
+    // 선택·비선택 모두 테두리를 켜되 두께는 같게 — 글자가 밀리지 않게.
     borderWidth: 1.5,
     borderColor: "transparent",
     borderRadius: Radius.pill,

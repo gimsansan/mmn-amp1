@@ -14,6 +14,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Card } from "@/components/ui/card";
 import { Icon, type IconName } from "@/components/ui/icon";
+import { ListeningCheckEntryButton } from "@/components/ui/listening-check-entry-button";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
@@ -26,7 +27,6 @@ import { FreqSessionScreen } from "@/training/freq/FreqSessionScreen";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { PitchCompareScreen } from "@/training/pitch2afc/PitchCompareScreen";
 import { StatsScreen } from "@/training/StatsScreen";
-import { SessionModeToggle } from "@/training/SessionModeToggle";
 import {
   DEFAULT_SESSION_MODE,
   type SessionMode,
@@ -56,41 +56,32 @@ const TRACK_OPTIONS: readonly {
 ];
 
 /**
- * 소리 높낮이 탭 — 음고 2종 선택 → 듣기 준비 → 바로 훈련(idle 생략).
- * 통계는 헤더 버튼으로 이 탭 안에서 스와프.
+ * 소리 높낮이 탭 — 음고 2종 선택 → 훈련 idle.
+ * 듣기 준비·통계는 헤더 버튼으로 이 탭 안에서 스와프.
  */
 export function PtaSessionScreen() {
   const theme = useTheme();
   const [track, setTrack] = useState<Track>("picker");
-  const [checked, setChecked] = useState(false);
-  const [autoStart, setAutoStart] = useState(false);
   const [mode, setMode] = useState<SessionMode>(DEFAULT_SESSION_MODE);
   const [showStats, setShowStats] = useState(false);
+  const [showCheck, setShowCheck] = useState(false);
 
   const backToPicker = useCallback(() => {
     setTrack("picker");
-    setChecked(false);
-    setAutoStart(false);
     setShowStats(false);
+    setShowCheck(false);
   }, []);
 
   const openTrack = useCallback((next: TrainingTrack) => {
-    setChecked(false);
-    setAutoStart(false);
     setTrack(next);
-  }, []);
-
-  const passCheck = useCallback(() => {
-    setChecked(true);
-    setAutoStart(true);
-  }, []);
-
-  const consumeAutoStart = useCallback(() => {
-    setAutoStart(false);
   }, []);
 
   const closeStats = useCallback(() => {
     setShowStats(false);
+  }, []);
+
+  const closeCheck = useCallback(() => {
+    setShowCheck(false);
   }, []);
 
   useFocusEffect(
@@ -98,6 +89,13 @@ export function PtaSessionScreen() {
       if (showStats) {
         const sub = BackHandler.addEventListener("hardwareBackPress", () => {
           closeStats();
+          return true;
+        });
+        return () => sub.remove();
+      }
+      if (showCheck) {
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+          closeCheck();
           return true;
         });
         return () => sub.remove();
@@ -110,30 +108,19 @@ export function PtaSessionScreen() {
         return true;
       });
       return () => sub.remove();
-    }, [track, showStats, backToPicker, closeStats]),
+    }, [track, showStats, showCheck, backToPicker, closeStats, closeCheck]),
   );
 
   if (showStats) {
     return <StatsScreen initialKind="pitch2" onBack={closeStats} />;
   }
 
-  if ((track === "pitch2" || track === "freq") && !checked) {
-    const face = TRACK_FACE[track];
+  if (showCheck) {
     return (
       <ListeningCheckScreen
-        trackTitle={face.title}
-        trackIcon={face.icon}
+        trackIcon="headphones"
         sampleHz={DEFAULT_REFERENCE_HZ}
-        onStart={passCheck}
-        onBack={backToPicker}
-        extra={
-          <SessionModeToggle
-            value={mode}
-            onChange={setMode}
-            textScale={1.2}
-            style={{ marginBottom: Spacing.two }}
-          />
-        }
+        onBack={closeCheck}
       />
     );
   }
@@ -142,8 +129,6 @@ export function PtaSessionScreen() {
     return (
       <PitchCompareScreen
         onBack={backToPicker}
-        autoStart={autoStart}
-        onAutoStartConsumed={consumeAutoStart}
         initialMode={mode}
         onModeChange={setMode}
       />
@@ -154,8 +139,6 @@ export function PtaSessionScreen() {
     return (
       <FreqSessionScreen
         onBack={backToPicker}
-        autoStart={autoStart}
-        onAutoStartConsumed={consumeAutoStart}
         initialMode={mode}
         onModeChange={setMode}
       />
@@ -174,7 +157,14 @@ export function PtaSessionScreen() {
             <ScreenHeader
               title="소리 높낮이"
               caption="웰니스·훈련 · 병원 검사·진단을 대신하지 않아요"
-              action={<StatsEntryButton onPress={() => setShowStats(true)} />}
+              action={
+                <View style={styles.headerActions}>
+                  <ListeningCheckEntryButton
+                    onPress={() => setShowCheck(true)}
+                  />
+                  <StatsEntryButton onPress={() => setShowStats(true)} />
+                </View>
+              }
             />
 
             <View style={styles.list}>
@@ -245,6 +235,11 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.three,
   },
   top: {
+    gap: Spacing.two,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.two,
   },
   list: {

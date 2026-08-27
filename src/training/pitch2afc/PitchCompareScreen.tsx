@@ -303,7 +303,7 @@ function SessionActions({
         <>
           <ActionButton
             variant="primary"
-            label={phase === "summary" ? "다시 연습" : "연습 시작"}
+            label={phase === "summary" ? "다시 연습" : "시작"}
             textScale={idleTextScale}
             onPress={onStart}
           />

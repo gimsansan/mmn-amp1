@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { DEFAULT_REFERENCE_HZ } from "@/audio/pureTone";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ActionButton } from "@/components/ui/action-button";
@@ -16,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { ListeningCheckEntryButton } from "@/components/ui/listening-check-entry-button";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
@@ -26,6 +28,7 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
+import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { SessionProgressBar } from "@/training/SessionProgressBar";
 import { StatsScreen } from "@/training/StatsScreen";
 import {
@@ -84,6 +87,7 @@ export function WrsSessionScreen({
    */
   const [leadIn, setLeadIn] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showCheck, setShowCheck] = useState(false);
   /**
    * 화면이 그리는 값은 ref가 아니라 state로 둔다 — ref는 바꿔도 다시 그리지 않아서
    * 옆에 있는 `setPhase` 덕에 우연히 맞게 보일 뿐이다. ref는 비동기 콜백에서
@@ -143,6 +147,13 @@ export function WrsSessionScreen({
         });
         return () => sub.remove();
       }
+      if (showCheck) {
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+          setShowCheck(false);
+          return true;
+        });
+        return () => sub.remove();
+      }
       if (phase === "idle" || phase === "summary") {
         if (!onBack) {
           return;
@@ -158,7 +169,7 @@ export function WrsSessionScreen({
         return true;
       });
       return () => sub.remove();
-    }, [onBack, phase, resetRun, showStats]),
+    }, [onBack, phase, resetRun, showStats, showCheck]),
   );
 
   const playCurrent = useCallback(async (index: number) => {
@@ -317,9 +328,27 @@ export function WrsSessionScreen({
     setShowStats(false);
   }, []);
 
+  const openCheck = useCallback(() => {
+    setShowCheck(true);
+  }, []);
+
+  const closeCheck = useCallback(() => {
+    setShowCheck(false);
+  }, []);
+
   if (showStats) {
     return (
       <StatsScreen initialKind="wrs1" onBack={closeStats} />
+    );
+  }
+
+  if (showCheck) {
+    return (
+      <ListeningCheckScreen
+        trackIcon="headphones"
+        sampleHz={DEFAULT_REFERENCE_HZ}
+        onBack={closeCheck}
+      />
     );
   }
 
@@ -331,7 +360,10 @@ export function WrsSessionScreen({
           caption="들은 단어를 보기에서 고르는 연습 · 병원 검사가 아니에요"
           action={
             phase === "idle" || phase === "summary" ? (
-              <StatsEntryButton onPress={openStats} />
+              <View style={styles.headerActions}>
+                <ListeningCheckEntryButton onPress={openCheck} />
+                <StatsEntryButton onPress={openStats} />
+              </View>
             ) : null
           }
         />
@@ -458,7 +490,7 @@ export function WrsSessionScreen({
             <ActionButton
               variant="primary"
               fill={false}
-              label={phase === "summary" ? "다시 연습" : "연습 시작"}
+              label={phase === "summary" ? "다시 연습" : "시작"}
               onPress={onStart}
             />
           ) : null}
@@ -582,6 +614,11 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: Spacing.four,
     gap: Spacing.three,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
   },
   idleContent: {
     gap: Spacing.three,

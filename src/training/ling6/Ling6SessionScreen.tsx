@@ -504,7 +504,7 @@ export function Ling6SessionScreen() {
             <ActionButton
               variant="primary"
               fill={false}
-              label={phase === "summary" ? "다시 연습" : "연습 시작"}
+              label={phase === "summary" ? "다시 연습" : "시작"}
               onPress={onStart}
             />
           ) : null}

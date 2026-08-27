@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -30,22 +24,17 @@ const SAMPLE_DURATION_SEC = 1.5;
 const TEXT_SCALE = 1.2;
 
 type ListeningCheckScreenProps = {
-  /** 어느 연습으로 들어가는지(제목에 표시). */
-  trackTitle: string;
   /**
-   * 그 연습의 아이콘. 연습 선택 카드 → 이 화면이 **같은 그림**으로 이어져
-   * 제목을 읽기 전에 어떤 연습인지 알아볼 수 있게 한다.
+   * 그 탭의 아이콘. 연습 선택 카드·시작 화면과 **같은 그림**으로 이어져
+   * 제목을 읽기 전에 어디 안내인지 알아볼 수 있게 한다.
    */
   trackIcon: IconName;
   /**
-   * 샘플음 주파수(Hz). **그 연습에서 실제로 듣게 될 음**을 쓴다.
+   * 샘플음 주파수(Hz). **그 탭에서 실제로 듣게 될 음**을 쓴다.
    * ② 다른 음 찾기 = 기준음, ① 떨림 찾기 = 반송파.
    */
   sampleHz: number;
-  onStart: () => void;
   onBack: () => void;
-  /** 소리 높낮이 — 귀풀기/연습 토글. 통과 후 idle을 건너뛰므로 여기서 고른다. */
-  extra?: ReactNode;
 };
 
 /** 카드 머리줄 — 파란 선 아이콘 + 굵은 한 줄. */
@@ -69,19 +58,16 @@ function GuideHeader({
 }
 
 /**
- * 연습 시작 전 청취 조건 안내(정적).
+ * 청취 조건 안내(정적). 시작 관문이 아니라 헤더 아이콘으로 연다(통계와 같음).
  *
  * 목적: 스피커/이어폰·기기 볼륨에 따라 자극이 달라져 **세션끼리 비교하기 어려워지는 것**을 줄인다.
  * `주의`: 이 화면은 **보정(calibration)이 아니다.** 앱은 절대 음압을 알지 못하므로
  * dB 수치·권장 레벨을 제시하지 않고, 볼륨을 대신 바꾸지도 않는다(OS 볼륨 존중).
  */
 export function ListeningCheckScreen({
-  trackTitle,
   trackIcon,
   sampleHz,
-  onStart,
   onBack,
-  extra,
 }: Readonly<ListeningCheckScreenProps>) {
   const theme = useTheme();
   const abortRef = useRef(false);
@@ -119,11 +105,11 @@ export function ListeningCheckScreen({
       });
   }, [playing, sampleHz]);
 
-  const leave = useCallback((next: () => void) => {
+  const leave = useCallback(() => {
     abortRef.current = true;
     stopPureTone();
-    next();
-  }, []);
+    onBack();
+  }, [onBack]);
 
   return (
     <ThemedView style={styles.fill}>
@@ -148,13 +134,6 @@ export function ListeningCheckScreen({
               style={[styles.centered, styles.title]}
             >
               듣기 준비
-            </ThemedText>
-            <ThemedText
-              themeColor="textSecondary"
-              type="small"
-              style={styles.subtitle}
-            >
-              {trackTitle}
             </ThemedText>
           </View>
 
@@ -211,8 +190,6 @@ export function ListeningCheckScreen({
             </Pressable>
           </Card>
 
-          {extra}
-
           <ThemedText
             themeColor="textMuted"
             type="small"
@@ -233,15 +210,11 @@ export function ListeningCheckScreen({
         </ScrollView>
         <View style={styles.actions}>
           <ActionButton
+            fill
             variant="primary"
-            label="연습 시작"
-            textScale={TEXT_SCALE}
-            onPress={() => leave(onStart)}
-          />
-          <ActionButton
             label="뒤로 가기"
             textScale={TEXT_SCALE}
-            onPress={() => leave(onBack)}
+            onPress={leave}
           />
         </View>
       </SafeAreaView>
@@ -300,11 +273,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 23 * TEXT_SCALE,
     lineHeight: 30 * TEXT_SCALE,
-  },
-  subtitle: {
-    fontSize: 12 * TEXT_SCALE,
-    lineHeight: 18 * TEXT_SCALE,
-    textAlign: "center",
   },
   box: {
     gap: Spacing.two - 1,

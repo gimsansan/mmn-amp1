@@ -15,6 +15,7 @@ import { ActionButton } from "@/components/ui/action-button";
 import { Equalizer } from "@/components/ui/equalizer";
 import { Icon } from "@/components/ui/icon";
 import { Pill } from "@/components/ui/pill";
+import { ListeningCheckEntryButton } from "@/components/ui/listening-check-entry-button";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import {
   MaxContentWidth,
@@ -94,15 +95,9 @@ type AmSessionScreenProps = {
   onBack?: () => void;
   /** idle·요약 헤더에서 통계 화면. 진행 중에는 숨김. */
   onOpenStats?: () => void;
-  /**
-   * 연습 시작 직전 게이트. false면 세션을 만들지 않음
-   * (부모가 듣기 준비를 띄울 때).
-   */
-  onBeforeStart?: () => boolean;
-  /** 듣기 준비를 막 통과했을 때 세션을 바로 시작. */
-  autoStart?: boolean;
-  onAutoStartConsumed?: () => void;
-  /** 듣기 준비로 화면을 갈아끼워도 귀풀기/연습 선택을 유지. */
+  /** idle·요약 헤더에서 듣기 준비. 진행 중에는 숨김. */
+  onOpenListeningCheck?: () => void;
+  /** 통계·듣기 준비로 화면을 갈아끼워도 귀풀기/연습 선택을 유지. */
   initialMode?: SessionMode;
   onModeChange?: (next: SessionMode) => void;
 };
@@ -114,9 +109,7 @@ type AmSessionScreenProps = {
 export function AmSessionScreen({
   onBack,
   onOpenStats,
-  onBeforeStart,
-  autoStart = false,
-  onAutoStartConsumed,
+  onOpenListeningCheck,
   initialMode = DEFAULT_SESSION_MODE,
   onModeChange,
 }: Readonly<AmSessionScreenProps>) {
@@ -245,13 +238,6 @@ export function AmSessionScreen({
     void runTrial(next);
   }, [mode, runTrial]);
 
-  const onStart = useCallback(() => {
-    if (onBeforeStart?.() === false) {
-      return;
-    }
-    startSession();
-  }, [onBeforeStart, startSession]);
-
   const changeMode = useCallback(
     (next: SessionMode) => {
       setMode(next);
@@ -259,16 +245,6 @@ export function AmSessionScreen({
     },
     [onModeChange],
   );
-
-  const autoStartOnceRef = useRef(false);
-  useEffect(() => {
-    if (!autoStart || autoStartOnceRef.current) {
-      return;
-    }
-    autoStartOnceRef.current = true;
-    startSession();
-    onAutoStartConsumed?.();
-  }, [autoStart, onAutoStartConsumed, startSession]);
 
   const onChoose = useCallback(
     (index: number) => {
@@ -400,9 +376,15 @@ export function AmSessionScreen({
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
-        {onOpenStats && (phase === "idle" || phase === "summary") ? (
+        {(onOpenStats || onOpenListeningCheck) &&
+        (phase === "idle" || phase === "summary") ? (
           <View style={styles.statsRow}>
-            <StatsEntryButton onPress={onOpenStats} />
+            {onOpenListeningCheck ? (
+              <ListeningCheckEntryButton onPress={onOpenListeningCheck} />
+            ) : null}
+            {onOpenStats ? (
+              <StatsEntryButton onPress={onOpenStats} />
+            ) : null}
           </View>
         ) : null}
         {phase === "idle" ? (
@@ -427,13 +409,7 @@ export function AmSessionScreen({
             <ThemedText type="heading" style={styles.heroHeading}>
               떨림 찾기
             </ThemedText>
-            <ThemedText
-              themeColor="textSecondary"
-              type="small"
-              style={[styles.caption, styles.heroCaption]}
-            >
-              웰니스 연습 · 병원 검사·진단을 대신하지 않아요
-            </ThemedText>
+            <View style={{ height: 40 * TEXT_SCALE }} />  
             <SessionModeToggle
               value={mode}
               onChange={changeMode}
@@ -645,9 +621,9 @@ export function AmSessionScreen({
               {phase === "idle" ? (
                 <ActionButton
                   variant="primary"
-                  label="연습 시작"
+                  label="시작"
                   textScale={idleTextScale}
-                  onPress={onStart}
+                  onPress={startSession}
                 />
               ) : (
                 <ActionButton
@@ -708,6 +684,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
+    gap: Spacing.two,
   },
   /**
    * idle 히어로를 감싸는 스크롤 껍데기. `flex: 1`이라 버튼이 바닥에 남는다.
@@ -734,11 +711,7 @@ const styles = StyleSheet.create({
     fontSize: 26 * TEXT_SCALE,
     lineHeight: 34 * TEXT_SCALE,
   },
-  /** small(14/20) × TEXT_SCALE. */
-  heroCaption: {
-    fontSize: 14 * TEXT_SCALE,
-    lineHeight: 20 * TEXT_SCALE,
-  },
+
   /** heroPrompt(12.5/19) × TEXT_SCALE. */
   heroPromptScaled: {
     fontSize: 12.5 * TEXT_SCALE,

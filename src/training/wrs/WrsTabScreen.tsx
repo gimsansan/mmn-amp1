@@ -9,10 +9,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { DEFAULT_REFERENCE_HZ } from "@/audio/pureTone";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Card } from "@/components/ui/card";
 import { ScreenHeader } from "@/components/ui/screen-header";
+import { ListeningCheckEntryButton } from "@/components/ui/listening-check-entry-button";
 import { StatsEntryButton } from "@/components/ui/stats-entry-button";
 import { Icon, type IconName } from "@/components/ui/icon";
 import {
@@ -21,6 +23,7 @@ import {
   Spacing,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
 import { StatsScreen } from "@/training/StatsScreen";
 import { WrsBingoScreen } from "@/training/wrs/WrsBingoScreen";
 import type { WrsDifficulty } from "@/training/wrs/wrsDistractors";
@@ -72,13 +75,14 @@ const TRACK_OPTIONS: readonly TrackOption[] = [
 
 /**
  * 단어 듣기 탭 — 한 글자·두 글자·빙고(쉬운 판/비슷한 소리) 선택.
- * 카드에서 바로 시작.
+ * 듣기 준비·통계는 헤더 아이콘으로 화면을 갈아끼움(소리 높낮이 목록과 같음).
  */
 export function WrsTabScreen() {
   const theme = useTheme();
   const [track, setTrack] = useState<Track>("picker");
   const [autoStart, setAutoStart] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showCheck, setShowCheck] = useState(false);
   const [bingoDifficulty, setBingoDifficulty] =
     useState<WrsDifficulty>("easy");
 
@@ -91,11 +95,17 @@ export function WrsTabScreen() {
     setShowStats(false);
   }, []);
 
+  const closeCheck = useCallback(() => {
+    setShowCheck(false);
+  }, []);
+
   const backToPicker = useCallback(() => {
     setTrack("picker");
     setAutoStart(false);
     setPendingTrack(null);
     setPendingDifficulty(null);
+    setShowStats(false);
+    setShowCheck(false);
   }, []);
 
   /**
@@ -149,6 +159,13 @@ export function WrsTabScreen() {
         });
         return () => sub.remove();
       }
+      if (showCheck) {
+        const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+          closeCheck();
+          return true;
+        });
+        return () => sub.remove();
+      }
       if (track === "picker") {
         return;
       }
@@ -157,11 +174,21 @@ export function WrsTabScreen() {
         return true;
       });
       return () => sub.remove();
-    }, [track, showStats, backToPicker, closeStats]),
+    }, [track, showStats, showCheck, backToPicker, closeStats, closeCheck]),
   );
 
   if (showStats) {
     return <StatsScreen initialKind="wrs1" onBack={closeStats} />;
+  }
+
+  if (showCheck) {
+    return (
+      <ListeningCheckScreen
+        trackIcon="headphones"
+        sampleHz={DEFAULT_REFERENCE_HZ}
+        onBack={closeCheck}
+      />
+    );
   }
 
   if (track === "one") {
@@ -217,7 +244,14 @@ export function WrsTabScreen() {
             <ScreenHeader
               title="단어 듣기"
               caption="들은 단어를 보기에서 고르는 연습 · 병원 검사가 아니에요"
-              action={<StatsEntryButton onPress={() => setShowStats(true)} />}
+              action={
+                <View style={styles.headerActions}>
+                  <ListeningCheckEntryButton
+                    onPress={() => setShowCheck(true)}
+                  />
+                  <StatsEntryButton onPress={() => setShowStats(true)} />
+                </View>
+              }
             />
 
             <View style={styles.list}>
@@ -294,6 +328,11 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.three,
   },
   top: {
+    gap: Spacing.two,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.two,
   },
   list: {

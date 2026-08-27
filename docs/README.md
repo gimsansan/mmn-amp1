@@ -20,7 +20,7 @@
 
 | 카테고리 | 질문 | 문서 |
 |---------|------|------|
-| **① 설계·기준** | 무엇을 왜 만드는가 | `amp-mdt-training-design.md`, `training-stats-recommendation.md` |
+| **① 설계·기준** | 무엇을 왜 만드는가 | `amp-mdt-training-design.md`, `training-stats-recommendation.md`, `listening-check-volume-by-tab.md` |
 | **② 환경·실행** | 어떻게 빌드·실행하는가 | `dev-client-setup-context.md`, `dev-client-connection-guide.md`, `cursor-rules-2-vs-3.md` |
 | **⑥ 읽기·질문** | 코드를 어떻게 물어보나 | `ask-file-behavior.md`(범용), `ask-app-behavior.md`(이 앱), `ask-token-budge-universal.md`(비용·범용), `ask-token-budget.md`(비용·이 앱), `analysis/`(7축을 이 앱에 **적용한 결과**) |
 | **③ 할 일·상태** | 무엇이 문제이고 지금 어디까지 왔나 | `improvement-backlog.md` (+ `-easy`) |
@@ -38,6 +38,7 @@
 |------|------|---------|----------------|
 | `amp-mdt-training-design.md` | 갱신 | 훈련·자극 설계, 근거 문헌, 제품 방침 | **왜 이런 과제·절차인가**, 자극 스펙의 의미 |
 | `training-stats-recommendation.md` | 갱신 | 탭별 기록 **수집·표시** 추천(봉투·kind 필터). 코드 미적용 | **기록을 어떻게 넣고 꺼내 보여주는가** |
+| `listening-check-volume-by-tab.md` | 갱신 | 탭별 듣기 준비 샘플 vs 퀴즈 음원·게인. 조정이 퀴즈에 이어지는지 | **듣기 준비로 맞춘 크기가 연습과 같은가** |
 | `ask-file-behavior.md` | 갱신 | React 등 **범용** 질문 요령(역할 먼저, `[화면] --동작-->`) | **스택 무관하게 어떻게 물어보나** |
 | `ask-app-behavior.md` | 갱신 | 위 요령의 **이 앱** 예(탭·Store·차트 경로) | **이 저장소 파일을 어떻게 물어보나** |
 | `ask-token-budge-universal.md` | 갱신 | 스택 무관 **범용** 비용 절약(탐색 계단, 상황별 처방, 세션 운영) | **어떤 저장소에서도 같은 답을 더 싸게** |
@@ -76,6 +77,7 @@
 | 예전 추정이 틀렸음이 드러남 | **백로그의 그 항목을 정정**(취소선 + 실측) | 리뷰에 측정 근거 |
 | 설계·과제 방식을 바꾸기로 합의 | **설계 문서** 갱신 | impl-log에 한 줄 |
 | 통계 수집·표시 방식을 바꾸기로 함 | **`training-stats-recommendation.md`** | 자극 설계 문서에 통계 UX를 섞지 않음 |
+| 듣기 준비 vs 퀴즈 음량 현황 | **`listening-check-volume-by-tab.md`** | 자극 설계에 탭별 게인 표를 흩뿌리지 않음 |
 | 코드를 어떻게 물어볼지 | **`ask-file-behavior.md`**(범용) · **`ask-app-behavior.md`**(이 앱) | 인계·설계에 질문 복붙을 흩뿌리지 않음 |
 | 요청·탐색이 토큰을 너무 먹음 | **`ask-token-budge-universal.md`**(방법) · **`ask-token-budget.md`**(이 앱 실측) | 앱 런타임 성능은 `analysis/ask-performance.md`(다른 문제) |
 | 빌드·실행 방법이 바뀜 | **셋업 문서** 갱신 | impl-log에 한 줄 |
@@ -159,6 +161,7 @@ docs/
 ├─ README.md                       ← 지금 이 파일(지도)
 ├─ amp-mdt-training-design.md      ① 설계·기준        [갱신형]
 ├─ training-stats-recommendation.md ① 설계(통계 수집·표시) [갱신형] 코드 미적용
+├─ listening-check-volume-by-tab.md ① 설계(듣기 준비 vs 퀴즈 음량) [갱신형]
 ├─ ask-file-behavior.md            ⑥ 읽기·질문(범용)   [갱신형]
 ├─ ask-app-behavior.md             ⑥ 읽기·질문(이 앱)  [갱신형]
 ├─ ask-token-budge-universal.md    ⑥ 읽기·질문(비용·범용) [갱신형]

@@ -13,14 +13,11 @@ import {
 
 /**
  * 떨림 탭 — 링 6처럼 탭이 곧 그 연습.
- * 듣기 준비는 첫 시작 전에만, 소리 높낮이처럼 화면을 갈아끼움(오버레이 아님).
- * 통계는 헤더 버튼.
+ * 듣기 준비·통계는 헤더 아이콘으로 화면을 갈아끼움(오버레이 아님).
  */
 export function AmTabScreen() {
   const [showStats, setShowStats] = useState(false);
   const [showCheck, setShowCheck] = useState(false);
-  const [checked, setChecked] = useState(false);
-  const [autoStart, setAutoStart] = useState(false);
   const [mode, setMode] = useState<SessionMode>(DEFAULT_SESSION_MODE);
 
   const closeStats = useCallback(() => {
@@ -35,22 +32,8 @@ export function AmTabScreen() {
     setShowStats(true);
   }, []);
 
-  const onBeforeStart = useCallback(() => {
-    if (checked) {
-      return true;
-    }
+  const openCheck = useCallback(() => {
     setShowCheck(true);
-    return false;
-  }, [checked]);
-
-  const passCheck = useCallback(() => {
-    setChecked(true);
-    setShowCheck(false);
-    setAutoStart(true);
-  }, []);
-
-  const consumeAutoStart = useCallback(() => {
-    setAutoStart(false);
   }, []);
 
   useFocusEffect(
@@ -77,10 +60,8 @@ export function AmTabScreen() {
   if (showCheck) {
     return (
       <ListeningCheckScreen
-        trackTitle="떨림 찾기"
-        trackIcon="vibrate"
+        trackIcon="headphones"
         sampleHz={DEFAULT_CARRIER_HZ}
-        onStart={passCheck}
         onBack={closeCheck}
       />
     );
@@ -89,9 +70,7 @@ export function AmTabScreen() {
   return (
     <AmSessionScreen
       onOpenStats={openStats}
-      onBeforeStart={onBeforeStart}
-      autoStart={autoStart}
-      onAutoStartConsumed={consumeAutoStart}
+      onOpenListeningCheck={openCheck}
       initialMode={mode}
       onModeChange={setMode}
     />

@@ -4,6 +4,196 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-27 13:28
+
+새 채팅 AI용. **이번 세션 = 듣기 준비 현황에 링6 녹음 vs 문장 TTS 분리.**
+
+### 한 일
+
+- 소리 구분: 직접 녹음·`prep-ling6-wav.mjs` 수치. 듣기 준비 아님.
+- 문장: 미리 만든 Heami wav. 실시간 `expo-speech` 아님.
+- 단어 듣기 TTS 문제와 문장을 같은 줄에 두지 않음.
+
+### 핵심 경로
+
+- `docs/listening-check-volume-by-tab.md`
+
+### 단정 금지
+
+- `주의`: `ling6Play.ts` 웹 임시본 주석은 그대로.
+
+---
+
+## 인계 — 2026-08-27 13:22
+
+새 채팅 AI용. **이번 세션 = 듣기 준비 vs 퀴즈 음량 탭별 현황 문서.**
+
+### 한 일
+
+- 5탭: 샘플 유무·엔진·게인·조정이 퀴즈에 이어지는지 정리.
+- 단어 듣기: 순음 샘플 vs TTS → 조정 의미 약함(핵심).
+- 링6·문장: 듣기 준비 없음. PTA는 같은 `playPureTone` 계열.
+
+### 핵심 경로
+
+- `docs/listening-check-volume-by-tab.md`
+- `docs/README.md`
+
+### 단정 금지
+
+- `미검증`: 실기기 체감. 맞추는 방법 합의 없음.
+
+---
+
+## 인계 — 2026-08-27 13:10
+
+새 채팅 AI용. **이번 세션 = 단어 듣기 헤더에 듣기 준비 아이콘.**
+
+### 한 일
+
+- 목록·한 글자·두 글자 idle/요약: 통계 왼쪽에 헤드폰.
+- PTA와 같게 화면 갈아끼움. 샘플은 440 Hz 순음.
+- 빙고는 통계 아이콘이 없어 안 넣음.
+
+### 핵심 경로
+
+- `src/training/wrs/WrsTabScreen.tsx`
+- `src/training/wrs/WrsSessionScreen.tsx`
+- `src/training/wrs/WrsTwoCharScreen.tsx`
+
+### 단정 금지
+
+- `주의`: 연습은 TTS. 샘플음은 순음.
+- `미검증`: 실기기.
+
+---
+
+## 인계 — 2026-08-27 13:03
+
+새 채팅 AI용. **이번 세션 = 떨림 듣기 준비 히어로를 headphones로.**
+
+### 한 일
+
+- 헤더 헤드폰으로 연 듣기 준비 히어로가 `vibrate`였음.
+- PTA와 같게 `trackIcon="headphones"`.
+- idle 「떨림 찾기」 히어로 `vibrate`는 그대로.
+
+### 핵심 경로
+
+- `src/training/am/AmTabScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기.
+
+---
+
+## 인계 — 2026-08-27 12:50
+
+새 채팅 AI용. **이번 세션 = 듣기 준비를 관문에서 빼고 통계처럼 아이콘으로 연다.**
+
+### 한 일
+
+- idle/카드 「연습 시작」은 바로 세션. 듣기 준비 화면은 안 끼움.
+- 헤더 `headphones` 버튼(`ListeningCheckEntryButton`). 통계 왼쪽.
+- 안내·소리 들어보기 유지. 「연습 시작」삭제. 「뒤로 가기」만(통계와 같음).
+- 소리 높낮이 귀풀기/연습 토글은 세션 idle로(듣기 준비 `extra` 제거).
+- 떨림 `onBeforeStart`·`autoStart`·`needsListeningCheck` 제거.
+
+### 핵심 경로
+
+- `src/components/ui/listening-check-entry-button.tsx`
+- `src/training/ListeningCheckScreen.tsx`
+- `src/training/am/AmTabScreen.tsx`, `AmSessionScreen.tsx`
+- `src/training/pta/PtaSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기. 진행 중에는 아이콘 숨김(통계와 같음).
+
+---
+
+## 인계 — 2026-08-27 11:29
+
+새 채팅 AI용. **이번 세션 = 떨림 듣기 준비를 idle 시작마다 다시 띄움.**
+
+### 한 일
+
+- `if (checked) return true`·`checked` 상태 제거.
+- idle 「연습 시작」마다 듣기 준비. 통과 후 `autoStart`는 그대로.
+- idle 문구는 항상 「듣기 준비가 이어집니다」.
+
+### 핵심 경로
+
+- `src/training/am/AmTabScreen.tsx`
+- `src/training/am/AmSessionScreen.tsx` — `needsListeningCheck` 주석만.
+
+### 단정 금지
+
+- `미검증`: 실기기. PTA 한 번 통과 스킵은 그대로.
+
+---
+
+## 인계 — 2026-08-27 11:16
+
+새 채팅 AI용. **이번 세션 = 떨림 idle 첫 시작 문구를 듣기 준비에 맞춤.**
+
+### 한 일
+
+- 첫 시작(`!checked`): 「시작을 누르면 듣기 준비가 이어집니다」.
+- 통과 후: 기존 「난이도가 맞춰지는 연습이 이어집니다」 유지.
+- 게이트·화면 전환은 그대로.
+
+### 핵심 경로
+
+- `src/training/am/AmSessionScreen.tsx` — `needsListeningCheck`
+- `src/training/am/AmTabScreen.tsx` — `needsListeningCheck={!checked}`
+
+### 단정 금지
+
+- `미검증`: 실기기. freq·pitch2 idle 문구는 이번엔 안 바꿈.
+
+---
+
+## 인계 — 2026-08-27 11:10
+
+새 채팅 AI용. **이번 세션 = 듣기 준비 「연습명」자막 제거.**
+
+### 한 일
+
+- `{trackTitle}`(듣기 준비 밑 떨림 찾기 등) 삭제. prop·`subtitle`·호출부 인자도 제거.
+- 아이콘은 남김. AM·freq·pitch2 듣기 준비가 같은 화면.
+
+### 핵심 경로
+
+- `src/training/ListeningCheckScreen.tsx`
+- `src/training/am/AmTabScreen.tsx`, `src/training/pta/PtaSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 아이콘만으로 연습 구분이 충분한지. 리빌드 불필요.
+
+---
+
+## 인계 — 2026-08-27 10:57
+
+새 채팅 AI용. **이번 세션 = 귀풀기/연습 토글 비선택 칸을 2차 버튼처럼.**
+
+### 한 일
+
+- 비선택: `surface`+`border`, 라벨 `text`, 힌트 `textSecondary`.
+- 선택: 기존 accent 틴트·테두리·글자 유지. 난이도 암시 방침 유지.
+
+### 핵심 경로
+
+- `src/training/SessionModeToggle.tsx` — AM·freq·pitch2·듣기 준비가 이 컴포넌트만 씀.
+
+### 단정 금지
+
+- `미검증`: 실기기에서 비선택이 충분히 눌려 보이는지. 리빌드 불필요.
+
+---
+
 ## 인계 — 2026-08-27 04:40
 
 새 채팅 AI용. **이번 세션 = 팔레트 1순위 교체 + 테스트 환경 복구.** 다음은 **2순위**.
