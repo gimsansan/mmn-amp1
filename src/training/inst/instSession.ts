@@ -3,6 +3,10 @@ import {
   instrumentLabel,
   type InstrumentId,
 } from "@/training/inst/instruments";
+import {
+  INST_NOTE_IDS,
+  type InstNoteId,
+} from "@/training/inst/instSounds";
 
 /**
  * 악기 소리 식별 세션 — 한 음을 듣고 어느 악기인지 넷 중에서 고른다.
@@ -15,7 +19,7 @@ import {
 export type Rng = () => number;
 
 /**
- * 시행마다 굴리는 기음(Hz). G4·A4·C5·E5.
+ * 시행마다 굴리는 기음은 `instSounds.ts`의 `INST_NOTES`(G4·A4·C5·E5)다.
  *
  * **음고를 고정하면 안 된다** — 한 악기가 늘 같은 높이로 나오면 음색이 아니라
  * 높이를 외워서 고를 수 있다. 그래서 한 악기의 세 시행에는 **서로 다른 음**을 준다.
@@ -23,16 +27,8 @@ export type Rng = () => number;
  *
  * `주의`: **악기마다 음을 다르게 주면 안 된다.** 한 악기만 낮추면 「낮은 소리 =
  * 그 악기」가 되어 위 문장이 깨진다. 넷이 같은 목록을 쓰되 **목록 자체를 넷 다
- * 편한 자리에 놓는다** — 그게 이 옥타브를 고른 이유다.
- *
- * 왜 여기인가(결정 2026-08-28, `wav음원생성.md`): 아래로 내려 C4를 쓰면 **플루트의
- * 최저음**이라 소리가 약하고 바람 소리가 섞인다. 크기를 맞추려 올리면 그 잡음까지
- * 커져 「쉬익거리는 게 플루트」라는 **음색 아닌 단서**가 된다(`prep-ling6-wav.mjs`가
- * 마찰음에서 겪은 것과 같은 문제). 반대로 한 옥타브를 통째로 올리면 이번엔 기타가
- * 높은 프렛이라 얇고 빨리 죽고, 배음이 이 앱 작업 대역(`pitch2afc/constants.ts`
- * 200~2000 Hz) 밖으로 많이 나간다. 넷 다 편한 가운데 자리가 여기다.
+ * 편한 자리에 놓는다** — 왜 그 옥타브인지는 `instSounds.ts`에 적어 뒀다.
  */
-export const INST_NOTES_HZ: readonly number[] = [392.0, 440.0, 523.25, 659.26];
 
 /** 악기당 시행 수. 넷 × 3 = 12문항 — 링 6(8)보다 길고 문장 듣기(18)보다 짧다. */
 export const REPEATS_PER_INSTRUMENT = 3;
@@ -42,8 +38,8 @@ export const INST_TRIAL_COUNT =
 
 export type InstTrial = {
   target: InstrumentId;
-  /** 이 시행에서 쓸 기음. */
-  noteHz: number;
+  /** 이 시행에서 쓸 기음. 음원 파일을 고르는 열쇠다(`instSounds.ts`). */
+  note: InstNoteId;
 };
 
 export type InstOutcome = {
@@ -113,14 +109,14 @@ export function createInstTrials(rng: Rng = Math.random): InstTrial[] {
   const order = orderWithoutRuns(counts, rng);
 
   // 악기별로 음을 섞어 두고 나온 차례대로 하나씩 꺼낸다.
-  const notesLeft = new Map<InstrumentId, number[]>(
-    INSTRUMENT_IDS.map((id) => [id, shuffleInPlace([...INST_NOTES_HZ], rng)]),
+  const notesLeft = new Map<InstrumentId, InstNoteId[]>(
+    INSTRUMENT_IDS.map((id) => [id, shuffleInPlace([...INST_NOTE_IDS], rng)]),
   );
 
   return order.map((id) => {
     const queue = notesLeft.get(id) ?? [];
-    const noteHz = queue.shift() ?? INST_NOTES_HZ[0] ?? 440;
-    return { target: id, noteHz };
+    const note = queue.shift() ?? INST_NOTE_IDS[0] ?? "a4";
+    return { target: id, note };
   });
 }
 

@@ -1,15 +1,20 @@
 import {
-  playInstrumentTone,
-  stopInstrumentTone,
-} from "@/audio/instrumentTone";
-import { instrumentOf } from "@/training/inst/instruments";
+  createAudioPlayer,
+  setAudioModeAsync,
+  type AudioPlayer,
+} from "expo-audio";
+
+import { instSoundOf } from "@/training/inst/instSounds";
 import type { InstTrial } from "@/training/inst/instSession";
 
 /**
  * 악기 자극 재생 — 훈련 쪽 창구.
  *
- * 소리를 어떻게 만드는지는 `@/audio/instrumentTone`만 안다. 실물 녹음 wav로
- * 갈아탈 때 갈아 끼우는 곳이 **이 파일 하나**다(화면·세션은 그대로).
+ * 합성(구 `@/audio/instrumentTone`)을 걷어내고 **실물 연주 녹음 wav**를 튼다.
+ * 링 6가 같은 이유로 같은 길을 갔다(`ling6Play.ts`) — 하모닉 합성으로는 「피아노
+ * 같은 소리」까지는 가도 「피아노」가 안 된다. 음원 16개는 `instSounds.ts`에 있다.
+ *
+ * 화면·세션은 이 교체에 손대지 않았다. 바뀐 것은 이 파일과 `instSounds.ts`뿐이다.
  */
 
 /**
@@ -18,23 +23,89 @@ import type { InstTrial } from "@/training/inst/instSession";
  */
 export const INST_FIRST_LEAD_MS = 700;
 
+let player: AudioPlayer | null = null;
+let playGen = 0;
+let pendingResolve: (() => void) | null = null;
+let modeReady: Promise<void> | null = null;
+
 export async function waitInstLeadIn(): Promise<void> {
   await new Promise((resolve) => {
     setTimeout(resolve, INST_FIRST_LEAD_MS);
   });
 }
 
+function ensurePlayer(): AudioPlayer {
+  if (!player) {
+    player = createAudioPlayer(null, { updateInterval: 100 });
+  }
+  return player;
+}
+
+function ensureAudioMode(): Promise<void> {
+  if (!modeReady) {
+    modeReady = setAudioModeAsync({
+      playsInSilentMode: true,
+      interruptionMode: "mixWithOthers",
+      shouldPlayInBackground: false,
+    }).catch(() => {
+      modeReady = null;
+    });
+  }
+  return modeReady;
+}
+
+function resolvePending(): void {
+  const resolve = pendingResolve;
+  pendingResolve = null;
+  resolve?.();
+}
+
 /** 진행 중인 재생을 끊는다. 중지·이탈 경로이므로 오류가 아니다. */
 export function stopInstPlayback(): void {
-  stopInstrumentTone();
+  playGen += 1;
+  player?.pause();
+  resolvePending();
 }
 
 /** 한 시행 재생. 끝나거나 중지되면 resolve. */
 export async function playInstTrial(trial: InstTrial): Promise<void> {
-  const instrument = instrumentOf(trial.target);
-  await playInstrumentTone({
-    spectrum: instrument.spectrum,
-    envelope: instrument.envelope,
-    frequencyHz: trial.noteHz,
+  stopInstPlayback();
+  const gen = playGen;
+
+  await ensureAudioMode();
+  if (gen !== playGen) {
+    return;
+  }
+
+  const current = ensurePlayer();
+  current.replace(instSoundOf(trial.target, trial.note));
+  await current.seekTo(0);
+  if (gen !== playGen) {
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const finish = (): void => {
+      subscription.remove();
+      resolve();
+    };
+    const subscription = current.addListener(
+      "playbackStatusUpdate",
+      (status) => {
+        if (gen !== playGen) {
+          finish();
+          return;
+        }
+        if (status.error) {
+          subscription.remove();
+          reject(new Error(status.error));
+          return;
+        }
+        if (status.didJustFinish) {
+          finish();
+        }
+      },
+    );
+    current.play();
   });
 }

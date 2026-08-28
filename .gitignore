@@ -44,3 +44,6 @@ example
 
 # JetBrains / Android Studio
 .idea/
+
+# 악기 원본 음원 — scripts/fetch-inst-src.mjs가 받는다. 83MB라 커밋하지 않는다.
+/.inst-src

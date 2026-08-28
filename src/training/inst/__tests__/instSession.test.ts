@@ -1,7 +1,6 @@
 import {
   collectInstrumentResults,
   createInstTrials,
-  INST_NOTES_HZ,
   INST_TRIAL_COUNT,
   instResultCopy,
   instWeakestCopy,
@@ -15,6 +14,7 @@ import {
   INSTRUMENT_IDS,
   type InstrumentId,
 } from "@/training/inst/instruments";
+import { INST_NOTE_IDS } from "@/training/inst/instSounds";
 
 function rngFrom(seed: number): () => number {
   let state = seed;
@@ -54,7 +54,7 @@ describe("createInstTrials", () => {
       for (const id of INSTRUMENT_IDS) {
         const notes = trials
           .filter((trial) => trial.target === id)
-          .map((trial) => trial.noteHz);
+          .map((trial) => trial.note);
         expect(new Set(notes).size).toBe(REPEATS_PER_INSTRUMENT);
       }
     }
@@ -63,7 +63,7 @@ describe("createInstTrials", () => {
   it("높이는 정해진 목록에서만 나온다", () => {
     const trials = createInstTrials(rngFrom(42));
     for (const trial of trials) {
-      expect(INST_NOTES_HZ).toContain(trial.noteHz);
+      expect(INST_NOTE_IDS).toContain(trial.note);
     }
   });
 });

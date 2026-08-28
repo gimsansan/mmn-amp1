@@ -1,0 +1,43 @@
+악기 소리 탭(assets/inst/*.wav) 음원 출처 — 소명 자료
+====================================================
+
+출처
+----
+University of Iowa Electronic Music Studios — Musical Instrument Samples (MIS)
+https://theremin.music.uiowa.edu/MIS.html
+확인 날짜: 2026-08-29
+
+이용 조건 (MIS.html 원문 인용)
+-----------------------------
+"these recordings have been freely available on this website and may be
+ downloaded and used for any projects, without restrictions."
+
+- 정식 라이선스 문서(CC0 등)가 아니라 **배포 페이지에 적힌 이용 허락 문장**이다.
+  그래서 문장을 그대로 옮겨 둔다. 나중에 페이지가 바뀌면 이 파일이 근거다.
+- 저작자 표시 의무가 명시돼 있지 않다 → 앱에 크레딧 화면을 만들지 않아도 된다.
+  (이 저장소에는 설정·크레딧 화면이 없고 탭이 6개라 더 못 늘린다.)
+
+녹음 조건
+---------
+- 무향실(Anechoic Chamber, Wendell Johnson Speech and Hearing Center) 녹음.
+- 모노 16bit 44.1kHz AIFF.
+- **피아노만 예외**: 작은 교습실에서 스테레오로 녹음됐다(무향실 아님).
+- 기타는 24bit 96kHz 판을 받아 44.1kHz로 내렸다.
+
+가져온 원본 (10개)
+------------------
+Piano.mf.G4.aiff / Piano.mf.A4.aiff / Piano.mf.C5.aiff / Piano.mf.E5.aiff
+Guitar.mf.sul_E.E4B4.mono.aif / Guitar.mf.sul_E.C5B5.mono.aif
+Violin.arco.mf.sulD.D4A4.aiff / Violin.arco.mf.sulA.C5C6.aiff
+Flute.vib.mf.B3B4.aiff / Flute.vib.mf.C5B5.aiff
+
+- 받는 스크립트: scripts/fetch-inst-src.mjs (→ .inst-src/, 커밋하지 않음)
+- 다듬는 스크립트: scripts/prep-inst-wav.mjs (→ assets/inst/, 16개)
+- 고른 이유는 scripts/inst-sources.mjs 머리말에 있다.
+
+배포 전 확인이 남은 것
+----------------------
+- assets/ling6/*.wav 와 assets/9_sent/*.wav 는 **출처가 다르다.**
+  ling6Play.ts 주석에 "웹에서 받은 개인 확인용 임시본"이라고 적혀 있다.
+  스토어 배포 전에 그 둘의 출처·라이선스를 따로 정리해야 한다.
+  (악기 음원은 이 파일로 정리 끝.)
