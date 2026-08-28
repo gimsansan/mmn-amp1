@@ -1,0 +1,209 @@
+import {
+  INSTRUMENT_IDS,
+  instrumentLabel,
+  type InstrumentId,
+} from "@/training/inst/instruments";
+
+/**
+ * 악기 소리 식별 세션 — 한 음을 듣고 어느 악기인지 넷 중에서 고른다.
+ *
+ * 「듣고 고르기」 틀은 링 6·문장 듣기와 같다. 다른 점은 **무음 시행이 없다**는
+ * 것이다. 링 6은 「들렸나」를 보는 검출 과제라 무음이 필요하지만, 여기는
+ * 「무엇이었나」를 보는 식별 과제여서 무음은 답할 수 없는 문항이 된다.
+ */
+
+export type Rng = () => number;
+
+/**
+ * 시행마다 굴리는 기음(Hz). G4·A4·C5·E5.
+ *
+ * **음고를 고정하면 안 된다** — 한 악기가 늘 같은 높이로 나오면 음색이 아니라
+ * 높이를 외워서 고를 수 있다. 그래서 한 악기의 세 시행에는 **서로 다른 음**을 준다.
+ * 넷 다 같은 목록에서 뽑으므로 음역 자체는 단서가 되지 않는다.
+ *
+ * `주의`: **악기마다 음을 다르게 주면 안 된다.** 한 악기만 낮추면 「낮은 소리 =
+ * 그 악기」가 되어 위 문장이 깨진다. 넷이 같은 목록을 쓰되 **목록 자체를 넷 다
+ * 편한 자리에 놓는다** — 그게 이 옥타브를 고른 이유다.
+ *
+ * 왜 여기인가(결정 2026-08-28, `wav음원생성.md`): 아래로 내려 C4를 쓰면 **플루트의
+ * 최저음**이라 소리가 약하고 바람 소리가 섞인다. 크기를 맞추려 올리면 그 잡음까지
+ * 커져 「쉬익거리는 게 플루트」라는 **음색 아닌 단서**가 된다(`prep-ling6-wav.mjs`가
+ * 마찰음에서 겪은 것과 같은 문제). 반대로 한 옥타브를 통째로 올리면 이번엔 기타가
+ * 높은 프렛이라 얇고 빨리 죽고, 배음이 이 앱 작업 대역(`pitch2afc/constants.ts`
+ * 200~2000 Hz) 밖으로 많이 나간다. 넷 다 편한 가운데 자리가 여기다.
+ */
+export const INST_NOTES_HZ: readonly number[] = [392.0, 440.0, 523.25, 659.26];
+
+/** 악기당 시행 수. 넷 × 3 = 12문항 — 링 6(8)보다 길고 문장 듣기(18)보다 짧다. */
+export const REPEATS_PER_INSTRUMENT = 3;
+
+export const INST_TRIAL_COUNT =
+  INSTRUMENT_IDS.length * REPEATS_PER_INSTRUMENT;
+
+export type InstTrial = {
+  target: InstrumentId;
+  /** 이 시행에서 쓸 기음. */
+  noteHz: number;
+};
+
+export type InstOutcome = {
+  target: InstrumentId;
+  choice: InstrumentId;
+  correct: boolean;
+};
+
+function shuffleInPlace<T>(items: T[], rng: Rng): T[] {
+  for (let i = items.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    const current = items[i];
+    const swap = items[j];
+    if (current === undefined || swap === undefined) {
+      continue;
+    }
+    items[i] = swap;
+    items[j] = current;
+  }
+  return items;
+}
+
+/**
+ * 같은 악기가 연달아 나오지 않게 순서를 짠다.
+ *
+ * 섞고 나서 겹치면 다시 섞는 식으로 하면 언제 끝날지 알 수 없다. 대신 **남은
+ * 개수가 가장 많은 것 중에서** 직전과 다른 것을 고른다 — 개수가 고른 묶음에서는
+ * 이 방법이 막다른 길에 빠지지 않는다.
+ */
+function orderWithoutRuns(
+  counts: Map<InstrumentId, number>,
+  rng: Rng,
+): InstrumentId[] {
+  const order: InstrumentId[] = [];
+  let previous: InstrumentId | null = null;
+
+  for (;;) {
+    const available = [...counts.entries()].filter(
+      ([id, left]) => left > 0 && id !== previous,
+    );
+    if (available.length === 0) {
+      break;
+    }
+    const most = Math.max(...available.map(([, left]) => left));
+    const best = available.filter(([, left]) => left === most);
+    const picked = best[Math.floor(rng() * best.length)] ?? best[0];
+    if (!picked) {
+      break;
+    }
+    const [id, left] = picked;
+    counts.set(id, left - 1);
+    order.push(id);
+    previous = id;
+  }
+
+  return order;
+}
+
+/**
+ * 12시행. 악기마다 3번씩 나오고, 같은 악기가 연달아 오지 않으며,
+ * 한 악기의 세 시행은 서로 다른 높이로 난다.
+ */
+export function createInstTrials(rng: Rng = Math.random): InstTrial[] {
+  const counts = new Map<InstrumentId, number>(
+    INSTRUMENT_IDS.map((id) => [id, REPEATS_PER_INSTRUMENT]),
+  );
+  const order = orderWithoutRuns(counts, rng);
+
+  // 악기별로 음을 섞어 두고 나온 차례대로 하나씩 꺼낸다.
+  const notesLeft = new Map<InstrumentId, number[]>(
+    INSTRUMENT_IDS.map((id) => [id, shuffleInPlace([...INST_NOTES_HZ], rng)]),
+  );
+
+  return order.map((id) => {
+    const queue = notesLeft.get(id) ?? [];
+    const noteHz = queue.shift() ?? INST_NOTES_HZ[0] ?? 440;
+    return { target: id, noteHz };
+  });
+}
+
+export function scoreInstChoice(
+  target: InstrumentId,
+  choice: InstrumentId,
+): boolean {
+  return target === choice;
+}
+
+/** 한 세션의 숫자 요약. 저장·통계가 쓰는 값이며 점수·진단이 아니다. */
+export type InstSummary = {
+  trialCount: number;
+  correctCount: number;
+  percent: number;
+};
+
+export function summarizeInst(
+  outcomes: readonly InstOutcome[],
+): InstSummary {
+  const trialCount = outcomes.length;
+  const correctCount = outcomes.filter((row) => row.correct).length;
+  const percent =
+    trialCount === 0 ? 0 : Math.round((100 * correctCount) / trialCount);
+  return { trialCount, correctCount, percent };
+}
+
+export type InstrumentTally = {
+  trialCount: number;
+  correctCount: number;
+};
+
+/**
+ * 악기별 맞힌 수. 요약 화면에서만 쓴다 — **저장소에는 안 넣는다**
+ * (기록 형식을 percent 셋으로 두어 단어·문장 듣기와 같은 추세 그림을 쓴다).
+ */
+export function collectInstrumentResults(
+  outcomes: readonly InstOutcome[],
+): Record<InstrumentId, InstrumentTally> {
+  const tally = Object.fromEntries(
+    INSTRUMENT_IDS.map((id) => [id, { trialCount: 0, correctCount: 0 }]),
+  ) as Record<InstrumentId, InstrumentTally>;
+
+  for (const outcome of outcomes) {
+    const row = tally[outcome.target];
+    row.trialCount += 1;
+    if (outcome.correct) {
+      row.correctCount += 1;
+    }
+  }
+  return tally;
+}
+
+/** 요약 한 줄. 다 못 채우고 끝냈으면 기록에 안 남는다는 것까지 말해 준다. */
+export function instResultCopy(summary: InstSummary): string {
+  if (summary.trialCount <= 0) {
+    return "연습이 짧아서 기록할 내용이 없어요";
+  }
+  if (summary.trialCount < INST_TRIAL_COUNT) {
+    return `${summary.trialCount}개 중 ${summary.correctCount}개를 맞혔어요. ${INST_TRIAL_COUNT}개를 다 고르지 않아 기록에는 안 남겼어요`;
+  }
+  return `${INST_TRIAL_COUNT}개 중 ${summary.correctCount}개를 맞혔어요`;
+}
+
+/**
+ * 이번 연습에서 가장 아쉬웠던 악기 한 줄. 판정이 아니라 **이번 기록** 이야기다.
+ * 다 맞혔거나, 아쉬운 악기가 여럿이어서 하나로 좁혀지지 않으면 null.
+ */
+export function instWeakestCopy(
+  tally: Record<InstrumentId, InstrumentTally>,
+): string | null {
+  const missed = INSTRUMENT_IDS.map((id) => ({
+    id,
+    miss: tally[id].trialCount - tally[id].correctCount,
+  })).filter((row) => row.miss > 0);
+
+  if (missed.length === 0) {
+    return null;
+  }
+  const worst = Math.max(...missed.map((row) => row.miss));
+  const leaders = missed.filter((row) => row.miss === worst);
+  if (leaders.length !== 1 || !leaders[0]) {
+    return null;
+  }
+  return `이번엔 ${instrumentLabel(leaders[0].id)} 소리가 가장 아쉬웠어요`;
+}

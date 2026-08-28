@@ -29,7 +29,15 @@ export type IconName =
   /** 단어 듣기 — 두 글자. */
   | 'twoChar'
   /** 문장 듣기 — 그림 세 장. */
-  | 'sentence';
+  | 'sentence'
+  /** 악기 소리 — 건반(피아노). 탭·통계 제목줄도 이걸 쓴다. */
+  | 'pianoKeys'
+  /** 악기 소리 — 퉁기는 줄(기타). */
+  | 'guitar'
+  /** 악기 소리 — 활로 켜는 줄(바이올린). 활이 줄을 가로지른다. */
+  | 'violin'
+  /** 악기 소리 — 입김을 부는 관(플루트). */
+  | 'flute';
 
 type IconProps = {
   name: IconName;
@@ -165,6 +173,48 @@ export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: Readonly<Ico
           <Rect x="3" y="6" width="5.5" height="12" rx="1" {...stroke} />
           <Rect x="9.25" y="6" width="5.5" height="12" rx="1" {...stroke} />
           <Rect x="15.5" y="6" width="5.5" height="12" rx="1" {...stroke} />
+        </>
+      ) : null}
+
+      {/*
+        악기 넷은 **보기 칸에서 서로 구분되어야 한다** — 글자를 읽기 전에 어느
+        악기인지 짚을 수 있게 실루엣을 최대한 다르게 잡았다. 건반(가로 사각 + 검은
+        건반) / 몸통 원 + 목(기타) / 줄을 가로지르는 활(바이올린) / 구멍 뚫린 가로
+        관(플루트). 기타와 바이올린이 둘 다 「줄」이라 가장 헷갈리므로, 바이올린은
+        몸통을 그리지 않고 활 하나로 못 박는다.
+      */}
+      {name === 'pianoKeys' ? (
+        <>
+          <Rect x="3" y="6" width="18" height="12" rx="2" {...stroke} />
+          <Path d="M9 6v12M15 6v12" {...stroke} />
+          <Rect x="7.6" y="6" width="2.8" height="7" rx="0.6" fill={color} />
+          <Rect x="13.6" y="6" width="2.8" height="7" rx="0.6" fill={color} />
+        </>
+      ) : null}
+
+      {name === 'guitar' ? (
+        <>
+          <Circle cx="8.5" cy="15.5" r="5.5" {...stroke} />
+          <Circle cx="8.5" cy="15.5" r="1.6" fill={color} />
+          <Path d="M12.4 11.6L18.6 5.4" {...stroke} />
+          <Path d="M17.2 4L20 6.8" {...stroke} />
+        </>
+      ) : null}
+
+      {name === 'violin' ? (
+        <>
+          <Path d="M8 4v16M12 4v16M16 4v16" {...stroke} opacity={0.45} />
+          <Path d="M3 16.5L21 8.5" {...stroke} strokeWidth={strokeWidth + 0.6} />
+        </>
+      ) : null}
+
+      {name === 'flute' ? (
+        <>
+          <Rect x="2.5" y="10" width="19" height="4" rx="2" {...stroke} />
+          <Circle cx="5.8" cy="12" r="1.1" {...stroke} />
+          <Circle cx="10.2" cy="12" r="0.9" fill={color} />
+          <Circle cx="13.4" cy="12" r="0.9" fill={color} />
+          <Circle cx="16.6" cy="12" r="0.9" fill={color} />
         </>
       ) : null}
     </Svg>

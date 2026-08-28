@@ -40,6 +40,7 @@ import {
   type StatsFeed,
   type StatsKind,
 } from "@/training/statsFeed";
+import { InstProgressPanel } from "@/training/inst/InstProgressPanel";
 import { SentClosedProgressPanel } from "@/training/sentClosed/SentClosedProgressPanel";
 import { WrsProgressPanel } from "@/training/wrs/WrsProgressPanel";
 
@@ -58,6 +59,7 @@ const KIND_ICON: Record<StatsKind, IconName> = {
   wrs2: "twoChar",
   am: "vibrate",
   sent: "sentence",
+  inst: "pianoKeys",
 };
 
 /** 본문이 밀려 들어오는 시간(ms). 넘기는 느낌만 주고 기다리게 하지 않는다. */
@@ -80,6 +82,9 @@ function KindPanel({
   if (kind === "sent") {
     return <SentClosedProgressPanel records={feed.sent} />;
   }
+  if (kind === "inst") {
+    return <InstProgressPanel records={feed.inst} />;
+  }
   if (!isSessionTrack(kind)) {
     return null;
   }
@@ -93,7 +98,7 @@ type TabView = { kind: StatsKind; forward: boolean };
 
 /**
  * 종목 탭 줄. 고른 것만 파란 면 + 꼬리로 아래 본문과 이어 보이게 한다.
- * 일곱 개라 한 화면에 다 들어오지 않으므로, 고른 탭이 잘리면 가운데로 굴려 준다
+ * 여덟 개라 한 화면에 다 들어오지 않으므로, 고른 탭이 잘리면 가운데로 굴려 준다
  * (헤더 차트 버튼으로 들어오면 그 종목이 줄 끝에 있을 수 있다).
  */
 function KindTabs({

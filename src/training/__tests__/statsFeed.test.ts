@@ -58,6 +58,7 @@ const EMPTY: StatsFeed = {
   wrs1: [],
   wrs2: [],
   sent: [],
+  inst: [],
 };
 
 describe("countOfKind · sessionRowsOfKind", () => {

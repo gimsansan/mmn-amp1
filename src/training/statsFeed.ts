@@ -1,6 +1,7 @@
 /**
- * 통계 읽기 창구 — 저장소 5개(`ling6Store` · `sessionStore` · `wrsStore` ·
- * `twoCharStore` · `sentClosed/store`)를 **그대로 두고** 읽는 쪽만 한 곳으로 모은다.
+ * 통계 읽기 창구 — 저장소 6개(`ling6Store` · `sessionStore` · `wrsStore` ·
+ * `twoCharStore` · `sentClosed/store` · `inst/instStore`)를 **그대로 두고**
+ * 읽는 쪽만 한 곳으로 모은다.
  * 저장 키 통합·마이그레이션이 아니다(`docs/training-stats-recommendation.md` §3
  * 「읽는 API만 봉투로 투영」).
  *
@@ -34,6 +35,11 @@ import {
   listSentClosedRecords,
   type SavedSentClosedRecord,
 } from "@/training/sentClosed/store";
+import {
+  clearInstRecords,
+  listInstRecords,
+  type SavedInstRecord,
+} from "@/training/inst/instStore";
 
 /** 통계 한 종목. 칩 하나 = kind 하나. */
 export type StatsKind =
@@ -43,9 +49,10 @@ export type StatsKind =
   | "wrs1"
   | "wrs2"
   | "am"
-  | "sent";
+  | "sent"
+  | "inst";
 
-/** 칩 순서 = 하단 탭 순서(소리 구분 · 소리 높낮이 · 단어 듣기 · 떨림 · 문장 듣기). */
+/** 칩 순서 = 하단 탭 순서(소리 구분 · 소리 높낮이 · 단어 듣기 · 떨림 · 문장 듣기 · 악기 소리). */
 export const STATS_KINDS: readonly StatsKind[] = [
   "ling6",
   "pitch2",
@@ -54,6 +61,7 @@ export const STATS_KINDS: readonly StatsKind[] = [
   "wrs2",
   "am",
   "sent",
+  "inst",
 ];
 
 /** 칩·지우기 버튼에 쓰는 종목 이름. */
@@ -65,10 +73,11 @@ export const KIND_LABEL: Record<StatsKind, string> = {
   wrs2: "두 글자",
   am: "떨림",
   sent: "문장 듣기",
+  inst: "악기 소리",
 };
 
 /**
- * 한 번 읽어 둔 다섯 저장소. 칩을 바꿔도 다시 읽지 않는다.
+ * 한 번 읽어 둔 여섯 저장소. 칩을 바꿔도 다시 읽지 않는다.
  * `sessions`는 귀풀기(practice)를 이미 걸러 낸 뒤다.
  */
 export type StatsFeed = {
@@ -77,6 +86,7 @@ export type StatsFeed = {
   readonly wrs1: readonly SavedWrsRecord[];
   readonly wrs2: readonly SavedTwoCharRecord[];
   readonly sent: readonly SavedSentClosedRecord[];
+  readonly inst: readonly SavedInstRecord[];
 };
 
 export const EMPTY_STATS_FEED: StatsFeed = {
@@ -85,19 +95,21 @@ export const EMPTY_STATS_FEED: StatsFeed = {
   wrs1: [],
   wrs2: [],
   sent: [],
+  inst: [],
 };
 
 /**
- * 다섯 저장소를 한 번에 읽는다. 레코드가 전부 요약 숫자라 합쳐도 수십 KB다.
+ * 여섯 저장소를 한 번에 읽는다. 레코드가 전부 요약 숫자라 합쳐도 수십 KB다.
  * 하나가 깨져도 나머지는 보여 준다(그 종목만 빈 목록).
  */
 export async function loadStatsFeed(): Promise<StatsFeed> {
-  const [ling6, sessions, wrs1, wrs2, sent] = await Promise.all([
+  const [ling6, sessions, wrs1, wrs2, sent, inst] = await Promise.all([
     listLing6DailyRecords().catch((): SavedLing6Record[] => []),
     listSavedSessions().catch((): SavedSessionRecord[] => []),
     listWrsRecords().catch((): SavedWrsRecord[] => []),
     listTwoCharRecords().catch((): SavedTwoCharRecord[] => []),
     listSentClosedRecords().catch((): SavedSentClosedRecord[] => []),
+    listInstRecords().catch((): SavedInstRecord[] => []),
   ]);
 
   return {
@@ -107,6 +119,7 @@ export async function loadStatsFeed(): Promise<StatsFeed> {
     wrs1,
     wrs2,
     sent,
+    inst,
   };
 }
 
@@ -133,6 +146,8 @@ export function countOfKind(feed: StatsFeed, kind: StatsKind): number {
       return feed.wrs2.length;
     case "sent":
       return feed.sent.length;
+    case "inst":
+      return feed.inst.length;
     default:
       return sessionRowsOfKind(feed, kind).length;
   }
@@ -152,6 +167,8 @@ export function clearStatsKind(kind: StatsKind): Promise<void> {
       return clearTwoCharRecords();
     case "sent":
       return clearSentClosedRecords();
+    case "inst":
+      return clearInstRecords();
     default:
       return deleteSavedSessionsByTrack(kind);
   }

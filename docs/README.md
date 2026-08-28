@@ -78,6 +78,7 @@
 | 설계·과제 방식을 바꾸기로 합의 | **설계 문서** 갱신 | impl-log에 한 줄 |
 | 통계 수집·표시 방식을 바꾸기로 함 | **`training-stats-recommendation.md`** | 자극 설계 문서에 통계 UX를 섞지 않음 |
 | 듣기 준비 vs 퀴즈 음량 현황 | **`listening-check-volume-by-tab.md`** | 자극 설계에 탭별 게인 표를 흩뿌리지 않음 |
+| 악기 소리 탭 관련 전부 | **루트 `answer_1.md`** | 사용자 결정(2026-08-28): 이 탭은 대화·설계·터미널 출력을 한 파일에 모은다. `docs/`에 나누지 않음 |
 | 코드를 어떻게 물어볼지 | **`ask-file-behavior.md`**(범용) · **`ask-app-behavior.md`**(이 앱) | 인계·설계에 질문 복붙을 흩뿌리지 않음 |
 | 요청·탐색이 토큰을 너무 먹음 | **`ask-token-budge-universal.md`**(방법) · **`ask-token-budget.md`**(이 앱 실측) | 앱 런타임 성능은 `analysis/ask-performance.md`(다른 문제) |
 | 빌드·실행 방법이 바뀜 | **셋업 문서** 갱신 | impl-log에 한 줄 |
