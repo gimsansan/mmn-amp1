@@ -56,6 +56,46 @@
 
 ## 로그
 
+### 2026-08-28 — 선택 버튼 눌림 scale 촉감(공용 훅)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 선택 버튼은 눌러도 색만 바뀌었다. 사용자: 빙고 타일처럼 살짝 눌리는 촉감을 통일. |
+| 근거·결정 | 대상은 `ChoiceCell`이 있는 4개 화면. freq·pitch2afc는 버튼 구조가 달라 이번 범위 제외. |
+| 변경 요약 | `src/hooks/use-press-scale.ts` 신설 — `Animated.Value(1)` 지연 초기화, `onPressIn`→0.96·`onPressOut`→1 spring(native driver). |
+| 변경 요약 | ling6·wrs·wrsTwoChar·sentClosed의 `ChoiceCell`: `Pressable`을 `Animated.View`(`transform: scale`)로 감싸고 `onPressIn/Out` 연결. |
+| 변경 요약 | 각 `choiceCell`의 `width`(31.5%/48%)를 감싸는 `choiceCellOuter`로 옮기고 `choiceCell`은 `width: "100%"`로. 그리드 레이아웃 유지. |
+| 주요 경로 | `src/hooks/use-press-scale.ts` |
+| 주요 경로 | `src/training/ling6/Ling6SessionScreen.tsx`, `wrs/WrsSessionScreen.tsx`, `wrs/WrsTwoCharScreen.tsx`, `sentClosed/SentClosedSessionScreen.tsx` |
+| 결과 | 코드 반영. 린트 신규 오류 없음(기존 인지복잡도·중첩삼항 경고만). 실기기 미확인. |
+| 확인 | `ReadLints` 5파일: 신규 오류 0. `WrsSessionScreen.test.tsx`는 오디오 모듈 미모킹으로 suite 로드 실패 — clean tree(stash)에서도 동일, 이번 변경 무관. |
+| 단정 금지 | `추정`: scale은 `useNativeDriver: true`라 JS 스레드·layout 부담 없음(빙고 타일과 같음). 듣기 중이 아니라 고르는 중 동작이라 오디오 겹침 낮음. |
+| 단정 금지 | `미검증`: 실기기에서 눌림 체감·그리드 폭 유지. `주의`: sentClosed는 `choiceCell`에 `overflow:hidden` 유지(이미지 클립). |
+| 성능·주의 | 없음. native driver spring, 버튼 개수만큼 Animated.Value(2~4개). |
+| 다음 | 원하면 freq·pitch2afc 인라인 버튼에도 확대 적용. 요약 카드 등장 페이드는 별개 작업. |
+
+### 2026-08-28 — SessionProgressBar 채움 폭 짧게 밀어 채우기
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | 채움 폭이 시행마다 `width: ${ratio*100}%`로 즉시 점프했다. 사용자: 점프 말고 짧게 밀어 채우기. |
+| 근거·결정 | 빙고는 칸이 진행이라 막대(`SessionProgressBar`) 자체가 없어 대상 아님. |
+| 변경 요약 | `Animated.Value(ratio)`를 지연 초기화 `useState`로 한 번만 생성(`equalizer.tsx`와 같은 방식). |
+| 변경 요약 | `ratio` 바뀔 때 `Animated.timing`(260ms)으로 밀어 채움. `interpolate`로 `0→"0%"`, `1→"100%"`. |
+| 변경 요약 | 첫 렌더는 `mounted` ref로 애니메이션 없이 `setValue(ratio)` 즉시 반영(초기 점프 방지 아니라 초기 애니메이션 생략). |
+| 변경 요약 | `fill`을 `View`→`Animated.View`로 교체. |
+| 주요 경로 | `src/training/SessionProgressBar.tsx` |
+| 주요 경로 | `src/training/__tests__/SessionProgressBar.test.tsx` (Animated에 맞춰 fake timer·`__getValue()`로 조정) |
+| 결과 | 코드 반영. 린트 통과. 테스트 4개 통과. 실기기 미확인. |
+| 확인 | `npx jest SessionProgressBar.test.tsx` → 4 passed. 린트 오류 없음. |
+| 단정 금지 | `주의`: `width(%)`는 layout이라 `useNativeDriver: false`. Equalizer의 `scaleY`(native)와 다르게 JS 스레드를 거친다. |
+| 단정 금지 | `추정`: 높이 5px·시행당 1회·260ms라 부담은 작을 것으로 봄. |
+| 단정 금지 | `미검증`: 듣기 중 오디오 끊김 영향 측정 안 함. |
+| 성능·주의 | `useNativeDriver: false`(layout 애니메이션)라 JS 스레드 부하 있음. 짧고 드물어 영향은 작다고 봄(`추정`, 미측정). |
+| 다음 | 실기기에서 밀림 체감·듣기 중 끊김 확인. 부담되면 `FILL_MS` 축소 또는 되돌림. |
+
 ### 2026-08-27 — 소리 높낮이 선택 화면에 공용 토글·안내문 통합, 카드 터치 = 즉시 시작
 
 | 항목 | 내용 |

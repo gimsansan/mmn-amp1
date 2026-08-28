@@ -1,6 +1,7 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Animated,
   BackHandler,
   Pressable,
   ScrollView,
@@ -25,6 +26,7 @@ import {
   Shadows,
   Spacing,
 } from "@/constants/theme";
+import { usePressScale } from "@/hooks/use-press-scale";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
@@ -589,29 +591,36 @@ function ChoiceCell({
 }>) {
   const theme = useTheme();
   const answer = marked === "answer";
+  const { scale, onPressIn, onPressOut } = usePressScale();
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={word}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.choiceCell,
-        {
-          backgroundColor: theme.surface,
-          borderColor: choiceBorder(theme, answer, pressed && !disabled),
-        },
-        Shadows.card,
-        pressed && !disabled && styles.pressed,
-        disabled && styles.disabled,
-      ]}
+    <Animated.View
+      style={[styles.choiceCellOuter, { transform: [{ scale }] }]}
     >
-      <ThemedText type="heading" style={styles.choiceWord}>
-        {word}
-      </ThemedText>
-    </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={word}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        style={({ pressed }) => [
+          styles.choiceCell,
+          {
+            backgroundColor: theme.surface,
+            borderColor: choiceBorder(theme, answer, pressed && !disabled),
+          },
+          Shadows.card,
+          pressed && !disabled && styles.pressed,
+          disabled && styles.disabled,
+        ]}
+      >
+        <ThemedText type="heading" style={styles.choiceWord}>
+          {word}
+        </ThemedText>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -694,8 +703,11 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     justifyContent: "space-between",
   },
-  choiceCell: {
+  choiceCellOuter: {
     width: "48%",
+  },
+  choiceCell: {
+    width: "100%",
     minHeight: 72,
     borderWidth: 1.5,
     borderRadius: Radius.large - 4,

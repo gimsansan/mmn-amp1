@@ -4,6 +4,53 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-28 11:12
+
+새 채팅 AI용. **이번 세션 = 선택 버튼 눌림 scale 촉감을 공용 훅으로 4개 화면에 통일. 구현 완료.**
+
+### 한 일
+
+- `src/hooks/use-press-scale.ts` 신설: `Animated.Value(1)` 지연 초기화, `onPressIn`→0.96·`onPressOut`→1 spring(`useNativeDriver: true`). 빙고 타일과 같은 방식.
+- `ChoiceCell` 4곳(ling6·wrs·wrsTwoChar·sentClosed): `Pressable`을 `Animated.View`(`transform: [{ scale }]`)로 감싸고 `onPressIn/Out` 연결. `usePressScale`·`Animated` import 추가.
+- 레이아웃 보존: `choiceCell`의 `width`(31.5%/48%)를 `choiceCellOuter`로 옮기고 `choiceCell`은 `width:"100%"`. sentClosed는 `overflow:hidden`을 `choiceCell`에 유지.
+- freq·pitch2afc는 선택 버튼이 인라인 `Pressable`(숫자 1~3)이고 구조가 달라 이번 범위에서 제외.
+
+### 핵심 경로
+
+- `src/hooks/use-press-scale.ts`
+- `src/training/ling6/Ling6SessionScreen.tsx` · `wrs/WrsSessionScreen.tsx` · `wrs/WrsTwoCharScreen.tsx` · `sentClosed/SentClosedSessionScreen.tsx`
+
+### 단정 금지
+
+- `추정`: native driver spring이라 JS·layout 부담 없음. 고르는 중 동작이라 실시간 오디오 겹침 낮음.
+- `미검증`: 실기기에서 눌림 체감·그리드 3열/2열 폭 유지 확인 안 함.
+- `주의`: `WrsSessionScreen.test.tsx`는 오디오 모듈 미모킹으로 suite 로드 실패 — clean tree에서도 동일, 이번 변경 무관.
+
+---
+
+## 인계 — 2026-08-28 10:38
+
+새 채팅 AI용. **이번 세션 = `SessionProgressBar` 채움 폭을 즉시 점프에서 짧게 밀어 채우기로. 구현 완료.**
+
+### 한 일
+
+- `SessionProgressBar.tsx`: `Animated.Value(ratio)`를 지연 초기화 `useState`로 한 번만 생성(`equalizer.tsx` 방식). `ratio` 변화 시 `Animated.timing`(260ms, `FILL_MS`)로 밀어 채움. `interpolate` `0→"0%"`,`1→"100%"`. 첫 렌더는 `mounted` ref로 애니메이션 생략(`setValue`). `fill`을 `Animated.View`로 교체.
+- 테스트: Animated 보간이라 `width`가 문자열이 아님 → fake timer로 `runAllTimers` 후 `__getValue()`로 폭 확인하도록 조정. 4개 통과.
+- 빙고는 막대 자체가 없어 대상 아님(칸이 진행). 쓰는 탭(ling6·sentClosed·WrsTwoChar·WrsSession·am·freq·pitch2afc)은 컴포넌트만 바꿔 자동 반영.
+
+### 핵심 경로
+
+- `src/training/SessionProgressBar.tsx`
+- `src/training/__tests__/SessionProgressBar.test.tsx`
+
+### 단정 금지
+
+- `주의`: `width(%)`는 layout이라 `useNativeDriver: false`. Equalizer `scaleY`(native)와 달리 JS 스레드를 거친다.
+- `추정`: 높이 5px·시행당 1회·260ms라 부담 작을 것으로 봄.
+- `미검증`: 듣기 중 오디오 끊김 영향·실기기 밀림 체감 측정 안 함.
+
+---
+
 ## 인계 — 2026-08-27 17:05
 
 새 채팅 AI용. **이번 세션 = 소리 높낮이 선택 화면에 공용 토글·안내문 통합 + 카드 터치 즉시 시작.**

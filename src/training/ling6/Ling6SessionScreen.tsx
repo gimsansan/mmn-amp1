@@ -1,6 +1,7 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Animated,
   BackHandler,
   Image,
   Pressable,
@@ -27,6 +28,7 @@ import {
   Shadows,
   Spacing,
 } from "@/constants/theme";
+import { usePressScale } from "@/hooks/use-press-scale";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmEndSession } from "@/training/confirmEndSession";
 import { ListeningCheckScreen } from "@/training/ListeningCheckScreen";
@@ -584,36 +586,43 @@ function ChoiceCell({
 }>) {
   const theme = useTheme();
   const answer = marked === "answer";
+  const { scale, onPressIn, onPressOut } = usePressScale();
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={sound.label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.choiceCell,
-        {
-          backgroundColor: theme.surface,
-          borderColor: answer
-            ? theme.accent
-            : pressed && !disabled
-              ? theme.accentBorder
-              : theme.border,
-        },
-        Shadows.card,
-        pressed && !disabled && styles.pressed,
-        disabled && styles.disabled,
-      ]}
+    <Animated.View
+      style={[styles.choiceCellOuter, { transform: [{ scale }] }]}
     >
-      <Image
-        source={sound.image}
-        style={styles.choiceImage}
-        resizeMode="contain"
-      />
-      <ThemedText type="smallBold">{sound.label}</ThemedText>
-    </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={sound.label}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        style={({ pressed }) => [
+          styles.choiceCell,
+          {
+            backgroundColor: theme.surface,
+            borderColor: answer
+              ? theme.accent
+              : pressed && !disabled
+                ? theme.accentBorder
+                : theme.border,
+          },
+          Shadows.card,
+          pressed && !disabled && styles.pressed,
+          disabled && styles.disabled,
+        ]}
+      >
+        <Image
+          source={sound.image}
+          style={styles.choiceImage}
+          resizeMode="contain"
+        />
+        <ThemedText type="smallBold">{sound.label}</ThemedText>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -701,8 +710,11 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     justifyContent: "space-between",
   },
-  choiceCell: {
+  choiceCellOuter: {
     width: "31.5%",
+  },
+  choiceCell: {
+    width: "100%",
     borderWidth: 1.5,
     borderRadius: Radius.large - 4,
     paddingVertical: Spacing.one,
