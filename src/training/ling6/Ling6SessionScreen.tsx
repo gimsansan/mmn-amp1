@@ -395,11 +395,13 @@ export function Ling6SessionScreen() {
                 「못 들었어요」를 누르세요.
               </ThemedText>
             </Card>
-            <Image
-              source={require("@/assets/ling6/ling6_back.webp")}
-              style={[styles.idleImage, { height: windowHeight * 0.45 }]}
-              resizeMode="cover"
-            />
+            {history.length === 0 ? (
+              <Image
+                source={require("@/assets/ling6/ling6_back.webp")}
+                style={[styles.idleImage, { height: windowHeight * 0.45 }]}
+                resizeMode="cover"
+              />
+            ) : null}
           </ScrollView>
         ) : null}
 
