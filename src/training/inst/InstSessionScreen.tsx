@@ -184,7 +184,7 @@ export function InstSessionScreen() {
     }, [closeCheck, closeStats, phase, resetRun, showCheck, showStats]),
   );
 
-  const playCurrent = useCallback(async (index: number) => {
+  const playCurrent = useCallback(async (index: number, replay = false) => {
     const trial = trialsRef.current[index];
     if (!trial) {
       return;
@@ -197,7 +197,8 @@ export function InstSessionScreen() {
     setLastError(null);
     setPhase("playing");
     try {
-      if (index === 0) {
+      // 다시 듣기에는 앞 뜸을 두지 않는다 — 사용자가 방금 버튼을 눌러 놓고 기다린다.
+      if (index === 0 && !replay) {
         setLeadIn(true);
         await waitInstLeadIn();
         if (aborted()) {
@@ -219,6 +220,24 @@ export function InstSessionScreen() {
       setPhase("choose");
     }
   }, []);
+
+  /**
+   * 이 문항을 다시 들려준다.
+   *
+   * 「고르기」에서만 연다. 피드백에서 다시 틀면 이미 답한 문항이 `choose`로
+   * 되돌아가 같은 문항 답이 한 번 더 쌓인다(아래 「중지」 주석과 같은 이유).
+   *
+   * **횟수는 제한하지 않는다.** 이건 검사가 아니라 훈련이고, 같은 포락선끼리는
+   * (피아노↔기타, 바이올린↔플루트) 한 번 듣고 가르기 어렵다 — 정상 청력도
+   * 몇 번 들어야 한다(실기기 확인 2026-08-29). 한 번만 들려주면 못 들은 사람은
+   * 찍는 수밖에 없고, 그건 훈련이 아니다.
+   *
+   * `주의`: 그래서 이 탭의 정답률은 **「몇 번이든 들은 뒤의 정답률」**이다.
+   * 한 번에 맞혔는지를 재고 싶으면 다시 들은 횟수를 따로 세야 한다(지금은 안 센다).
+   */
+  const onReplay = useCallback(() => {
+    void playCurrent(trialIndex, true);
+  }, [playCurrent, trialIndex]);
 
   const onStart = useCallback(() => {
     abortRef.current = false;
@@ -540,6 +559,10 @@ export function InstSessionScreen() {
                 onPress={() => confirmEndSession(onEndManual)}
               />
             </>
+          ) : null}
+
+          {phase === "choose" ? (
+            <ActionButton fill={false} label="다시 듣기" onPress={onReplay} />
           ) : null}
 
           {phase === "playing" || phase === "choose" ? (
