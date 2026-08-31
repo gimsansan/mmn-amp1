@@ -4,6 +4,50 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-31 17:08
+
+새 채팅 AI용. **이번 세션 = 통계 점 12 상한 + %·링6 면 0.22.**
+
+### 한 일
+
+- 세 벌 SVG: 점 12 이하면 전부, 13 이상이면 첫·끝만. 선·면적은 50점 유지.
+- `%`·링6 면적 `0.22`. `TrendChart`(높낮이·다른 음·떨림) 면은 `0.35`.
+- `docs/training-stats-graphs.md` · `training-stats-recommendation.md` 맞춤.
+
+### 핵심 경로
+
+- `src/training/TrendChart.tsx`
+- `src/training/PercentTrend.tsx`
+- `src/training/ling6/Ling6ProgressPanel.tsx`
+
+### 단정 금지
+
+- `미검증`: 12개일 때 좁은 폭 겹침. % 면 0.22 격자 대비.
+
+---
+
+## 인계 — 2026-08-31 16:48
+
+새 채팅 AI용. **이번 세션 = 통계 선 그래프 UI만 전환(레이아웃 유지).**
+
+### 한 일
+
+- 세 벌 SVG(`TrendChart` / `PercentTrend` / `Ling6PassTrend`)에 선 아래 면적·마지막 점 강조.
+- 색은 기존 테마. 짙은 히어로 카드·타일 레이아웃·y축은 안 바꿈.
+- `docs/training-stats-graphs.md` 공통 UI 표 갱신.
+
+### 핵심 경로
+
+- `src/training/TrendChart.tsx`
+- `src/training/PercentTrend.tsx`
+- `src/training/ling6/Ling6ProgressPanel.tsx`
+
+### 단정 금지
+
+- `미검증`: 실기기 점 겹침·면 채움 대비.
+
+---
+
 ## 인계 — 2026-08-31 16:18
 
 새 채팅 AI용. **이번 세션 = 통계 그래프 데이터·UI 지도 md.**

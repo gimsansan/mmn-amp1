@@ -4,9 +4,17 @@
  * 여기 숫자는 점수·진단이 아니다(웰니스 방침).
  */
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { StyleSheet, View, type LayoutChangeEvent } from "react-native";
-import Svg, { Circle, Line, Path, Text as SvgText } from "react-native-svg";
+import Svg, {
+  Circle,
+  Defs,
+  Line,
+  LinearGradient,
+  Path,
+  Stop,
+  Text as SvgText,
+} from "react-native-svg";
 
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
@@ -22,7 +30,11 @@ const PAD_TOP = 10;
 const PAD_BOTTOM = 18;
 const PAD_LEFT = 22;
 const PAD_RIGHT = 10;
-const DOT_R = 3.5;
+const DOT_R = 3;
+const LAST_DOT_R = 5;
+const LAST_STROKE = 3;
+/** 이하면 회차마다 점. 초과면 첫·끝만. 선·면적은 전부. 세 차트 동일. */
+const MAX_ALL_DOTS = 12;
 const PERCENT_MAX = 100;
 const TICKS = [0, 50, 100] as const;
 
@@ -32,6 +44,7 @@ export function PercentTrend({
 }: Readonly<{ records: readonly PercentSessionRecord[] }>) {
   const theme = useTheme();
   const [width, setWidth] = useState(0);
+  const gradientId = useId();
 
   const onLayout = (event: LayoutChangeEvent) => {
     setWidth(event.nativeEvent.layout.width);
@@ -39,6 +52,7 @@ export function PercentTrend({
 
   const plotW = Math.max(0, width - PAD_LEFT - PAD_RIGHT);
   const plotH = CHART_HEIGHT - PAD_TOP - PAD_BOTTOM;
+  const baseY = CHART_HEIGHT - PAD_BOTTOM;
   const ordinals = records.map((record) => wrsTimeOrdinal(record.savedAt));
   const minOrd = Math.min(...ordinals);
   const maxOrd = Math.max(...ordinals);
@@ -58,6 +72,13 @@ export function PercentTrend({
     )
     .join(" ");
 
+  const lastX = xy.at(-1)?.x;
+  const firstX = xy.at(0)?.x;
+  const areaPath =
+    lastX != null && firstX != null
+      ? `${linePath} L ${lastX.toFixed(1)} ${baseY} L ${firstX.toFixed(1)} ${baseY} Z`
+      : "";
+
   const first = records[0];
   const last = records.at(-1);
 
@@ -66,6 +87,12 @@ export function PercentTrend({
       <View style={styles.chartArea} onLayout={onLayout}>
         {width > 0 ? (
           <Svg width={width} height={CHART_HEIGHT}>
+            <Defs>
+              <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={theme.accent} stopOpacity={0.22} />
+                <Stop offset="1" stopColor={theme.accent} stopOpacity={0} />
+              </LinearGradient>
+            </Defs>
             {TICKS.map((tick) => {
               const y = PAD_TOP + ((PERCENT_MAX - tick) / PERCENT_MAX) * plotH;
               return (
@@ -94,6 +121,7 @@ export function PercentTrend({
                 </SvgText>
               );
             })}
+            <Path d={areaPath} fill={`url(#${gradientId})`} />
             <Path
               d={linePath}
               stroke={theme.accent}
@@ -104,15 +132,20 @@ export function PercentTrend({
             />
             {xy.map((point, index) => {
               const isLast = index === xy.length - 1;
+              const showDot =
+                xy.length <= MAX_ALL_DOTS || index === 0 || isLast;
+              if (!showDot) {
+                return null;
+              }
               return (
                 <Circle
                   key={`${records[index]?.id}-${index}`}
                   cx={point.x}
                   cy={point.y}
-                  r={isLast ? DOT_R + 1.5 : DOT_R}
-                  fill={isLast ? theme.highlight : theme.surface}
+                  r={isLast ? LAST_DOT_R : DOT_R}
+                  fill={isLast ? theme.surface : theme.accent}
                   stroke={isLast ? theme.highlight : theme.accent}
-                  strokeWidth={2}
+                  strokeWidth={isLast ? LAST_STROKE : 0}
                 />
               );
             })}

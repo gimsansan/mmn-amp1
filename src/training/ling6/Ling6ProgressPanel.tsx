@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { StyleSheet, View, type LayoutChangeEvent } from "react-native";
-import Svg, { Circle, Line, Path, Text as SvgText } from "react-native-svg";
+import Svg, {
+  Circle,
+  Defs,
+  Line,
+  LinearGradient,
+  Path,
+  Stop,
+  Text as SvgText,
+} from "react-native-svg";
 
 import { ThemedText } from "@/components/themed-text";
 import { Card } from "@/components/ui/card";
@@ -23,7 +31,11 @@ const PAD_TOP = 10;
 const PAD_BOTTOM = 18;
 const PAD_LEFT = 18;
 const PAD_RIGHT = 10;
-const DOT_R = 3.5;
+const DOT_R = 3;
+const LAST_DOT_R = 5;
+const LAST_STROKE = 3;
+/** 이하면 회차마다 점. 초과면 첫·끝만. 선·면적은 전부. 세 차트 동일. */
+const MAX_ALL_DOTS = 12;
 const BAR_MAX_H = 56;
 const BAR_STUB_H = 3;
 
@@ -147,6 +159,7 @@ function Ling6PassTrend({
 }: Readonly<{ records: readonly SavedLing6Record[] }>) {
   const theme = useTheme();
   const [width, setWidth] = useState(0);
+  const gradientId = useId();
 
   const onLayout = (event: LayoutChangeEvent) => {
     setWidth(event.nativeEvent.layout.width);
@@ -154,6 +167,7 @@ function Ling6PassTrend({
 
   const plotW = Math.max(0, width - PAD_LEFT - PAD_RIGHT);
   const plotH = CHART_HEIGHT - PAD_TOP - PAD_BOTTOM;
+  const baseY = CHART_HEIGHT - PAD_BOTTOM;
   const ordinals = records.map((record) => dateOrdinal(record.dateKey));
   const minOrd = Math.min(...ordinals);
   const maxOrd = Math.max(...ordinals);
@@ -178,6 +192,13 @@ function Ling6PassTrend({
     )
     .join(" ");
 
+  const lastX = xy.at(-1)?.x;
+  const firstX = xy.at(0)?.x;
+  const areaPath =
+    lastX != null && firstX != null
+      ? `${linePath} L ${lastX.toFixed(1)} ${baseY} L ${firstX.toFixed(1)} ${baseY} Z`
+      : "";
+
   const ticks = [0, 3, 6];
   const first = records.at(0);
   const last = records.at(-1);
@@ -187,6 +208,12 @@ function Ling6PassTrend({
       <View style={styles.chartArea} onLayout={onLayout}>
         {width > 0 ? (
           <Svg width={width} height={CHART_HEIGHT}>
+            <Defs>
+              <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={theme.accent} stopOpacity={0.22} />
+                <Stop offset="1" stopColor={theme.accent} stopOpacity={0} />
+              </LinearGradient>
+            </Defs>
             {ticks.map((tick) => {
               const y =
                 PAD_TOP +
@@ -219,6 +246,7 @@ function Ling6PassTrend({
                 </SvgText>
               );
             })}
+            <Path d={areaPath} fill={`url(#${gradientId})`} />
             <Path
               d={linePath}
               stroke={theme.accent}
@@ -229,15 +257,20 @@ function Ling6PassTrend({
             />
             {xy.map((point, index) => {
               const isLast = index === xy.length - 1;
+              const showDot =
+                xy.length <= MAX_ALL_DOTS || index === 0 || isLast;
+              if (!showDot) {
+                return null;
+              }
               return (
                 <Circle
                   key={`${records[index]?.dateKey}-${index}`}
                   cx={point.x}
                   cy={point.y}
-                  r={isLast ? DOT_R + 1.5 : DOT_R}
-                  fill={isLast ? theme.highlight : theme.surface}
+                  r={isLast ? LAST_DOT_R : DOT_R}
+                  fill={isLast ? theme.surface : theme.accent}
                   stroke={isLast ? theme.highlight : theme.accent}
-                  strokeWidth={2}
+                  strokeWidth={isLast ? LAST_STROKE : 0}
                 />
               );
             })}

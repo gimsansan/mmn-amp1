@@ -26,7 +26,13 @@ const CHART_HEIGHT = 132;
 const PAD_TOP = 12;
 const PAD_BOTTOM = 12;
 const PAD_X = 8;
-const DOT_R = 3.5;
+/** 중간 점. 선 색으로 채움. */
+const DOT_R = 3;
+/** 마지막 점만 크게. 흰 면 + 주황 테두리. */
+const LAST_DOT_R = 5;
+const LAST_STROKE = 3;
+/** 이하면 회차마다 점. 초과면 첫·끝만. 선·면적은 전부. 세 차트 동일. */
+const MAX_ALL_DOTS = 12;
 
 export type TrendChartProps = {
   /** 시간순(오래→최근). 최소 2점. */
@@ -105,7 +111,7 @@ export function TrendChart({
           <Svg width={width} height={CHART_HEIGHT}>
             <Defs>
               <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={theme.accent} stopOpacity={0.22} />
+                <Stop offset="0" stopColor={theme.accent} stopOpacity={0.35} />
                 <Stop offset="1" stopColor={theme.accent} stopOpacity={0} />
               </LinearGradient>
             </Defs>
@@ -144,15 +150,20 @@ export function TrendChart({
             />
             {xy.map((pt, i) => {
               const isLast = i === xy.length - 1;
+              const showDot =
+                xy.length <= MAX_ALL_DOTS || i === 0 || isLast;
+              if (!showDot) {
+                return null;
+              }
               return (
                 <Circle
                   key={`${points[i].savedAt}-${i}`}
                   cx={pt.x}
                   cy={pt.y}
-                  r={isLast ? DOT_R + 1.5 : DOT_R}
-                  fill={isLast ? theme.highlight : theme.surface}
+                  r={isLast ? LAST_DOT_R : DOT_R}
+                  fill={isLast ? theme.surface : theme.accent}
                   stroke={isLast ? theme.highlight : theme.accent}
-                  strokeWidth={2}
+                  strokeWidth={isLast ? LAST_STROKE : 0}
                 />
               );
             })}
