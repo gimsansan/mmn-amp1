@@ -4,6 +4,129 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-08-31 15:46
+
+새 채팅 AI용. **이번 세션 = ActionButton 눌림을 투명도 대신 살짝 축소.**
+
+### 한 일
+
+- `pressed`: `opacity: 0.7` 삭제, `scale: 0.97`. disabled 투명도는 그대로.
+- `ActionButton`을 쓰는 시작·다시 연습·처음으로·뒤로 가기 등에 일괄 적용.
+- 보기 카드·빙고·헤더 아이콘은 안 건드림.
+
+### 핵심 경로
+
+- `src/components/ui/action-button.tsx`
+
+### 단정 금지
+
+- 0.97 체감·실기기 확인은 미검증.
+
+---
+
+## 인계 — 2026-08-31 15:37
+
+새 채팅 AI용. **이번 세션 = 오늘 연습 끝 약한 소리 16/34, 목록은 이름+점수 16만.**
+
+### 한 일
+
+- 「약한 소리」 16, 악기 그림 34. 아래 목록 그림 제거. `피아노`·`0/3` 둘 다 16.
+- 결과 문장 20은 그대로(다른 탭과 맞춤).
+
+### 핵심 경로
+
+- `src/training/inst/InstSessionScreen.tsx`
+
+### 단정 금지
+
+- 그림 3장×긴 문장이 좁은 폭에서 접히는 정도는 실기기 미검증.
+
+---
+
+## 인계 — 2026-08-31 15:26
+
+새 채팅 AI용. **이번 세션 = 오늘 연습 끝에서 아쉬움 문장을 「약한 소리」+기존 악기 그림으로 바꿈.**
+
+### 한 일
+
+- `instWeakestIds`: 틀린 횟수 공동 1위 1~3개 id. 4개 동점·전부 맞춤은 null.
+- 요약 카드 오른쪽 위: `약한 소리` + 해당 webp 28dp. 통계 탭·저장 형식은 안 바꿈.
+
+### 핵심 경로
+
+- `src/training/inst/instSession.ts`
+- `src/training/inst/InstSessionScreen.tsx`
+
+### 단정 금지
+
+- 좁은 화면에서 긴 결과 문장+그림 3개 줄바꿈은 실기기 미검증.
+
+---
+
+## 인계 — 2026-08-31 15:00
+
+새 채팅 AI용. **이번 세션 = 악기 소리 연습 끝 「아쉬움」 문장이 동점 둘·셋을 같이 짚음.**
+
+### 한 일
+
+- `instWeakestCopy`: 틀린 횟수 공동 1위가 2·3이면 `피아노·기타`처럼 `·`로 이어 말함.
+- 다 맞춤·넷이 같은 횟수로 틀림 → 여전히 null. 전체 % 그래프·저장은 그대로.
+
+### 핵심 경로
+
+- `src/training/inst/instSession.ts`
+- `src/training/inst/__tests__/instSession.test.ts`
+
+### 단정 금지
+
+- 없음. 통계 탭 악기별 저장은 이번 세션에서 안 함.
+
+---
+
+## 인계 — 2026-08-31 10:47
+
+새 채팅 AI용. **이번 세션 = 악기 보기 칸 그림을 70~90dp에 맞춤. 글자는 그대로.**
+
+### 한 일
+
+- `choiceImage`: 64 고정 → 폭 100% · `aspectRatio` 1 · `maxHeight` 90. `contain` 유지.
+- 보기·미리보기 칸 `paddingVertical` `Spacing.three`→`two`. 미리보기는 `maxHeight` 64.
+- 글자(`choiceLabel`·`choiceFamily`)는 안 바꿈. 화면별 배율 훅은 안 넣음.
+
+### 핵심 경로
+
+- `src/training/inst/InstSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 짧은 폰 568dp·태블릿 실기기.
+- `주의`: 플루트는 가로 관이라 같은 칸에서도 면적이 작아 보일 수 있음.
+- 이전 인계의 「검은 배경」은 잘못봄. WebP는 투명.
+
+---
+
+## 인계 — 2026-08-31 10:40
+
+새 채팅 AI용. **이번 세션 = 악기 소리 보기 칸 아이콘을 `assets/4-inst/` WebP로 교체.**
+
+### 한 일
+
+- `Instrument.icon`(SVG `IconName`)을 `image: require("@/assets/4-inst/*.webp")`로 바꿈.
+- `InstSessionScreen` 미리보기·보기 칸·집계 행을 `Image`(`resizeMode: contain`)로 그림.
+- 듣기 확인·통계의 `pianoKeys` SVG는 그대로. `icon.tsx`의 guitar/violin/flute SVG는 안 지움.
+
+### 핵심 경로
+
+- `src/training/inst/instruments.ts` · `InstSessionScreen.tsx`
+- `assets/4-inst/{piano,guitar,violin,flute}.webp`
+
+### 단정 금지
+
+- `미검증`: 실기기에서 칸 크기·짧은 화면.
+- `주의`: WebP가 검은 배경이라 밝은 카드 위에 사각이 남을 수 있음.
+
+---
+
 ## 인계 — 2026-08-28 11:22
 
 새 채팅 AI용. **이번 세션 = 소리 구분 idle 안내 이미지를 기록 0건일 때만 표시.**

@@ -1,4 +1,5 @@
-import type { IconName } from "@/components/ui/icon";
+import type { ImageSourcePropType } from "react-native";
+
 import type {
   HarmonicSpectrum,
   ToneEnvelope,
@@ -22,7 +23,7 @@ export type Instrument = {
   label: string;
   /** 이름 아래 한 줄 — 악기 이름을 몰라도 소리의 성격으로 고를 수 있게. */
   family: string;
-  icon: IconName;
+  image: ImageSourcePropType;
   spectrum: HarmonicSpectrum;
   envelope: ToneEnvelope;
 };
@@ -36,7 +37,7 @@ export const INSTRUMENTS: readonly Instrument[] = [
     id: "piano",
     label: "피아노",
     family: "두드리는 건반",
-    icon: "pianoKeys",
+    image: require("@/assets/4-inst/piano.webp"),
     // 완만한 감쇠. 때리는 소리라 어택이 몇 ms고 서스테인이 거의 없다.
     spectrum: [1, 0.62, 0.4, 0.24, 0.15, 0.09, 0.05, 0.03],
     envelope: {
@@ -50,7 +51,7 @@ export const INSTRUMENTS: readonly Instrument[] = [
     id: "guitar",
     label: "기타",
     family: "퉁기는 줄",
-    icon: "guitar",
+    image: require("@/assets/4-inst/guitar.webp"),
     // 피아노보다 2차가 약하고 3차가 살아 있다 — 퉁김 특유의 속 빈 느낌.
     spectrum: [1, 0.45, 0.55, 0.22, 0.18, 0.1, 0.06, 0.03],
     envelope: {
@@ -64,7 +65,7 @@ export const INSTRUMENTS: readonly Instrument[] = [
     id: "violin",
     label: "바이올린",
     family: "활로 켜는 줄",
-    icon: "violin",
+    image: require("@/assets/4-inst/violin.webp"),
     // 상부 하모닉이 오래 남아 톱니에 가깝다. 활이라 어택이 수십 ms.
     spectrum: [1, 0.85, 0.7, 0.62, 0.48, 0.38, 0.28, 0.2, 0.14, 0.1],
     envelope: {
@@ -78,7 +79,7 @@ export const INSTRUMENTS: readonly Instrument[] = [
     id: "flute",
     label: "플루트",
     family: "입으로 부는 관",
-    icon: "flute",
+    image: require("@/assets/4-inst/flute.webp"),
     // 거의 순음. 넷 중 유일하게 「맑고 단순한」 쪽이라 기준점 노릇을 한다.
     spectrum: [1, 0.28, 0.1, 0.05, 0.02],
     envelope: {

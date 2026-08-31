@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   BackHandler,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -33,7 +34,7 @@ import {
   createInstTrials,
   INST_TRIAL_COUNT,
   instResultCopy,
-  instWeakestCopy,
+  instWeakestIds,
   scoreInstChoice,
   summarizeInst,
   type InstOutcome,
@@ -43,6 +44,7 @@ import {
 import {
   INSTRUMENTS,
   instrumentLabel,
+  instrumentOf,
   type Instrument,
   type InstrumentId,
 } from "@/training/inst/instruments";
@@ -72,7 +74,6 @@ export function InstSessionScreen() {
   );
   const [lastTarget, setLastTarget] = useState<InstrumentId | null>(null);
   const [resultLine, setResultLine] = useState<string | null>(null);
-  const [weakestLine, setWeakestLine] = useState<string | null>(null);
   const [tally, setTally] = useState<Record<
     InstrumentId,
     InstrumentTally
@@ -92,6 +93,7 @@ export function InstSessionScreen() {
     phase === "playing" || phase === "choose" || phase === "feedback";
   const choiceDisabled = phase !== "choose";
   const idleTextScale = phase === "idle" ? TEXT_SCALE : 1;
+  const weakestIds = tally ? instWeakestIds(tally) : null;
 
   const resetRun = useCallback(() => {
     abortRef.current = true;
@@ -104,7 +106,6 @@ export function InstSessionScreen() {
     setLastCorrect(undefined);
     setLastTarget(null);
     setResultLine(null);
-    setWeakestLine(null);
     setTally(null);
     setSaveNote(null);
     setLastError(null);
@@ -229,7 +230,6 @@ export function InstSessionScreen() {
     setLastCorrect(undefined);
     setLastTarget(null);
     setResultLine(null);
-    setWeakestLine(null);
     setTally(null);
     setSaveNote(null);
     void playCurrent(0);
@@ -244,7 +244,6 @@ export function InstSessionScreen() {
     const nextTally = collectInstrumentResults(outcomes);
     setResultLine(instResultCopy(summary));
     setTally(nextTally);
-    setWeakestLine(instWeakestCopy(nextTally));
 
     if (summary.trialCount !== INST_TRIAL_COUNT) {
       setSaveNote(null);
@@ -384,29 +383,48 @@ export function InstSessionScreen() {
               </ThemedText>
             </View>
             <Card size="large" style={styles.summaryCard}>
-              <ThemedText type="heading" style={styles.resultLine}>
-                {resultLine}
-              </ThemedText>
-              {weakestLine ? (
-                <ThemedText type="smallBold" style={{ color: theme.accent }}>
-                  {weakestLine}
+              <View style={styles.summaryTop}>
+                <ThemedText type="heading" style={styles.resultLine}>
+                  {resultLine}
                 </ThemedText>
-              ) : null}
+                {weakestIds ? (
+                  <View
+                    accessible
+                    accessibilityRole="text"
+                    accessibilityLabel={`약한 소리 ${weakestIds.map(instrumentLabel).join("·")}`}
+                    style={styles.weakCluster}
+                  >
+                    <ThemedText
+                      type="smallBold"
+                      style={[styles.weakLabel, { color: theme.accent }]}
+                    >
+                      약한 소리
+                    </ThemedText>
+                    <View style={styles.weakIcons}>
+                      {weakestIds.map((id) => (
+                        <Image
+                          key={id}
+                          source={instrumentOf(id).image}
+                          style={styles.weakImage}
+                          resizeMode="contain"
+                        />
+                      ))}
+                    </View>
+                  </View>
+                ) : null}
+              </View>
               {tally ? (
                 <View style={styles.tallyList}>
                   {INSTRUMENTS.map((instrument) => (
                     <View key={instrument.id} style={styles.tallyRow}>
-                      <View style={styles.tallyName}>
-                        <Icon
-                          name={instrument.icon}
-                          size={20}
-                          color={theme.textSecondary}
-                        />
-                        <ThemedText type="smallBold">
-                          {instrument.label}
-                        </ThemedText>
-                      </View>
-                      <ThemedText type="mono" themeColor="textMuted">
+                      <ThemedText type="smallBold" style={styles.tallyLabel}>
+                        {instrument.label}
+                      </ThemedText>
+                      <ThemedText
+                        type="mono"
+                        themeColor="textMuted"
+                        style={styles.tallyScore}
+                      >
                         {`${tally[instrument.id].correctCount}/${tally[instrument.id].trialCount}`}
                       </ThemedText>
                     </View>
@@ -543,7 +561,11 @@ function PreviewCell({ instrument }: Readonly<{ instrument: Instrument }>) {
         { backgroundColor: theme.surface, borderColor: theme.border },
       ]}
     >
-      <Icon name={instrument.icon} size={30} color={theme.accent} />
+      <Image
+        source={instrument.image}
+        style={styles.previewImage}
+        resizeMode="contain"
+      />
       <ThemedText type="smallBold">{instrument.label}</ThemedText>
     </View>
   );
@@ -589,10 +611,10 @@ function ChoiceCell({
           disabled && styles.disabled,
         ]}
       >
-        <Icon
-          name={instrument.icon}
-          size={44}
-          color={answer ? theme.accent : theme.text}
+        <Image
+          source={instrument.image}
+          style={styles.choiceImage}
+          resizeMode="contain"
         />
         <ThemedText type="smallBold" style={styles.choiceLabel}>
           {instrument.label}
@@ -649,9 +671,14 @@ const styles = StyleSheet.create({
     width: "48%",
     borderWidth: 1,
     borderRadius: Radius.large - 4,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.two,
     alignItems: "center",
     gap: Spacing.one,
+  },
+  previewImage: {
+    width: "100%",
+    aspectRatio: 1,
+    maxHeight: 64,
   },
   summaryContent: {
     gap: Spacing.three,
@@ -669,9 +696,33 @@ const styles = StyleSheet.create({
   summaryCard: {
     gap: Spacing.two,
   },
+  summaryTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: Spacing.two,
+  },
   resultLine: {
+    flex: 1,
+    minWidth: 0,
     fontSize: 20,
     lineHeight: 28,
+  },
+  weakCluster: {
+    alignItems: "flex-end",
+    gap: Spacing.one,
+  },
+  weakLabel: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  weakIcons: {
+    flexDirection: "row",
+    gap: Spacing.one,
+  },
+  weakImage: {
+    width: 34,
+    height: 34,
   },
   tallyList: {
     gap: Spacing.one,
@@ -682,10 +733,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: Spacing.two,
   },
-  tallyName: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
+  tallyLabel: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  tallyScore: {
+    fontSize: 16,
+    lineHeight: 22,
   },
   footnote: {
     fontSize: 14,
@@ -722,10 +776,19 @@ const styles = StyleSheet.create({
     width: "100%",
     borderWidth: 1.5,
     borderRadius: Radius.large - 4,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.two,
     alignItems: "center",
     gap: Spacing.one,
+  },
+  /**
+   * 칸 폭(48%)에 맞추고, 태블릿(`MaxContentWidth` 560)에서만 커지는 걸
+   * `maxHeight`로 막는다. 요청 높이 70~90dp.
+   */
+  choiceImage: {
+    width: "100%",
+    aspectRatio: 1,
+    maxHeight: 90,
   },
   choiceLabel: {
     fontSize: 17,

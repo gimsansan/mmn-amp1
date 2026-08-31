@@ -5,6 +5,7 @@ import {
   INST_TRIAL_COUNT,
   instResultCopy,
   instWeakestCopy,
+  instWeakestIds,
   REPEATS_PER_INSTRUMENT,
   scoreInstChoice,
   summarizeInst,
@@ -134,7 +135,7 @@ describe("collectInstrumentResults", () => {
   });
 });
 
-describe("instWeakestCopy", () => {
+describe("instWeakestIds", () => {
   it("가장 아쉬운 악기가 하나면 그것을 짚는다", () => {
     const tally = collectInstrumentResults([
       outcome("piano", "guitar"),
@@ -142,6 +143,7 @@ describe("instWeakestCopy", () => {
       outcome("violin", "flute"),
       outcome("flute", "flute"),
     ]);
+    expect(instWeakestIds(tally)).toEqual(["piano"]);
     expect(instWeakestCopy(tally)).toBe("이번엔 피아노 소리가 가장 아쉬웠어요");
   });
 
@@ -150,14 +152,42 @@ describe("instWeakestCopy", () => {
       outcome("piano", "piano"),
       outcome("guitar", "guitar"),
     ]);
+    expect(instWeakestIds(tally)).toBeNull();
     expect(instWeakestCopy(tally)).toBeNull();
   });
 
-  it("아쉬운 악기가 둘이면 하나로 좁히지 않는다", () => {
+  it("아쉬운 악기가 둘이면 같이 짚는다", () => {
     const tally = collectInstrumentResults([
       outcome("piano", "guitar"),
       outcome("guitar", "piano"),
     ]);
+    expect(instWeakestIds(tally)).toEqual(["piano", "guitar"]);
+    expect(instWeakestCopy(tally)).toBe(
+      "이번엔 피아노·기타 소리가 가장 아쉬웠어요",
+    );
+  });
+
+  it("아쉬운 악기가 셋이면 같이 짚는다", () => {
+    const tally = collectInstrumentResults([
+      outcome("piano", "guitar"),
+      outcome("guitar", "piano"),
+      outcome("violin", "flute"),
+      outcome("flute", "flute"),
+    ]);
+    expect(instWeakestIds(tally)).toEqual(["piano", "guitar", "violin"]);
+    expect(instWeakestCopy(tally)).toBe(
+      "이번엔 피아노·기타·바이올린 소리가 가장 아쉬웠어요",
+    );
+  });
+
+  it("넷이 같은 횟수로 틀리면 아무 말도 하지 않는다", () => {
+    const tally = collectInstrumentResults([
+      outcome("piano", "guitar"),
+      outcome("guitar", "piano"),
+      outcome("violin", "flute"),
+      outcome("flute", "violin"),
+    ]);
+    expect(instWeakestIds(tally)).toBeNull();
     expect(instWeakestCopy(tally)).toBeNull();
   });
 });

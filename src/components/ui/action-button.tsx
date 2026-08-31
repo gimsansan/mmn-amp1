@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   pressed: {
-    opacity: 0.7,
+    transform: [{ scale: 0.97 }],
   },
   disabled: {
     opacity: 0.4,

@@ -186,12 +186,12 @@ export function instResultCopy(summary: InstSummary): string {
 }
 
 /**
- * 이번 연습에서 가장 아쉬웠던 악기 한 줄. 판정이 아니라 **이번 기록** 이야기다.
- * 다 맞혔거나, 아쉬운 악기가 여럿이어서 하나로 좁혀지지 않으면 null.
+ * 이번 연습에서 가장 아쉬웠던 악기 id. 판정이 아니라 **이번 기록**이다.
+ * 다 맞혔거나, 넷이 같은 횟수로 틀리면 null. 동점이 둘·셋이면 같이 돌려준다.
  */
-export function instWeakestCopy(
+export function instWeakestIds(
   tally: Record<InstrumentId, InstrumentTally>,
-): string | null {
+): InstrumentId[] | null {
   const missed = INSTRUMENT_IDS.map((id) => ({
     id,
     miss: tally[id].trialCount - tally[id].correctCount,
@@ -202,8 +202,20 @@ export function instWeakestCopy(
   }
   const worst = Math.max(...missed.map((row) => row.miss));
   const leaders = missed.filter((row) => row.miss === worst);
-  if (leaders.length !== 1 || !leaders[0]) {
+  if (leaders.length === 0 || leaders.length === INSTRUMENT_IDS.length) {
     return null;
   }
-  return `이번엔 ${instrumentLabel(leaders[0].id)} 소리가 가장 아쉬웠어요`;
+  return leaders.map((row) => row.id);
+}
+
+/** 요약 문장. 화면은 그림으로 바꾸고, 읽기 전용 라벨·테스트가 쓴다. */
+export function instWeakestCopy(
+  tally: Record<InstrumentId, InstrumentTally>,
+): string | null {
+  const ids = instWeakestIds(tally);
+  if (!ids) {
+    return null;
+  }
+  const names = ids.map((id) => instrumentLabel(id)).join("·");
+  return `이번엔 ${names} 소리가 가장 아쉬웠어요`;
 }
