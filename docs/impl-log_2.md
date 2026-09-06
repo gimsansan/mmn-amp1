@@ -56,6 +56,22 @@
 
 ## 로그
 
+### 2026-09-07 — 악기 표: 그림 유지, 합성 필드 제거(리베이스 충돌)
+
+| 항목 | 내용 |
+|------|------|
+| 트랙 | 공통·인프라 |
+| 근거·결정 | `new-content` 리베이스. 원격은 `image`+합성 `spectrum`/`envelope`. 로컬은 `icon`. |
+| 근거·결정 | 화면은 `instrument.image`. 사용자는 `assets/4-inst/*.webp`를 쓴다고 함. |
+| 변경 요약 | `instruments.ts`는 `image`만. `icon`·합성 필드 없음. 문서 충돌은 양쪽 블록을 위에 쌓음. |
+| 주요 경로 | `src/training/inst/instruments.ts` |
+| 주요 경로 | `docs/handoff4.md` · `docs/impl-log_2.md` |
+| 결과 | 리베이스 후 `git push origin new-content` (`a99c36d..00b70f7`). |
+| 확인 | 충돌 마커 없음. 원격 반영됨. |
+| 단정 금지 | `미검증`: 리베이스 후 실기기 악기 칸. |
+| 성능·주의 | 없음. 표 필드만. |
+| 다음 | 없음 |
+
 ### 2026-09-07 — 소리 구분 고르기 그림 001–006 교체
 
 | 항목 | 내용 |

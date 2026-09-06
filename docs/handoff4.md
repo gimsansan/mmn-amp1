@@ -4,6 +4,27 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-09-07 07:41
+
+새 채팅 AI용. **이번 세션 = `new-content` 리베이스 충돌 해소. 악기 보기는 WebP.**
+
+### 한 일
+
+- `instruments.ts`: `assets/4-inst/*.webp`의 `image`만. `icon`·합성 `spectrum`/`envelope` 제거.
+- `handoff4`·`impl-log_2` 충돌은 원격(8/31)과 로컬(9/07 ling6) 블록을 둘 다 남김.
+- 리베이스 완료 후 `origin/new-content`에 푸시함(`a99c36d..00b70f7`).
+
+### 핵심 경로
+
+- `src/training/inst/instruments.ts`
+- `assets/4-inst/{piano,guitar,violin,flute}.webp`
+
+### 단정 금지
+
+- `미검증`: 리베이스 후 실기기 악기 칸.
+
+---
+
 ## 인계 — 2026-09-07 07:09
 
 새 채팅 AI용. **이번 세션 = 소리 구분 고르기 그림 001–006 교체.**
