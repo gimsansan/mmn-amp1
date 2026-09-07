@@ -188,12 +188,17 @@ export function PtaSessionScreen() {
               caption="웰니스·훈련 · 병원 검사·진단을 대신하지 않아요"
               action={
                 <View style={styles.headerActions}>
-                  <ListeningCheckEntryButton onPress={openCheck} />
+                  <ListeningCheckEntryButton
+                    label="점검"
+                    onPress={openCheck}
+                  />
                   <StatsEntryButton
+                    label="비교"
                     accessibilityLabel="높낮이 비교 연습 통계 보기"
                     onPress={openStatsPitch}
                   />
                   <StatsEntryButton
+                    label="찾기"
                     accessibilityLabel="다른 음 찾기 연습 통계 보기"
                     onPress={openStatsFreq}
                   />

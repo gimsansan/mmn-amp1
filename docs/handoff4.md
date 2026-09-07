@@ -4,6 +4,66 @@
 > 사용자(2026-08-21 02:08): 이후 인계는 여기. `handoff3.md`는 과거.  
 > 사용자(2026-08-19 01:09): 블록에 **`### 합의` / `### 안 한 일` / `### 다음` 넣지 않음.**
 
+## 인계 — 2026-09-07 10:14
+
+새 채팅 AI용. **이번 세션 = PTA 헤더 헤드폰에 `점검` 글자.**
+
+### 한 일
+
+- `ListeningCheckEntryButton`에 선택 `label`. 통계 버튼과 같은 56 높이.
+- `PtaSessionScreen` 선택 화면만. 다른 탭은 아이콘만.
+
+### 핵심 경로
+
+- `src/components/ui/listening-check-entry-button.tsx`
+- `src/training/pta/PtaSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 좁은 폭에서 제목·버튼 3개 겹침.
+
+---
+
+## 인계 — 2026-09-07 10:09
+
+새 채팅 AI용. **이번 세션 = PTA 헤더 통계 2버튼에 `비교`·`찾기` 글자.**
+
+### 한 일
+
+- `StatsEntryButton`에 선택 `label`. 있으면 아이콘 아래 14px 글자.
+- `PtaSessionScreen` 선택 화면만 사용. 다른 탭은 아이콘만.
+
+### 핵심 경로
+
+- `src/components/ui/stats-entry-button.tsx`
+- `src/training/pta/PtaSessionScreen.tsx`
+
+### 단정 금지
+
+- `미검증`: 좁은 폭에서 제목·버튼 3개 겹침.
+
+---
+
+## 인계 — 2026-09-07 09:16
+
+새 채팅 AI용. **이번 세션 = 소리 구분 `006.webp`(스) 가로 늘림 재출력.**
+
+### 한 일
+
+- 원본 `06_스.png` 없음. 006 장면 + 005 비율로 1:1 생성.
+- 456×413에 cover(높이만 crop). 가로 stretch 안 함.
+- `001`~`005`·wav·`sounds.ts`는 그대로.
+
+### 핵심 경로
+
+- `assets/ling6/006.webp`
+
+### 단정 금지
+
+- `미검증`: 실기기 3열 칸 잘림. 생성본 ≠ 예전 단장 픽셀.
+
+---
+
 ## 인계 — 2026-09-07 07:41
 
 새 채팅 AI용. **이번 세션 = `new-content` 리베이스 충돌 해소. 악기 보기는 WebP.**
